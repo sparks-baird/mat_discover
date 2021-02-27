@@ -259,7 +259,7 @@ class ElM2D():
         '''
         distances = np.ndarray(len(input_tuple))
 
-        for input_1, input_2 in input_tuple:
+        for i, (input_1, input_2) in enumerate(input_tuple):
             distances[i] = EMD(self.input_mat[input_1], self.input_mat[input_2])
 
         return distances
