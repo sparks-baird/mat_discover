@@ -2,13 +2,13 @@ from distutils.core import setup
 setup(
   name = 'ElM2D',        
   packages = ['ElM2D'],  
-  version = '0.1.3',      
+  version = '0.1.4',      
   license='GPL3',       
   description = 'A mapping class to embed large datasets of ionic compositions with respect to the ElMD metric.',  
   author = 'Cameron Hagreaves',              
   author_email = 'cameron.h@rgreaves.me.uk', 
   url = 'https://github.com/lrcfmd/ElM2D/',   
-  download_url = 'https://github.com/lrcfmd/ElM2D/archive/0.1.3.tar.gz',    
+  download_url = 'https://github.com/lrcfmd/ElM2D/archive/0.1.4.tar.gz',    
   keywords = ['ChemInformatics', 'Materials Science', 'Machine Learning', 'Materials Representation'],   
   install_requires=[            
           'cython',
@@ -28,7 +28,6 @@ setup(
     'Programming Language :: Python :: 3.4',
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
-    'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.7'
   ],
 )

@@ -1,9 +1,10 @@
 # ElM2D
 A high performance mapping class to construct ElM2D plots from larger datasets of ionic compositions.
 
-Recommended installation through `pip` 
+Recommended installation through `pip` and python 3.7.
 
 ```
+pip install python==3.7
 pip install ElM2D
 ```
 
@@ -11,7 +12,7 @@ pip install ElM2D
 
 ### Sorting
 
-To sort a list of compositions into an ordering of chemical similarity call
+To sort a list of compositions into an ordering of chemical similarity
 
 ```python
 from ElM2D import ElM2D
@@ -39,6 +40,8 @@ mapper.fit_transform(df["formula"])
 mapper.plot()  # Returns a figure for viewing in notebooks
 ...
 mapper.plot("ElM2D_Plot_UMAP.html")  # Returns a figure and saves as ElM2D_Plot_UMAP.html
+...
+mapper.plot(fp="ElM2D_Plot_UMAP.html", color=df["target"])  # Returns and saves figure, with additional colouring based on a property from an associated pandas dataframe
 ```
 
 

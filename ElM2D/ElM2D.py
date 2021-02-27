@@ -105,7 +105,7 @@ class ElM2D():
             csv_reader = csv.reader(csvfile, delimiter="'")
             self.dist_vec = np.array(next(csv_reader), dtype=float)
 
-    def plot(self, color=None, fp=None):
+    def plot(self, fp=None, color=None):
         if color is None:
             df = pd.DataFrame({"x": self.embedding[:, 0], "y": self.embedding[:, 1], "formula": self.formula_list})
             fig = px.scatter(df, x="x", y="y", hover_name="formula")
