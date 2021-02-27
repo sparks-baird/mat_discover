@@ -11,6 +11,8 @@ setup(
   download_url = 'https://github.com/lrcfmd/ElM2D/archive/0.1.2.tar.gz',    
   keywords = ['ChemInformatics', 'Materials Science', 'Machine Learning', 'Materials Representation'],   
   install_requires=[            
+          'cython',
+          'numba',
           'numpy',
           'pandas',
           'scipy',
