@@ -2,21 +2,20 @@ from distutils.core import setup
 setup(
   name = 'ElM2D',        
   packages = ['ElM2D'],  
-  version = '0.1.1',      
+  version = '0.1.3',      
   license='GPL3',       
   description = 'A mapping class to embed large datasets of ionic compositions with respect to the ElMD metric.',  
   author = 'Cameron Hagreaves',              
   author_email = 'cameron.h@rgreaves.me.uk', 
   url = 'https://github.com/lrcfmd/ElM2D/',   
-  download_url = 'https://github.com/lrcfmd/ElM2D/archive/0.1.0.tar.gz',    
+  download_url = 'https://github.com/lrcfmd/ElM2D/archive/0.1.2.tar.gz',    
   keywords = ['ChemInformatics', 'Materials Science', 'Machine Learning', 'Materials Representation'],   
   install_requires=[            
           'numpy',
           'pandas',
           'scipy',
           'plotly',
-          'umap-learn',
-          'numba'
+          'umap-learn'
       ],
   classifiers=[
     'Development Status :: 5 - Production/Stable',  
