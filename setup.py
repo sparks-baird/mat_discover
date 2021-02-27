@@ -2,9 +2,9 @@ from distutils.core import setup
 setup(
   name = 'ElM2D',        
   packages = ['ElM2D'],  
-  version = '0.1.0',      
+  version = '0.1.1',      
   license='GPL3',       
-  description = 'A mapping class to perform the ElMD metric on datasets on ionic compositions',  
+  description = 'A mapping class to embed large datasets of ionic compositions with respect to the ElMD metric.',  
   author = 'Cameron Hagreaves',              
   author_email = 'cameron.h@rgreaves.me.uk', 
   url = 'https://github.com/lrcfmd/ElM2D/',   

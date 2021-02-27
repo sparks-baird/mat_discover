@@ -1,2 +1,44 @@
 # ElM2D
-A mapping class to construct ElM2D plots from lists of compositions in a high performance manner
+A high performance mapping class to construct ElM2D plots from larger datasets of ionic compositions.
+
+Recommended installation through `pip` 
+
+```
+pip install ElM2D
+```
+
+## Usage 
+
+### Sorting
+
+To sort a list of compositions into an ordering of chemical similarity call
+
+```python
+from ElM2D import ElM2D
+...
+
+comps = df["formula"].to_numpy()
+sorted_indices = ElM2D().sort_compositions(comps)
+sorted_comps = comps[sorted_indices]
+```
+
+### Embedding
+
+Embeddings can be constructed through either the UMAP or PCA methods of dimensionality reduction. The embedded points are accessible via the `embedding` property. Higher dimensional embeddings can be created with the `n_components` parameter. 
+
+```python
+mapper = ElMD()
+embedding = mapper.fit_transform(df["formula"])
+embedding = mapper.fit_transform(df["formula"], how="PCA", n_components=7)
+```
+
+These embeddings may be visualized within a jupyter notebook, or exported to HTML to view in the web browser.
+
+```python
+mapper.fit_transform(df["formula"])
+mapper.plot()  # Returns a figure for viewing in notebooks
+...
+mapper.plot("ElM2D_Plot_UMAP.html")  # Returns a figure and saves as ElM2D_Plot_UMAP.html
+```
+
+

@@ -52,8 +52,6 @@ from ElMD import ElMD, EMD
 import plotly.express as px
 import plotly.io as pio
 
-def main():
-    df = 
 
 class ElM2D():
     '''
