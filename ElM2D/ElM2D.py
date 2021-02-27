@@ -47,11 +47,15 @@ from scipy.spatial.distance import squareform
 from numba import njit 
 
 import umap
-from ElMD import ElMD, EMD
+from ElM2D.ElMD import ElMD, EMD
 
 import plotly.express as px
 import plotly.io as pio
 
+
+if __name__ == "__main__":
+    mapper = ElM2D()
+    print()
 
 class ElM2D():
     '''
@@ -63,7 +67,6 @@ class ElM2D():
                        n_components=2,
                        verbose=False):
 
-        self.mode = mode
         self.verbose = verbose
 
         self.n_proc = cpu_count()
@@ -105,11 +108,11 @@ class ElM2D():
     def plot(self, color=None, fp=None):
         if color is None:
             df = pd.DataFrame({"x": self.embedding[:, 0], "y": self.embedding[:, 1], "formula": self.formula_list})
-            fig = px.scatter(df, "x"="x", "y"="y", hover_name="formula")
+            fig = px.scatter(df, x="x", y="y", hover_name="formula")
 
         else:
-            df = pd.DataFrame({"x": self.embedding[:, 0], "y": self.embedding[:, 1], "formula": self.formula_list, "color"=color})
-            fig = px.scatter(df, "x"="x", "y"="y", hover_name="formula", color="color")
+            df = pd.DataFrame({"x": self.embedding[:, 0], "y": self.embedding[:, 1], "formula": self.formula_list, "color":color})
+            fig = px.scatter(df, x="x", y="y", hover_name="formula", color="color")
 
         if fp is not None:
             pio.write_html(fig, fp)
@@ -135,7 +138,8 @@ class ElM2D():
         
         elif n < 1000:
             # Do this on a single core for smaller datasets
-            self.dist_vec = 
+            distances = []
+
             for i in range(n - 1):
                 x = ElMD(X[i])
                 for j in range(i + 1, n):
@@ -155,7 +159,7 @@ class ElM2D():
         return embedding
 
     def transform(self, how="UMAP", n_components=2):
-        if self.dm == None:
+        if self.dm is None:
             print("No distance matrix computed, run fit() first")
             return 
 
@@ -262,9 +266,7 @@ class ElM2D():
 
     def __repr__(self):
         if self.dm:
-            return f"ElM2D(size={len(self.formula_list)}, 
-                           chemical_diversity={np.mean(self.dm)} +/- {np.std(self.dm)},
-                           maximal_distance={np.max(self.dm)})"
+            return f"ElM2D(size={len(self.formula_list)},  chemical_diversity={np.mean(self.dm)} +/- {np.std(self.dm)}, maximal_distance={np.max(self.dm)})"
         else:
             return f"ElM2D()"
 
