@@ -8,7 +8,7 @@ setup(
   author = 'Cameron Hagreaves',              
   author_email = 'cameron.h@rgreaves.me.uk', 
   url = 'https://github.com/lrcfmd/ElM2D/',   
-  download_url = 'https://github.com/lrcfmd/ElM2D/archive/v0.1.0.tar.gz',    
+  download_url = 'https://github.com/lrcfmd/ElM2D/archive/0.1.0.tar.gz',    
   keywords = ['ChemInformatics', 'Materials Science', 'Machine Learning', 'Materials Representation'],   
   install_requires=[            
           'numpy',
