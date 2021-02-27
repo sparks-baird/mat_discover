@@ -1,5 +1,5 @@
 # ElM2D
-A high performance mapping class to construct ElM2D plots from larger datasets of ionic compositions.
+A high performance mapping class to construct ElM2D plots from large datasets of ionic compositions.
 
 Recommended installation through `pip` and python 3.7.
 
