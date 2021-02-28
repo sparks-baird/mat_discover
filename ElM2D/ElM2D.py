@@ -182,7 +182,7 @@ class ElM2D():
         https://github.com/stober/mds/blob/master/src/mds.py
         """
 
-        if self.dm == None:
+        if self.dm is None:
             print("No distance matrix computed, call fit_transform with a list of compositions, or load a saved matrix with load_dm()")
             return 
 
