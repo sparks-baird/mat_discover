@@ -35,7 +35,7 @@ sorted_comps = comps[sorted_indices]
 Embeddings can be constructed through either the UMAP or PCA methods of dimensionality reduction. The embedded points are accessible via the `embedding` property. Higher dimensional embeddings can be created with the `n_components` parameter. 
 
 ```python
-mapper = ElMD()
+mapper = ElM2D()
 embedding = mapper.fit_transform(df["formula"])
 embedding = mapper.fit_transform(df["formula"], how="PCA", n_components=7)
 ```
