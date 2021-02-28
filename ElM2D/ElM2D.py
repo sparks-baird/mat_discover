@@ -52,6 +52,8 @@ from ElM2D.ElMD import ElMD, EMD
 import plotly.express as px
 import plotly.io as pio
 
+from tqdm import tqdm
+from tqdm.contrib.concurrent import process_map  
 
 if __name__ == "__main__":
     mapper = ElM2D()
@@ -69,7 +71,7 @@ class ElM2D():
 
         self.verbose = verbose
 
-        self.n_proc = cpu_count()
+        self.n_proc = cpu_count() - 1
 
         self.formula_list = None # Input formulae
         self.input_mat = None    # Pettifor vector representation of formula
@@ -236,18 +238,29 @@ class ElM2D():
             self.input_mat[i] = ElMD(formula).vector_form
 
         # Create input pairings
-        for i in range(len(formula_list) - 1):
-            sublist = []
-            for j in range(i + 1, len(formula_list)):
-                sublist.append((i, j))
-
-            pool_list.append(sublist)
+        if self.verbose: 
+            print("Constructing joint compositional pairings")
+            for i in tqdm(range(len(formula_list) - 1)):
+                sublist = [(i, j) for j in range(i + 1, len(formula_list))]
+                pool_list.append(sublist)
+        else:
+            for i in range(len(formula_list) - 1):
+                sublist = [(i, j) for j in range(i + 1, len(formula_list))]
+                pool_list.append(sublist)
 
         # Distribute amongst processes
+        if self.verbose: print("Creating Process Pool")
         process_pool = Pool(n_proc)
-        scores = process_pool.map(self._pool_ElMD, pool_list)
+        if self.verbose:
+            print("Scattering scores and computing values")
+            scores = process_map(self._pool_ElMD, pool_list, chunksize=1)
+        else:
+            scores = process_pool.map(self._pool_ElMD, pool_list)
+        
+        if self.verbose: print("Scores computed closing processes")
         process_pool.close()
 
+        if self.verbose: print("Flattening sublists")
         # Flattens list of lists to single list
         distances = [dist for sublist in scores for dist in sublist]
        
