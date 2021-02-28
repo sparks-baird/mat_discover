@@ -67,7 +67,7 @@ class ElM2D():
     '''
     def __init__(self, n_proc=None,
                        n_components=2,
-                       verbose=False):
+                       verbose=True):
 
         self.verbose = verbose
 
