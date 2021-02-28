@@ -25,7 +25,7 @@ To sort a list of compositions into an ordering of chemical similarity
 from ElM2D import ElM2D
 ...
 
-comps = df["formula"].to_numpy()
+comps = df["composition"].to_numpy()
 sorted_indices = ElM2D().sort_compositions(comps)
 sorted_comps = comps[sorted_indices]
 ```

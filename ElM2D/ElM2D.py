@@ -71,7 +71,7 @@ class ElM2D():
 
         self.verbose = verbose
 
-        self.n_proc = cpu_count() - 1
+        self.n_proc = cpu_count()
 
         self.formula_list = None # Input formulae
         self.input_mat = None    # Pettifor vector representation of formula
