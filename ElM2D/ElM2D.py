@@ -170,7 +170,7 @@ class ElM2D():
             self.embedding = self.embedder.fit_transform(self.dm)
 
         elif how == "PCA":
-            self.embedding = self.PCA(n_comp=n_components)
+            self.embedding = self.PCA(n_components=n_components)
 
         return self.embedding
 
