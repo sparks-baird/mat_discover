@@ -65,15 +65,19 @@ class ElM2D():
     distance matrix wrt EMD and a two dimensional embedding using either PCA or 
     UMAP
     '''
-    def __init__(self, n_proc=None,
+    def __init__(self, formula_list=None,
+                       n_proc=None,
                        n_components=2,
                        verbose=True):
 
         self.verbose = verbose
 
-        self.n_proc = cpu_count()
+        if n_proc is None:
+            self.n_proc = cpu_count()
+        else: 
+            self.n_proc = n_proc
 
-        self.formula_list = None # Input formulae
+        self.formula_list = formula_list # Input formulae
         self.input_mat = None    # Pettifor vector representation of formula
         self.embedder = None     # For accessing UMAP object
         self.embedding = None    # Stores the last embedded coordinates
