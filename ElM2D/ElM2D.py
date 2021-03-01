@@ -124,13 +124,12 @@ class ElM2D():
     def fit(self, X, metric=None):
         '''
         Take an input vector, either of a precomputed distance matrix, or
-        an iterable of strings of composition formula, fit a UMAP approximated
-        manifold to this and return the embedded points in the lower dimension.
-        This can be multiprocessed if we do not wish to fit future compounds to
-        the manifold
+        an iterable of strings of composition formula, construct an ElMD distance
+        matrix and store to self.dm. Can pass a precomputed matrix with 
+        metric="precomputed"
 
         Input
-        X - A list of compound formula strings
+        X - A list of compound formula strings, or a precomputed distance matrix
         '''
         self.formula_list = X
         n = len(X)
@@ -156,11 +155,24 @@ class ElM2D():
             self.dm = squareform(dist_vec)
 
     def fit_transform(self, X, how="UMAP", n_components=2, metric=None):
+        """
+        Successively call fit and transform
+
+        Parameters:
+        X - List of compositions to embed 
+        how - "UMAP" or "PCA", the embedding technique to use
+        n_components - The number of dimensions to embed to
+        metric - "precomputed" to pass precomputed distance matrices
+        """
         self.fit(X, metric=metric)
         embedding = self.transform(how=how, n_components=n_components)
         return embedding
 
     def transform(self, how="UMAP", n_components=2):
+        """
+        Call the selected embedding method (UMAP or PCA) and embed to 
+        n_components dimensions.
+        """
         if self.dm is None:
             print("No distance matrix computed, run fit() first")
             return 
@@ -210,7 +222,7 @@ class ElM2D():
         Returns: The indices of the input list as they fall in sorted order compositionally
 
         Usage:
-        comps = df["formula"].to_numpy(dtype="str")
+        comps = df["formula"].to_numpy(dtype=str)
         sorted_indices = ChemMapper.sort_compositions(comps)
         sorted_comps = comps[sorted_indices]
         """

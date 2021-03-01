@@ -10,12 +10,30 @@ pip install ElM2D
 
 ## Examples
 
-125 thousand compositions from the inorganic crystal structure database, plotted with [datashader](https://github.com/holoviz/datashader):
+125,000 compositions from the inorganic crystal structure database, plotted with [datashader](https://github.com/holoviz/datashader):
 ![ICSD Map](https://i.imgur.com/ZPqHxsz.png)
 
 For more interactive examples please see www.elmd.io/plots
 
 ## Usage 
+
+### Computing Distance Matrices
+
+The computed distance matrix is accessible through the `dm` attribute
+
+```python
+
+mapper = ElM2D()
+mapper.fit(df["composition"])
+print(mapper.dm)
+mapper.save_dm("ComputedMatrix.pk")
+
+...
+
+mapper.load_dm("ComputedMatrix.pk")
+```
+
+This distance matrix can be used as a lookup table for distances between compositions given their numeric indices (`distance = mapper.dm[i][j]`) or used as a kernel matrix for embedding, regression, and classification tasks directly.
 
 ### Sorting
 
