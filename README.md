@@ -57,7 +57,7 @@ embedding = mapper.fit_transform(df["formula"])
 embedding = mapper.fit_transform(df["formula"], how="PCA", n_components=7)
 ```
 
-Embeddings may also be directed towards a particular chemical property in a pandas DataFrame, to help bring known patterns into focus.
+Embeddings may also be directed towards a particular chemical property in a pandas DataFrame, to bring known patterns into focus.
 ```python
 embedding = mapper.fit_transform(df["formula"], df["property_of_interest"])
 ```

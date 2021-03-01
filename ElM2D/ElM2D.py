@@ -208,6 +208,7 @@ class ElM2D():
                 self.embedder = umap.UMAP(n_components=n_components, verbose=self.verbose, metric="precomputed")
                 self.embedding = self.embedder.fit_transform(self.dm)
             else:
+                y = y.to_numpy(dtype=float)
                 if self.verbose: print(f"Constructing UMAP Embedding to {n_components} dimensions, fitting to {y.name}")
                 self.embedder = umap.UMAP(n_components=n_components, verbose=self.verbose, metric="precomputed", target_metric="l2")
                 self.embedding = self.embedder.fit_transform(self.dm, y)
