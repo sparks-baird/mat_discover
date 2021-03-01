@@ -91,10 +91,9 @@ class ElM2D():
         f_handle.close()
 
         # Save the distance matrix as a csv
-        with open(filepath + ".csv", 'w', newline='') as csvfile:
-            csv_writer = csv.writer(csvfile, delimiter="'")
-            csv_writer.writerow(self.dist_vec)
+        np.savetxt(filepath + ".csv", self.dm, delimiter=",")
 
+        
     def load(self, filepath):
         f_handle = open(filepath + ".pk", 'rb')
         load_dict = pk.load(f_handle)
@@ -106,11 +105,8 @@ class ElM2D():
             else:
                 self.__dict__[k] = v
 
-        # Save the distance matrix as a csv
-        with open(filepath + ".csv") as csvfile:
-            csv_reader = csv.reader(csvfile, delimiter="'")
-            self.dist_vec = np.array(next(csv_reader), dtype=float)
-
+        self.dm = np.loadtxt(filepath + ".csv", delimiter=",")
+        
     def plot(self, fp=None, color=None, embedding=None):
         if self.embedding is None:
             print("No embedding in memory, call transform() first.")    
@@ -162,13 +158,16 @@ class ElM2D():
 
         if metric == "precomputed":
             self.dm = X
+
+        elif metric is None:
+            metric = "mod_petti"
         
         elif n < 1000:
             # Do this on a single core for smaller datasets
             distances = []
 
             for i in range(n - 1):
-                x = ElMD(X[i])
+                x = ElMD(X[i], metric=metric)
                 for j in range(i + 1, n):
                     distances.append(x.elmd(X[j]))
             
@@ -177,10 +176,10 @@ class ElM2D():
 
         else:
             if self.verbose: print("Constructing distances")
-            dist_vec = self._process_list(X, self.n_proc)
+            dist_vec = self._process_list(X, metric=metric, self.n_proc)
             self.dm = squareform(dist_vec)
 
-    def fit_transform(self, X, how="UMAP", n_components=2, metric=None):
+    def fit_transform(self, X, y=None, how="UMAP", n_components=2, metric=None):
         """
         Successively call fit and transform
 
@@ -191,10 +190,10 @@ class ElM2D():
         metric - "precomputed" to pass precomputed distance matrices
         """
         self.fit(X, metric=metric)
-        embedding = self.transform(how=how, n_components=n_components)
+        embedding = self.transform(how=how, n_components=n_components, y=y)
         return embedding
 
-    def transform(self, how="UMAP", n_components=2):
+    def transform(self, how="UMAP", n_components=2, y=None):
         """
         Call the selected embedding method (UMAP or PCA) and embed to 
         n_components dimensions.
@@ -204,9 +203,14 @@ class ElM2D():
             return 
 
         if how == "UMAP":
-            if self.verbose: print(f"Constructing UMAP Embedding to {n_components} dimensions")
-            self.embedder = umap.UMAP(n_components=n_components, verbose=self.verbose, metric="precomputed")
-            self.embedding = self.embedder.fit_transform(self.dm)
+            if y is None:
+                if self.verbose: print(f"Constructing UMAP Embedding to {n_components} dimensions")
+                self.embedder = umap.UMAP(n_components=n_components, verbose=self.verbose, metric="precomputed")
+                self.embedding = self.embedder.fit_transform(self.dm)
+            else:
+                if self.verbose: print(f"Constructing UMAP Embedding to {n_components} dimensions, fitting to {y.name}")
+                self.embedder = umap.UMAP(n_components=n_components, verbose=self.verbose, metric="precomputed", target_metric="l2")
+                self.embedding = self.embedder.fit_transform(self.dm, y)
 
         elif how == "PCA":
             if self.verbose: print(f"Constructing PCA Embedding to {n_components} dimensions")
@@ -268,7 +272,7 @@ class ElM2D():
         return sorted_indices
 
 
-    def _process_list(self, formula_list, n_proc):
+    def _process_list(self, formula_list, metric="mod_petti", n_proc):
         '''
         Given an iterable list of formulas in composition form
         use multiple processes to convert these to pettifor ratio
@@ -280,7 +284,7 @@ class ElM2D():
         self.input_mat = np.ndarray(shape=(len(formula_list), 103), dtype=np.float64)
 
         for i, formula in enumerate(formula_list):
-            self.input_mat[i] = ElMD(formula).vector_form
+            self.input_mat[i] = ElMD(formula, metric=metric).vector_form
 
         # Create input pairings
         if self.verbose: 

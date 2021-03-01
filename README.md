@@ -55,6 +55,13 @@ Embeddings can be constructed through either the [UMAP](https://github.com/lmcin
 mapper = ElM2D()
 embedding = mapper.fit_transform(df["formula"])
 embedding = mapper.fit_transform(df["formula"], how="PCA", n_components=7)
+
+# Embeddings may also be directed towards a particular chemical property in a 
+# pandas DataFrame to help uncover patterns
+embedding = mapper.fit_transform(df["formula"], df["property_of_interest"])
+
+# Different atomic representation vectors may also be chosen with the metric attribute
+embedding = mapper.fit_transform(df["formula"], metric="atomic")
 ```
 
 These embeddings may be visualized within a jupyter notebook, or exported to HTML to view full page in the web browser.
