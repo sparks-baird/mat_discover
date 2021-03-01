@@ -176,7 +176,7 @@ class ElM2D():
 
         else:
             if self.verbose: print("Constructing distances")
-            dist_vec = self._process_list(X, metric=metric, self.n_proc)
+            dist_vec = self._process_list(X, metric=metric, n_proc=self.n_proc)
             self.dm = squareform(dist_vec)
 
     def fit_transform(self, X, y=None, how="UMAP", n_components=2, metric=None):
@@ -273,7 +273,7 @@ class ElM2D():
         return sorted_indices
 
 
-    def _process_list(self, formula_list, metric="mod_petti", n_proc):
+    def _process_list(self, formula_list, n_proc, metric="mod_petti"):
         '''
         Given an iterable list of formulas in composition form
         use multiple processes to convert these to pettifor ratio
