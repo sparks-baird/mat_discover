@@ -49,7 +49,7 @@ sorted_comps = comps[sorted_indices]
 
 ### Embedding
 
-Embeddings can be constructed through either the UMAP or PCA methods of dimensionality reduction. The most recently embedded points are accessible via the `embedding` property. Higher dimensional embeddings can be created with the `n_components` parameter. 
+Embeddings can be constructed through either the [UMAP](https://github.com/lmcinnes/umap) or PCA methods of dimensionality reduction. The most recently embedded points are accessible via the `embedding` property. Higher dimensional embeddings can be created with the `n_components` parameter. 
 
 ```python
 mapper = ElM2D()
