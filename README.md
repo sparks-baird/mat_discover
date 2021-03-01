@@ -1,5 +1,5 @@
 # ElM2D
-A high performance mapping class to construct [ElMD distance matrices](www.github.com/lrcfmd/ElMD) from large datasets of ionic compositions. This includes helper methods to directly embed these datasets as maps of chemical space, as well as sorting/saving. 
+A high performance mapping class to construct [ElMD distance matrices](www.github.com/lrcfmd/ElMD) from large datasets of ionic compositions. This includes helper methods to directly embed these datasets as maps of chemical space, as well as sorting lists of compositions, and exporting kernel matrices. 
 
 Recommended installation through `pip` and python 3.7.
 
