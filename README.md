@@ -19,7 +19,7 @@ For more interactive examples please see www.elmd.io/plots
 
 ### Computing Distance Matrices
 
-The computed distance matrix is accessible through the `dm` attribute
+The computed distance matrix is accessible through the `dm` attribute and can be saved and loaded as a python binary pickle object.
 
 ```python
 
