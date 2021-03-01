@@ -218,7 +218,7 @@ class ElM2D():
             self.fit(X)
 
         dists_1D = self.PCA(n_components=1)
-        sorted_indices = np.argsort(dists_1D)
+        sorted_indices = np.argsort(dists_1D.flatten())
 
         return sorted_indices
 
