@@ -159,9 +159,6 @@ class ElM2D():
         if metric == "precomputed":
             self.dm = X
 
-        elif metric is None:
-            metric = "mod_petti"
-        
         elif n < 1000:
             # Do this on a single core for smaller datasets
             distances = []
@@ -179,7 +176,7 @@ class ElM2D():
             dist_vec = self._process_list(X, metric=metric, n_proc=self.n_proc)
             self.dm = squareform(dist_vec)
 
-    def fit_transform(self, X, y=None, how="UMAP", n_components=2, metric=None):
+    def fit_transform(self, X, y=None, how="UMAP", n_components=2, metric="mod_petti"):
         """
         Successively call fit and transform
 
