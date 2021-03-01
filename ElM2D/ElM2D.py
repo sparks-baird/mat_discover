@@ -107,14 +107,36 @@ class ElM2D():
             csv_reader = csv.reader(csvfile, delimiter="'")
             self.dist_vec = np.array(next(csv_reader), dtype=float)
 
-    def plot(self, fp=None, color=None):
-        if color is None:
-            df = pd.DataFrame({"x": self.embedding[:, 0], "y": self.embedding[:, 1], "formula": self.formula_list})
-            fig = px.scatter(df, x="x", y="y", hover_name="formula")
+    def plot(self, fp=None, color=None, embedding=None):
+        if self.embedding is None:
+            print("No embedding in memory, call transform() first.")    
+            return 
 
-        else:
-            df = pd.DataFrame({"x": self.embedding[:, 0], "y": self.embedding[:, 1], "formula": self.formula_list, "color":color})
-            fig = px.scatter(df, x="x", y="y", hover_name="formula", color="color")
+        if embedding is None:
+            embedding = self.embedding
+
+        if embedding.shape[1] == 2:
+            if color is None:
+                df = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1], "formula": self.formula_list})
+                fig = px.scatter(df, x="x", y="y", hover_name="formula", hover_data={"x":False, "y":False})
+
+            else:
+                df = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1], "formula": self.formula_list, color.name: color.to_numpy()})
+                fig = px.scatter(df, x="x", y="y",color=color.name, hover_data={"formula": True, color.name: True, "x":False, "y":False})
+
+        elif embedding.shape[1] == 3:
+            if color is None:
+                df = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1], "z": embedding[:, 2], "formula": self.formula_list})
+                fig = px.scatter_3d(df, x="x", y="y", z="z", hover_name="formula", hover_data={"x":False, "y":False, "z":False})
+
+            else:
+                df = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1], "z": embedding[:, 2], "formula": self.formula_list, color.name: color.to_numpy()})
+                fig = px.scatter_3d(df, x="x", y="y", z="z", color=color.name, hover_data={"formula": True, color.name: True, "x":False, "y":False, "z":False})
+        
+        elif embedding.shape[1] > 3:
+            print("Too many dimensions to plot directly, using first three components")
+            fig = self.plot(fp=fp, color=color, embedding=embedding[:, :3])
+            return fig
 
         if fp is not None:
             pio.write_html(fig, fp)
@@ -178,11 +200,14 @@ class ElM2D():
             return 
 
         if how == "UMAP":
-            self.embedder = umap.UMAP(n_components=n_components, verbose=self.verbose)
+            if self.verbose: print(f"Constructing UMAP Embedding to {n_components} dimensions")
+            self.embedder = umap.UMAP(n_components=n_components, verbose=self.verbose, metric="precomputed")
             self.embedding = self.embedder.fit_transform(self.dm)
 
         elif how == "PCA":
+            if self.verbose: print(f"Constructing PCA Embedding to {n_components} dimensions")
             self.embedding = self.PCA(n_components=n_components)
+            if self.verbose: print(f"Finished Embedding")
 
         return self.embedding
 
@@ -199,6 +224,8 @@ class ElM2D():
             return 
 
         (n,n) = self.dm.shape
+
+        if self.verbose: print(f"Constructing {n_components}x{n_components} Gram matrix")
         E = (-0.5 * self.dm**2)
 
         # Use this matrix to get column and row means
@@ -208,10 +235,12 @@ class ElM2D():
         # From Principles of Multivariate Analysis: A User's Perspective (page 107).
         F = np.array(E - np.transpose(Er) - Es + np.mean(E))
 
+        if self.verbose: print(f"Computing Eigen Decomposition")
         [U, S, V] = np.linalg.svd(F)
 
         Y = U * np.sqrt(S)
 
+        if self.verbose: print(f"PCA Projected Points Computed")
         self.mds_points = Y
 
         return Y[:, :n_components]
@@ -264,12 +293,12 @@ class ElM2D():
         if self.verbose: print("Creating Process Pool")
         process_pool = Pool(n_proc)
         if self.verbose:
-            print("Scattering scores and computing values")
+            print("Scattering compositions between processes and computing distances")
             scores = process_map(self._pool_ElMD, pool_list, chunksize=1)
         else:
             scores = process_pool.map(self._pool_ElMD, pool_list)
         
-        if self.verbose: print("Scores computed closing processes")
+        if self.verbose: print("Distances computed closing processes")
         process_pool.close()
 
         if self.verbose: print("Flattening sublists")
