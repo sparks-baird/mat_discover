@@ -57,7 +57,7 @@ embedding = mapper.fit_transform(df["formula"])
 embedding = mapper.fit_transform(df["formula"], how="PCA", n_components=7)
 ```
 
-These embeddings may be visualized within a jupyter notebook, or exported to HTML to view in the web browser.
+These embeddings may be visualized within a jupyter notebook, or exported to HTML to view full page in the web browser.
 
 ```python
 mapper.fit_transform(df["formula"])
