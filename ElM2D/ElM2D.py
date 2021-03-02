@@ -231,7 +231,7 @@ class ElM2D():
 
         (n,n) = self.dm.shape
 
-        if self.verbose: print(f"Constructing {n_components}x{n_components} Gram matrix")
+        if self.verbose: print(f"Constructing {n}x{n_components} Gram matrix")
         E = (-0.5 * self.dm**2)
 
         # Use this matrix to get column and row means
