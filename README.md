@@ -53,25 +53,25 @@ Embeddings can be constructed through either the [UMAP](https://github.com/lmcin
 
 ```python
 mapper = ElM2D()
-embedding = mapper.fit_transform(df["formula"])
-embedding = mapper.fit_transform(df["formula"], how="PCA", n_components=7)
+embedding = mapper.fit_transform(df["composition"])
+embedding = mapper.fit_transform(df["composition"], how="PCA", n_components=7)
 ```
 
 Embeddings may also be directed towards a particular chemical property in a pandas DataFrame, to bring known patterns into focus.
 ```python
-embedding = mapper.fit_transform(df["formula"], df["property_of_interest"])
+embedding = mapper.fit_transform(df["composition"], df["property_of_interest"])
 ```
 
 By default, the [modified Pettifor scale](https://iopscience.iop.org/article/10.1088/1367-2630/18/9/093011/meta) is used as the method of atomic similarity, "atomic", "petti", "mod_petti", and "mendeleev" can be selected through the `metric` attribute. 
 
 ```python
-embedding = mapper.fit_transform(df["formula"], metric="atomic")
+embedding = mapper.fit_transform(df["composition"], metric="atomic")
 ```
 
 These embeddings may be visualized within a jupyter notebook, or exported to HTML to view full page in the web browser.
 
 ```python
-mapper.fit_transform(df["formula"])
+mapper.fit_transform(df["composition"])
 
 # Returns a figure for viewing in notebooks
 mapper.plot() 
