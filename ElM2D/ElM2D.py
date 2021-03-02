@@ -143,7 +143,7 @@ class ElM2D():
 
         return fig
 
-    def fit(self, X, metric=None):
+    def fit(self, X, metric="mod_petti"):
         '''
         Take an input vector, either of a precomputed distance matrix, or
         an iterable of strings of composition formula, construct an ElMD distance
