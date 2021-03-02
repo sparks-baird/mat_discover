@@ -83,6 +83,6 @@ mapper.plot("ElM2D_Plot_UMAP.html")
 mapper.plot(fp="ElM2D_Plot_UMAP.html", color=df["chemical_property"]) 
 
 # Plotting also works in 3D
-mapper.fit_transform(df["formula"], n_components=3)
+mapper.fit_transform(df["composition"], n_components=3)
 mapper.plot(color=df["chemical_property"])
 ```
