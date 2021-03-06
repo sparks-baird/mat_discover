@@ -325,7 +325,7 @@ class ElM2D():
         return distances
 
     def __repr__(self):
-        if self.dm:
+        if self.dm is not None:
             return f"ElM2D(size={len(self.formula_list)},  chemical_diversity={np.mean(self.dm)} +/- {np.std(self.dm)}, maximal_distance={np.max(self.dm)})"
         else:
             return f"ElM2D()"
