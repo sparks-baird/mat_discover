@@ -119,8 +119,11 @@ mapper.formula_list = df["formula"]
 
 ### Cross Validation
 
+Perform a K-Folds splitting of the dataset into subsets, to build up training
+and testing datasets.
+
 ```python
-cvs = mapper.cross_validation()
+cvs = mapper.cross_validate()
 for i, (X_train, X_test) in enumerate(cvs):
     sub_mapper = ElM2D()
     
@@ -132,7 +135,7 @@ for i, (X_train, X_test) in enumerate(cvs):
 ...
 from sklearn.metrics import mean_average_error as mae
 
-cvs = mapper.cross_validation(y=df["target"])
+cvs = mapper.cross_validate(y=df["target"])
 
 for X_train, X_test, y_train, y_test in cvs:
     clf.fit(X_train, y_train)

@@ -318,7 +318,7 @@ class ElM2D():
         if y is None:
             return X_ret
 
-        y = y[inds]
+        y = y.to_numpy()[inds]
         y_splits = np.array_split(y, k)
         y_ret = []
 
