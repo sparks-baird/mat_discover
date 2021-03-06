@@ -114,7 +114,34 @@ mapper.export_dm("large_df_emb_UMAP.csv")
 mapper = ElM2D()
 mapper.import_dm("large_df_dm.csv")
 mapper.import_embedding("large_df_emb_UMAP.csv")
+mapper.formula_list = df["formula"]
 ```
+
+### Cross Validation
+
+```python
+cvs = mapper.cross_validation()
+for i, (X_train, X_test) in enumerate(cvs):
+    sub_mapper = ElM2D()
+    
+    sub_mapper.fit(X_train)
+    sub_mapper.save(f"train_elm2d_{i}.pk")
+    
+    sub_mapper.fit(X_test)
+    sub_mapper.save(f"test_elm2d_{i}.pk")
+...
+from sklearn.metrics import mean_average_error as mae
+
+cvs = mapper.cross_validation(y=df["target"])
+
+for X_train, X_test, y_train, y_test in cvs:
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+    errors.append(mae(y_pred, y_test))
+
+print(np.mean(errors))
+```
+
 
 ## Citing
 
