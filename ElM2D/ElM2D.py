@@ -251,7 +251,7 @@ class ElM2D():
 
         return Y[:, :n_components]
 
-    def sort_compositions(self, X):
+    def sort_compositions(self, X=None):
         """
         Parameters: X, an iterable list of compositions in string format
         Returns: The indices of the input list as they fall in sorted order compositionally
@@ -261,7 +261,7 @@ class ElM2D():
         sorted_indices = ChemMapper.sort_compositions(comps)
         sorted_comps = comps[sorted_indices]
         """
-        if self.dm == None:
+        if self.dm is None:
             self.fit(X)
 
         dists_1D = self.PCA(n_components=1)
