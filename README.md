@@ -31,9 +31,7 @@ mapper.fit(df["formula"])
 
 print(mapper.dm)
 
-mapper.export_dm("ComputedMatrix.pk")
-...
-mapper.import_dm("ComputedMatrix.pk")
+mapper.export_dm("ComputedMatrix.csv")
 ```
 
 This distance matrix can be used as a lookup table for distances between compositions given their numeric indices (`distance = mapper.dm[i][j]`) or used as a kernel matrix for embedding, regression, and classification tasks directly.
@@ -55,6 +53,11 @@ Embeddings can be constructed through either the [UMAP](https://github.com/lmcin
 
 ```python
 mapper = ElM2D()
+mapper.fit(df["formula"])
+embedding = mapper.transform()
+...
+
+# For new data
 embedding = mapper.fit_transform(df["formula"])
 embedding = mapper.fit_transform(df["formula"], how="PCA", n_components=7)
 ```
