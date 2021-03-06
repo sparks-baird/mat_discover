@@ -85,14 +85,10 @@ class ElM2D():
 
     def save(self, filepath):
         # Save all variables except for the distance matrix
-        save_dict = {k: v for k, v in self.__dict__.items() if k != 'dist_vec' }
+        save_dict = {k: v for k, v in self.__dict__.items()}
         f_handle = open(filepath + ".pk", 'wb')
         pk.dump(save_dict, f_handle)
         f_handle.close()
-
-        # Save the distance matrix as a csv
-        np.savetxt(filepath + ".csv", self.dm, delimiter=",")
-
         
     def load(self, filepath):
         f_handle = open(filepath + ".pk", 'rb')
@@ -100,13 +96,8 @@ class ElM2D():
         f_handle.close()
 
         for k, v in load_dict.items():
-            if k == 'dist_vec':
-                continue
-            else:
-                self.__dict__[k] = v
+            self.__dict__[k] = v
 
-        self.dm = np.loadtxt(filepath + ".csv", delimiter=",")
-        
     def plot(self, fp=None, color=None, embedding=None):
         if self.embedding is None:
             print("No embedding in memory, call transform() first.")    
@@ -251,21 +242,24 @@ class ElM2D():
 
         return Y[:, :n_components]
 
-    def sort_compositions(self, X=None):
+    def sort(self):
         """
-        Parameters: X, an iterable list of compositions in string format
-        Returns: The indices of the input list as they fall in sorted order compositionally
+        Sorts compositions based on their ElMD similarity.
 
         Usage:
-        comps = df["formula"].to_numpy(dtype=str)
-        sorted_indices = ChemMapper.sort_compositions(comps)
-        sorted_comps = comps[sorted_indices]
+        mapper = ElM2D()
+        mapper.fit(df["formula"])
+
+        sorted_indices = mapper.sort()
+        sorted_comps = mapper.sorted_comps
         """
-        if self.dm is None:
-            self.fit(X)
+        if self.formula_list is None:
+            print("Error must fit formulas first") # TODO Exceptions?
 
         dists_1D = self.PCA(n_components=1)
         sorted_indices = np.argsort(dists_1D.flatten())
+
+        self.sorted_formulas = self.formula_list.to_numpy(str)[sorted_indices]
 
         return sorted_indices
 
@@ -330,8 +324,14 @@ class ElM2D():
         else:
             return f"ElM2D()"
 
-    def save_dm(self, path):
-        pk.dump(self.dm, open(path, "wb"))
+    def export_dm(self, path):
+        np.savetxt(path, self.dm, delimiter=",")
         
-    def load_dm(self, path):
-        self.dm = pk.load(open(path, "rb"))
+    def import_dm(self, path):
+        self.dm = np.loadtxt(path, delimiter=",")
+
+    def export_embedding(self, path):
+        np.savetxt(path, self.embedding, delimiter=",")
+        
+    def import_embedding(self, path):
+        self.embedding = np.loadtxt(path, delimiter=",")

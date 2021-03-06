@@ -24,14 +24,16 @@ For more interactive examples please see www.elmd.io/plots
 The computed distance matrix is accessible through the `dm` attribute and can be saved and loaded as a python binary pickle object.
 
 ```python
+from ElM2D import ElM2D
+
 mapper = ElM2D()
-mapper.fit(df["composition"])
+mapper.fit(df["formula"])
 
 print(mapper.dm)
 
-mapper.save_dm("ComputedMatrix.pk")
+mapper.export_dm("ComputedMatrix.pk")
 ...
-mapper.load_dm("ComputedMatrix.pk")
+mapper.import_dm("ComputedMatrix.pk")
 ```
 
 This distance matrix can be used as a lookup table for distances between compositions given their numeric indices (`distance = mapper.dm[i][j]`) or used as a kernel matrix for embedding, regression, and classification tasks directly.
@@ -41,12 +43,10 @@ This distance matrix can be used as a lookup table for distances between composi
 To sort a list of compositions into an ordering of chemical similarity
 
 ```python
-from ElM2D import ElM2D
-...
+mapper.fit(df["formula"])
 
-comps = df["composition"].to_numpy()
-sorted_indices = ElM2D().sort_compositions(comps)
-sorted_comps = comps[sorted_indices]
+sorted_indices = mapper.sort()
+sorted_comps = mapper.sorted_comps
 ```
 
 ### Embedding
@@ -55,25 +55,25 @@ Embeddings can be constructed through either the [UMAP](https://github.com/lmcin
 
 ```python
 mapper = ElM2D()
-embedding = mapper.fit_transform(df["composition"])
-embedding = mapper.fit_transform(df["composition"], how="PCA", n_components=7)
+embedding = mapper.fit_transform(df["formula"])
+embedding = mapper.fit_transform(df["formula"], how="PCA", n_components=7)
 ```
 
 Embeddings may also be directed towards a particular chemical property in a pandas DataFrame, to bring known patterns into focus.
 ```python
-embedding = mapper.fit_transform(df["composition"], df["property_of_interest"])
+embedding = mapper.fit_transform(df["formula"], df["property_of_interest"])
 ```
 
 By default, the [modified Pettifor scale](https://iopscience.iop.org/article/10.1088/1367-2630/18/9/093011/meta) is used as the method of atomic similarity, "atomic", "petti", "mod_petti", and "mendeleev" can be selected through the `metric` attribute. 
 
 ```python
-embedding = mapper.fit_transform(df["composition"], metric="atomic")
+embedding = mapper.fit_transform(df["formula"], metric="atomic")
 ```
 
 These embeddings may be visualized within a jupyter notebook, or exported to HTML to view full page in the web browser.
 
 ```python
-mapper.fit_transform(df["composition"])
+mapper.fit_transform(df["formula"])
 
 # Returns a figure for viewing in notebooks
 mapper.plot() 
@@ -85,8 +85,32 @@ mapper.plot("ElM2D_Plot_UMAP.html")
 mapper.plot(fp="ElM2D_Plot_UMAP.html", color=df["chemical_property"]) 
 
 # Plotting also works in 3D
-mapper.fit_transform(df["composition"], n_components=3)
+mapper.fit_transform(df["formula"], n_components=3)
 mapper.plot(color=df["chemical_property"])
+```
+
+### Saving 
+
+Smaller datasets can be saved directly with the `save(filepath.pk)`/`load(filepath.pk)` methods directly. This is limited to files of size 3GB (the python binary file size limit).
+
+Larger datasets will require importing/exporting the distance matrix and embeddings (`export_embedding(filepath.csv)`/`import_embedding(filepath.csv)` separately as csv files if you require this processed data in future work. 
+
+```python
+mapper.fit(small_df["formula"])
+mapper.save("small_df_mapper.pk")
+...
+mapper = ElM2D()
+mapper.load("small_df_mapper.pk")
+...
+
+mapper.fit(large_df["formula"])
+mapper.export_dm("large_df_dm.csv")
+mapper.export_dm("large_df_emb_UMAP.csv")
+...
+
+mapper = ElM2D()
+mapper.import_dm("large_df_dm.csv")
+mapper.import_embedding("large_df_emb_UMAP.csv")
 ```
 
 ## Citing
