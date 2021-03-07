@@ -54,7 +54,7 @@ import plotly.io as pio
 from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map  
 
-from ElMD import ElMD
+from ElMD import ElMD, EMD
 
 if __name__ == "__main__":
     mapper = ElM2D()
@@ -86,7 +86,6 @@ class ElM2D():
         self.dm = None           # Stores distance matrix
 
         self.metric = metric
-        self.feature_matrix = 
 
     def save(self, filepath):
         # Save all variables except for the distance matrix
@@ -347,10 +346,17 @@ class ElM2D():
         '''
         pool_list = []
 
-        self.input_mat = np.ndarray(shape=(len(formula_list), 103), dtype=np.float64)
 
-        for i, formula in enumerate(formula_list):
-            self.input_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
+        n_elements = len(ElMD().periodic_tab[self.metric])
+        self.input_mat = np.ndarray(shape=(len(formula_list), n_elements), dtype=np.float64)
+
+        if self.verbose: 
+            print("Parsing Formula")
+            for i, formula in tqdm(enumerate(formula_list)):
+                self.input_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
+        else:
+            for i, formula in enumerate(formula_list):
+                self.input_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
 
         # Create input pairings
         if self.verbose: 
@@ -402,9 +408,6 @@ class ElM2D():
         else:
             return f"ElM2D()"
 
-    def features(self):
-
-
     def export_dm(self, path):
         np.savetxt(path, self.dm, delimiter=",")
         
@@ -416,3 +419,12 @@ class ElM2D():
         
     def import_embedding(self, path):
         self.embedding = np.loadtxt(path, delimiter=",")
+
+    def featurize(self, compositions, how="mean"):
+        elmd_obj = ElMD(metric=self.metric)
+        vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric])))
+
+        for i, formula in enumerate(compositions):
+            vectors[i] = ElMD(formula, metric=self.metric, feature_pooling=how).feature_vector
+
+        return vectors
