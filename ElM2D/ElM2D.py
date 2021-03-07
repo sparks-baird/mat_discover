@@ -56,8 +56,12 @@ from tqdm.contrib.concurrent import process_map
 
 from ElMD import ElMD, EMD
 
-if __name__ == "__main__":
-    mapper = ElM2D()
+def main():
+    from matminer.datasets import load_dataset
+    
+    df = load_dataset("matbench_expt_gap").head(1001)
+    mapper = ElM2D(metric="oliynyk")
+    mapper.featurize(df["composition"])
     print()
 
 class ElM2D():
@@ -423,7 +427,10 @@ class ElM2D():
     def featurize(self, compositions, how="mean"):
         elmd_obj = ElMD(metric=self.metric)
 
-        vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"])))
+        if type(elmd_obj.periodic_tab[self.metric]["H"]) is int:
+            vectors = np.ndarray((len(compositions), 1)))
+        else:
+            vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"])))
 
         if self.verbose:
             print("Constructing compositionally weighted feature vectors for each composition")
@@ -438,3 +445,6 @@ class ElM2D():
                 vectors[i] = ElMD(formula, metric=self.metric, feature_pooling=how).feature_vector
 
         return vectors
+
+if __name__ == "__main__":
+    main()
