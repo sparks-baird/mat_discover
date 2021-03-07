@@ -356,7 +356,7 @@ class ElM2D():
 
         if self.verbose: 
             print("Parsing Formula")
-            for i, formula in tqdm(enumerate(formula_list)):
+            for i, formula in tqdm(list(enumerate(formula_list))):
                 self.input_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
         else:
             for i, formula in enumerate(formula_list):
