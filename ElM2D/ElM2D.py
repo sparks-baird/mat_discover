@@ -350,7 +350,7 @@ class ElM2D():
         self.input_mat = np.ndarray(shape=(len(formula_list), 103), dtype=np.float64)
 
         for i, formula in enumerate(formula_list):
-            self.input_mat[i] = ElMD(formula, metric=self.metric).vector_form
+            self.input_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
 
         # Create input pairings
         if self.verbose: 
@@ -386,9 +386,13 @@ class ElM2D():
         Uses multiprocessing module to call the numba compiled EMD function
         '''
         distances = np.ndarray(len(input_tuple))
-
+        elmd_obj = ElMD(metric=self.metric)
+        
         for i, (input_1, input_2) in enumerate(input_tuple):
-            distances[i] = EMD(self.input_mat[input_1], self.input_mat[input_2])
+            distances[i] = EMD(self.input_mat[input_1], 
+                               self.input_mat[input_2],
+                               elmd_obj.lookup,
+                               elmd_obj.periodic_tab[self.metric])
 
         return distances
 
@@ -397,6 +401,9 @@ class ElM2D():
             return f"ElM2D(size={len(self.formula_list)},  chemical_diversity={np.mean(self.dm)} +/- {np.std(self.dm)}, maximal_distance={np.max(self.dm)})"
         else:
             return f"ElM2D()"
+
+    def features(self):
+
 
     def export_dm(self, path):
         np.savetxt(path, self.dm, delimiter=",")
