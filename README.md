@@ -21,7 +21,7 @@ For more interactive examples please see www.elmd.io/plots
 
 ### Computing Distance Matrices
 
-The computed distance matrix is accessible through the `dm` attribute and can be saved and loaded as a python binary pickle object.
+The computed distance matrix is accessible through the `dm` attribute and can be saved and loaded as a csv file.
 
 ```python
 from ElM2D import ElM2D
