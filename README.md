@@ -155,22 +155,33 @@ Linear:
 - atomic
 - mod_petti
 
-Machine Learnt:
+Chemically Derived:
 - oliynyk 
 - oliynyk_sc
-- cgcnn 
-- elemnet 
 - jarvis 
 - jarvis_sc 
 - magpie 
 - magpie_sc 
+
+Machine Learnt:
+- cgcnn 
+- elemnet 
 - mat2vec 
 - matscholar 
 - megnet16 
+
+Random Numbers:
 - random_200
 
 Custom Distance Matrix
 - precomputed
+
+Bulk featurizing can be performed with `featurize`.
+
+```python
+mapper = ElM2D(metric="oliynyk_sc")
+X = mapper.featurize(df["formula"])
+```
 
 ## Citing
 
@@ -188,11 +199,9 @@ year = {2020},
 doi = {10.1021/acs.chemmater.0c03381},
 URL = { 
         https://doi.org/10.1021/acs.chemmater.0c03381
-    
 },
 eprint = { 
         https://doi.org/10.1021/acs.chemmater.0c03381
-    
 }
 }
 ```
