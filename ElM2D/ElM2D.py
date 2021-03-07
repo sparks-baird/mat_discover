@@ -433,7 +433,7 @@ class ElM2D():
             vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"])))
 
         if self.verbose:
-            print("Constructing compositionally weighted feature vectors for each composition")
+            print(f"Constructing compositionally weighted {self.metric} feature vectors for each composition")
             for i, formula in tqdm(list(enumerate(compositions))):
                 vectors[i] = ElMD(formula, metric=self.metric, feature_pooling=how).feature_vector
 
