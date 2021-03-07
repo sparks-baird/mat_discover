@@ -47,13 +47,14 @@ from scipy.spatial.distance import squareform
 from numba import njit 
 
 import umap
-from ElM2D.ElMD import ElMD, EMD
 
 import plotly.express as px
 import plotly.io as pio
 
 from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map  
+
+from ElMD import ElMD
 
 if __name__ == "__main__":
     mapper = ElM2D()

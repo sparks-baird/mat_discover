@@ -145,10 +145,32 @@ for X_train, X_test, y_train, y_test in cvs:
 print(np.mean(errors))
 ```
 
+### Available Metrics
+You may use either discrete scales or machine learnt representations for each element. Choose these via the `metric` parameter.
+
+Linear:
+- mendeleev
+- petti
+- atomic
+- mod_petti
+
+Machine Learnt:
+- oliynyk 
+- oliynyk_sc
+- cgcnn 
+- elemnet 
+- jarvis 
+- jarvis_sc 
+- magpie 
+- magpie_sc 
+- mat2vec 
+- matscholar 
+- megnet16 
+- random_200
 
 ## Citing
 
-If you would like to cite this code in your work, please use the Chemistry of Materials reference
+If you would like to cite this code in your work, please use the following reference
 
 ```
 @article{doi:10.1021/acs.chemmater.0c03381,
