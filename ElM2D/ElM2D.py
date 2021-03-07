@@ -441,11 +441,11 @@ class ElM2D():
         #     vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"])))
 
         print(f"Constructing compositionally weighted {self.metric} feature vectors for each composition")
-        scores = process_map(self._pool_featurize, compositions, chunksize=1)
+        vectors = process_map(self._pool_featurize, compositions, chunksize=1)
 
         print("Complete")
 
-        return vectors
+        return np.array(vectors)
 
 if __name__ == "__main__":
     main()
