@@ -158,11 +158,11 @@ class ElM2D():
         if self.metric == "precomputed":
             self.dm = X
 
-        elif n < 1000:
+        elif n < 200:
             # Do this on a single core for smaller datasets
             distances = []
-
-            for i in range(n - 1):
+            print("Small dataset, using single CPU")
+            for i in tqdm(range(n - 1)):
                 x = ElMD(X[i], metric=self.metric)
                 for j in range(i + 1, n):
                     distances.append(x.elmd(X[j]))
@@ -424,25 +424,21 @@ class ElM2D():
     def import_embedding(self, path):
         self.embedding = np.loadtxt(path, delimiter=",")
 
+    def _pool_featurize(self, comp):
+        return ElMD(formula, metric=self.metric).feature_vector
+
     def featurize(self, compositions, how="mean"):
         elmd_obj = ElMD(metric=self.metric)
 
-        if type(elmd_obj.periodic_tab[self.metric]["H"]) is int:
-            vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric])))
-        else:
-            vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"])))
+        # if type(elmd_obj.periodic_tab[self.metric]["H"]) is int:
+        #     vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric])))
+        # else:
+        #     vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"])))
 
-        if self.verbose:
-            print(f"Constructing compositionally weighted {self.metric} feature vectors for each composition")
-            for i, formula in tqdm(list(enumerate(compositions))):
-                vectors[i] = ElMD(formula, metric=self.metric, feature_pooling=how).feature_vector
+        print(f"Constructing compositionally weighted {self.metric} feature vectors for each composition")
+        scores = process_map(self._pool_featurize, compositions, chunksize=1)
 
-            print("Complete")
-            
-
-        else:
-            for i, formula in enumerate(compositions):
-                vectors[i] = ElMD(formula, metric=self.metric, feature_pooling=how).feature_vector
+        print("Complete")
 
         return vectors
 
