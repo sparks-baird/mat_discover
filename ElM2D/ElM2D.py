@@ -428,7 +428,7 @@ class ElM2D():
         elmd_obj = ElMD(metric=self.metric)
 
         if type(elmd_obj.periodic_tab[self.metric]["H"]) is int:
-            vectors = np.ndarray((len(compositions), 1)))
+            vectors = np.ndarray((len(compositions), 1))
         else:
             vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"])))
 
