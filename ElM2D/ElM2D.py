@@ -69,7 +69,8 @@ class ElM2D():
     def __init__(self, formula_list=None,
                        n_proc=None,
                        n_components=2,
-                       verbose=True):
+                       verbose=True,
+                       metric="mod_petti"):
 
         self.verbose = verbose
 
@@ -83,6 +84,9 @@ class ElM2D():
         self.embedder = None     # For accessing UMAP object
         self.embedding = None    # Stores the last embedded coordinates
         self.dm = None           # Stores distance matrix
+
+        self.metric = metric
+        self.feature_matrix = 
 
     def save(self, filepath):
         # Save all variables except for the distance matrix
@@ -135,20 +139,20 @@ class ElM2D():
 
         return fig
 
-    def fit(self, X, metric="mod_petti"):
+    def fit(self, X):
         '''
         Take an input vector, either of a precomputed distance matrix, or
         an iterable of strings of composition formula, construct an ElMD distance
-        matrix and store to self.dm. Can pass a precomputed matrix with 
-        metric="precomputed"
+        matrix and store to self.dm.
 
         Input
         X - A list of compound formula strings, or a precomputed distance matrix
+        (ensure self.metric = "precomputed")
         '''
         self.formula_list = X
         n = len(X)
 
-        if metric == "precomputed":
+        if self.metric == "precomputed":
             self.dm = X
 
         elif n < 1000:
@@ -156,7 +160,7 @@ class ElM2D():
             distances = []
 
             for i in range(n - 1):
-                x = ElMD(X[i], metric=metric)
+                x = ElMD(X[i], metric=self.metric)
                 for j in range(i + 1, n):
                     distances.append(x.elmd(X[j]))
             
@@ -165,10 +169,10 @@ class ElM2D():
 
         else:
             if self.verbose: print("Constructing distances")
-            dist_vec = self._process_list(X, metric=metric, n_proc=self.n_proc)
+            dist_vec = self._process_list(X, n_proc=self.n_proc)
             self.dm = squareform(dist_vec)
 
-    def fit_transform(self, X, y=None, how="UMAP", n_components=2, metric="mod_petti"):
+    def fit_transform(self, X, y=None, how="UMAP", n_components=2):
         """
         Successively call fit and transform
 
@@ -176,9 +180,8 @@ class ElM2D():
         X - List of compositions to embed 
         how - "UMAP" or "PCA", the embedding technique to use
         n_components - The number of dimensions to embed to
-        metric - "precomputed" to pass precomputed distance matrices
         """
-        self.fit(X, metric=metric)
+        self.fit(X)
         embedding = self.transform(how=how, n_components=n_components, y=y)
         return embedding
 
@@ -335,7 +338,7 @@ class ElM2D():
 
         return [(X_ret[i][0], X_ret[i][1], y_ret[i][0], y_ret[i][1]) for i in range(k)]
 
-    def _process_list(self, formula_list, n_proc, metric="mod_petti"):
+    def _process_list(self, formula_list, n_proc):
         '''
         Given an iterable list of formulas in composition form
         use multiple processes to convert these to pettifor ratio
@@ -347,7 +350,7 @@ class ElM2D():
         self.input_mat = np.ndarray(shape=(len(formula_list), 103), dtype=np.float64)
 
         for i, formula in enumerate(formula_list):
-            self.input_mat[i] = ElMD(formula, metric=metric).vector_form
+            self.input_mat[i] = ElMD(formula, metric=self.metric).vector_form
 
         # Create input pairings
         if self.verbose: 

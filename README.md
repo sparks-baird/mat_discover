@@ -67,10 +67,11 @@ Embeddings may also be directed towards a particular chemical property in a pand
 embedding = mapper.fit_transform(df["formula"], df["property_of_interest"])
 ```
 
-By default, the [modified Pettifor scale](https://iopscience.iop.org/article/10.1088/1367-2630/18/9/093011/meta) is used as the method of atomic similarity, "atomic", "petti", "mod_petti", and "mendeleev" can be selected through the `metric` attribute. 
+By default, the [modified Pettifor scale](https://iopscience.iop.org/article/10.1088/1367-2630/18/9/093011/meta) is used as the method of atomic similarity, this is changed through the `metric` attribute. 
 
 ```python
-embedding = mapper.fit_transform(df["formula"], metric="atomic")
+mapper = ElM2D(metric="atomic")
+embedding = mapper.fit_transform(df["formula"])
 ```
 
 These embeddings may be visualized within a jupyter notebook, or exported to HTML to view full page in the web browser.
@@ -167,6 +168,9 @@ Machine Learnt:
 - matscholar 
 - megnet16 
 - random_200
+
+Custom Distance Matrix
+- precomputed
 
 ## Citing
 
