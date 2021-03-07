@@ -271,7 +271,7 @@ class ElM2D():
         return sorted_indices
 
 
-    def cross_validate(self, y=None, k=5, shuffle=True, seed=42):
+    def cross_validate(self, y=None, X=None, k=5, shuffle=True, seed=42):
         """
         Implementation of cross validation with K-Folds.
         
@@ -307,7 +307,12 @@ class ElM2D():
             np.random.seed(seed) 
             np.random.shuffle(inds)
 
-        formulas = self.formula_list.to_numpy(str)[inds]
+        if X is None:
+            formulas = self.formula_list.to_numpy(str)[inds]
+        
+        else:
+            formulas = X
+        
         splits = np.array_split(formulas, k)
 
         X_ret = []
@@ -425,7 +430,7 @@ class ElM2D():
         self.embedding = np.loadtxt(path, delimiter=",")
 
     def _pool_featurize(self, comp):
-        return ElMD(formula, metric=self.metric).feature_vector
+        return ElMD(comp, metric=self.metric).feature_vector
 
     def featurize(self, compositions, how="mean"):
         elmd_obj = ElMD(metric=self.metric)
