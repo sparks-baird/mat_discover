@@ -422,9 +422,19 @@ class ElM2D():
 
     def featurize(self, compositions, how="mean"):
         elmd_obj = ElMD(metric=self.metric)
-        vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric])))
 
-        for i, formula in enumerate(compositions):
-            vectors[i] = ElMD(formula, metric=self.metric, feature_pooling=how).feature_vector
+        vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"])))
+
+        if self.verbose:
+            print("Constructing compositionally weighted feature vectors for each composition")
+            for i, formula in tqdm(list(enumerate(compositions))):
+                vectors[i] = ElMD(formula, metric=self.metric, feature_pooling=how).feature_vector
+
+            print("Complete")
+            
+
+        else:
+            for i, formula in enumerate(compositions):
+                vectors[i] = ElMD(formula, metric=self.metric, feature_pooling=how).feature_vector
 
         return vectors
