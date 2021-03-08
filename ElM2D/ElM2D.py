@@ -155,10 +155,11 @@ class ElM2D():
         self.formula_list = X
         n = len(X)
 
+        if self.verbose: print(f"Fitting {self.metric} kernel matrix")
         if self.metric == "precomputed":
             self.dm = X
 
-        elif n < 200:
+        elif n < 5:
             # Do this on a single core for smaller datasets
             distances = []
             print("Small dataset, using single CPU")
