@@ -448,5 +448,65 @@ class ElM2D():
 
         return np.array(vectors)
 
+    def intersect(self, y, X=None):
+        """
+        Takes in a second formula list, y, and computes the intersectional distance 
+        matrix between the two under the given metric. If a two formula lists
+        are given the intersection between the two is computed, returning a 
+        distance matrix of the form:
+
+              X_0             X_1            X_2            ...
+        y_0  ElMD(X_0, y_0)  ElMD(X_1, y_0)  ElMD(X_2, y_0)
+        y_1  ElMD(X_0, y_1)  ElMD(X_1, y_1)  ElMD(X_2, y_1)
+        f_2  ElMD(X_0, y_2)  ElMD(X_1, y_2)  ElMD(X_2, y_2)
+        ...
+        """
+        if X is None:
+            X = self.formula_list
+
+        intersection_dm = self._process_intersection(X, y, self.n_proc)
+
+        return intersection_dm
+        
+
+    def _process_intersection(self, X, y, n_proc):
+        '''
+        Compute the 
+        '''
+        pool_list = []
+
+        n_elements = len(ElMD().periodic_tab[self.metric])
+        X_mat = np.ndarray(shape=(len(X), n_elements), dtype=np.float64)
+        y_mat = np.ndarray(shape=(len(y), n_elements), dtype=np.float64)
+
+        print("Parsing X Formula")
+        for i, formula in tqdm(list(enumerate(X))):
+            X_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
+
+        print("Parsing Y Formula")
+        for i, formula in tqdm(list(enumerate(y))):
+            y_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
+
+        # Create input pairings
+        print("Constructing joint compositional pairings")
+        for y in tqdm(range(len(y_mat))):
+            sublist = [(y, x) for x in range(len(X_mat))]
+            pool_list.append(sublist)
+        
+
+        # Distribute amongst processes
+        if self.verbose: print("Creating Process Pool")
+        if self.verbose:
+            print("Scattering compositions between processes and computing distances")
+            distances = process_map(self._pool_ElMD, pool_list, chunksize=1)
+
+        if self.verbose: print("Distances computed closing processes")
+
+        # if self.verbose: print("Flattening sublists")
+        # Flattens list of lists to single list
+        # distances = [dist for sublist in scores for dist in sublist]
+       
+        return np.array(distances, dtype=np.float64)
+
 if __name__ == "__main__":
     main()
