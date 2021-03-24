@@ -109,7 +109,7 @@ mapper.load("small_df_mapper.pk")
 
 mapper.fit(large_df["formula"])
 mapper.export_dm("large_df_dm.csv")
-mapper.export_dm("large_df_emb_UMAP.csv")
+mapper.export_embedding("large_df_emb_UMAP.csv")
 ...
 
 mapper = ElM2D()
