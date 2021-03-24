@@ -44,7 +44,7 @@ To sort a list of compositions into an ordering of chemical similarity
 mapper.fit(df["formula"])
 
 sorted_indices = mapper.sort()
-sorted_comps = mapper.sorted_comps
+sorted_comps = mapper.sorted_formulas
 ```
 
 ### Embedding
