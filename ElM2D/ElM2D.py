@@ -381,7 +381,7 @@ class ElM2D():
 
         # Distribute amongst processes
         if self.verbose: print("Creating Process Pool")
-        process_pool = Pool(n_proc)
+        
         if self.verbose:
             print("Scattering compositions between processes and computing distances")
             scores = process_map(self._pool_ElMD, pool_list, chunksize=1)
@@ -389,7 +389,6 @@ class ElM2D():
             scores = process_pool.map(self._pool_ElMD, pool_list)
         
         if self.verbose: print("Distances computed closing processes")
-        process_pool.close()
 
         if self.verbose: print("Flattening sublists")
         # Flattens list of lists to single list
