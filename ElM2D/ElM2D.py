@@ -74,7 +74,8 @@ class ElM2D():
                        n_proc=None,
                        n_components=2,
                        verbose=True,
-                       metric="mod_petti"):
+                       metric="mod_petti",
+                       chunksize=1):
 
         self.verbose = verbose
 
@@ -84,12 +85,15 @@ class ElM2D():
             self.n_proc = n_proc
 
         self.formula_list = formula_list # Input formulae
+
+        self.metric = metric
+        self.chunksize=chunksize
+
         self.input_mat = None    # Pettifor vector representation of formula
         self.embedder = None     # For accessing UMAP object
         self.embedding = None    # Stores the last embedded coordinates
         self.dm = None           # Stores distance matrix
 
-        self.metric = metric
 
     def save(self, filepath):
         # Save all variables except for the distance matrix
@@ -380,13 +384,9 @@ class ElM2D():
                 pool_list.append(sublist)
 
         # Distribute amongst processes
-        if self.verbose: print("Creating Process Pool")
+        if self.verbose: print("Creating Process Pool\nScattering compositions between processes and computing distances")
         
-        if self.verbose:
-            print("Scattering compositions between processes and computing distances")
-            scores = process_map(self._pool_ElMD, pool_list, chunksize=1)
-        else:
-            scores = process_pool.map(self._pool_ElMD, pool_list)
+        scores = process_map(self._pool_ElMD, pool_list, chunksize=self.chunksize)
         
         if self.verbose: print("Distances computed closing processes")
 
@@ -441,7 +441,7 @@ class ElM2D():
         #     vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"])))
 
         print(f"Constructing compositionally weighted {self.metric} feature vectors for each composition")
-        vectors = process_map(self._pool_featurize, compositions, chunksize=1)
+        vectors = process_map(self._pool_featurize, compositions, chunksize=self.chunksize)
 
         print("Complete")
 
@@ -497,7 +497,7 @@ class ElM2D():
         if self.verbose: print("Creating Process Pool")
         if self.verbose:
             print("Scattering compositions between processes and computing distances")
-            distances = process_map(self._pool_ElMD, pool_list, chunksize=1)
+            distances = process_map(self._pool_ElMD, pool_list, chunksize=self.chunksize)
 
         if self.verbose: print("Distances computed closing processes")
 
