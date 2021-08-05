@@ -41,10 +41,10 @@ from collections import Counter
 
 import numpy as np
 import pandas as pd
-import pickle as pk 
+import pickle as pk
 
 from scipy.spatial.distance import squareform
-from numba import njit 
+from numba import njit
 
 import umap
 
@@ -52,13 +52,13 @@ import plotly.express as px
 import plotly.io as pio
 
 from tqdm import tqdm
-from tqdm.contrib.concurrent import process_map  
+from tqdm.contrib.concurrent import process_map
 
 from ElMD import ElMD, EMD
 
 def main():
     from matminer.datasets import load_dataset
-    
+
     df = load_dataset("matbench_expt_gap").head(1001)
     mapper = ElM2D(metric="oliynyk")
     mapper.featurize(df["composition"])
@@ -67,7 +67,7 @@ def main():
 class ElM2D():
     '''
     This class takes in a list of compound formula and creates the intercompound
-    distance matrix wrt EMD and a two dimensional embedding using either PCA or 
+    distance matrix wrt EMD and a two dimensional embedding using either PCA or
     UMAP
     '''
     def __init__(self, formula_list=None,
@@ -80,7 +80,7 @@ class ElM2D():
 
         if n_proc is None:
             self.n_proc = cpu_count()
-        else: 
+        else:
             self.n_proc = n_proc
 
         self.formula_list = formula_list # Input formulae
@@ -97,7 +97,7 @@ class ElM2D():
         f_handle = open(filepath + ".pk", 'wb')
         pk.dump(save_dict, f_handle)
         f_handle.close()
-        
+
     def load(self, filepath):
         f_handle = open(filepath + ".pk", 'rb')
         load_dict = pk.load(f_handle)
@@ -108,8 +108,8 @@ class ElM2D():
 
     def plot(self, fp=None, color=None, embedding=None):
         if self.embedding is None:
-            print("No embedding in memory, call transform() first.")    
-            return 
+            print("No embedding in memory, call transform() first.")
+            return
 
         if embedding is None:
             embedding = self.embedding
@@ -131,7 +131,7 @@ class ElM2D():
             else:
                 df = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1], "z": embedding[:, 2], "formula": self.formula_list, color.name: color.to_numpy()})
                 fig = px.scatter_3d(df, x="x", y="y", z="z", color=color.name, hover_data={"formula": True, color.name: True, "x":False, "y":False, "z":False})
-        
+
         elif embedding.shape[1] > 3:
             print("Too many dimensions to plot directly, using first three components")
             fig = self.plot(fp=fp, color=color, embedding=embedding[:, :3])
@@ -167,7 +167,7 @@ class ElM2D():
                 x = ElMD(X[i], metric=self.metric)
                 for j in range(i + 1, n):
                     distances.append(x.elmd(X[j]))
-            
+
             dist_vec = np.array(distances)
             self.dm = squareform(dist_vec)
 
@@ -181,7 +181,7 @@ class ElM2D():
         Successively call fit and transform
 
         Parameters:
-        X - List of compositions to embed 
+        X - List of compositions to embed
         how - "UMAP" or "PCA", the embedding technique to use
         n_components - The number of dimensions to embed to
         """
@@ -191,12 +191,12 @@ class ElM2D():
 
     def transform(self, how="UMAP", n_components=2, y=None):
         """
-        Call the selected embedding method (UMAP or PCA) and embed to 
+        Call the selected embedding method (UMAP or PCA) and embed to
         n_components dimensions.
         """
         if self.dm is None:
             print("No distance matrix computed, run fit() first")
-            return 
+            return
 
         if how == "UMAP":
             if y is None:
@@ -226,7 +226,7 @@ class ElM2D():
 
         if self.dm is None:
             print("No distance matrix computed, call fit_transform with a list of compositions, or load a saved matrix with load_dm()")
-            return 
+            return
 
         (n,n) = self.dm.shape
 
@@ -275,10 +275,10 @@ class ElM2D():
     def cross_validate(self, y=None, X=None, k=5, shuffle=True, seed=42):
         """
         Implementation of cross validation with K-Folds.
-        
-        Splits the formula_list into k equal sized partitions and returns five 
-        tuples of training and test sets. Returns a list of length k, each item 
-        containing 2 (4 with target data) numpy arrays of formulae of 
+
+        Splits the formula_list into k equal sized partitions and returns five
+        tuples of training and test sets. Returns a list of length k, each item
+        containing 2 (4 with target data) numpy arrays of formulae of
         length n - n/k and n/k.
 
         Parameters:
@@ -305,26 +305,26 @@ class ElM2D():
         inds = np.arange(len(self.formula_list)) # TODO Exception
 
         if shuffle:
-            np.random.seed(seed) 
+            np.random.seed(seed)
             np.random.shuffle(inds)
 
         if X is None:
             formulas = self.formula_list.to_numpy(str)[inds]
-        
+
         else:
             formulas = X
-        
+
         splits = np.array_split(formulas, k)
 
         X_ret = []
-        
+
         for i in range(k):
             train_splits = np.delete(np.arange(k), i)
             X_train = splits[train_splits[0]]
 
             for index in train_splits[1:]:
                 X_train = np.concatenate((X_train, splits[index]))
-            
+
             X_test = splits[i]
             X_ret.append((X_train, X_test))
 
@@ -341,7 +341,7 @@ class ElM2D():
 
             for index in train_splits[1:]:
                 y_train = np.concatenate((y_train, y_splits[index]))
-            
+
             y_test = y_splits[i]
             y_ret.append((y_train, y_test))
 
@@ -360,7 +360,7 @@ class ElM2D():
         n_elements = len(ElMD().periodic_tab[self.metric])
         self.input_mat = np.ndarray(shape=(len(formula_list), n_elements), dtype=np.float64)
 
-        if self.verbose: 
+        if self.verbose:
             print("Parsing Formula")
             for i, formula in tqdm(list(enumerate(formula_list))):
                 self.input_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
@@ -369,7 +369,7 @@ class ElM2D():
                 self.input_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
 
         # Create input pairings
-        if self.verbose: 
+        if self.verbose:
             print("Constructing joint compositional pairings")
             for i in tqdm(range(len(formula_list) - 1)):
                 sublist = [(i, j) for j in range(i + 1, len(formula_list))]
@@ -381,19 +381,19 @@ class ElM2D():
 
         # Distribute amongst processes
         if self.verbose: print("Creating Process Pool")
-        
+
         if self.verbose:
             print("Scattering compositions between processes and computing distances")
-            scores = process_map(self._pool_ElMD, pool_list, chunksize=1)
+            scores = process_map(self._pool_ElMD, pool_list, chunksize=10)
         else:
             scores = process_pool.map(self._pool_ElMD, pool_list)
-        
+
         if self.verbose: print("Distances computed closing processes")
 
         if self.verbose: print("Flattening sublists")
         # Flattens list of lists to single list
         distances = [dist for sublist in scores for dist in sublist]
-       
+
         return np.array(distances, dtype=np.float64)
 
     def _pool_ElMD(self, input_tuple):
@@ -402,9 +402,9 @@ class ElM2D():
         '''
         distances = np.ndarray(len(input_tuple))
         elmd_obj = ElMD(metric=self.metric)
-        
+
         for i, (input_1, input_2) in enumerate(input_tuple):
-            distances[i] = EMD(self.input_mat[input_1], 
+            distances[i] = EMD(self.input_mat[input_1],
                                self.input_mat[input_2],
                                elmd_obj.lookup,
                                elmd_obj.periodic_tab[self.metric])
@@ -419,13 +419,13 @@ class ElM2D():
 
     def export_dm(self, path):
         np.savetxt(path, self.dm, delimiter=",")
-        
+
     def import_dm(self, path):
         self.dm = np.loadtxt(path, delimiter=",")
 
     def export_embedding(self, path):
         np.savetxt(path, self.embedding, delimiter=",")
-        
+
     def import_embedding(self, path):
         self.embedding = np.loadtxt(path, delimiter=",")
 
@@ -441,7 +441,7 @@ class ElM2D():
         #     vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"])))
 
         print(f"Constructing compositionally weighted {self.metric} feature vectors for each composition")
-        vectors = process_map(self._pool_featurize, compositions, chunksize=1)
+        vectors = process_map(self._pool_featurize, compositions, chunksize=10)
 
         print("Complete")
 
@@ -449,9 +449,9 @@ class ElM2D():
 
     def intersect(self, y, X=None):
         """
-        Takes in a second formula list, y, and computes the intersectional distance 
+        Takes in a second formula list, y, and computes the intersectional distance
         matrix between the two under the given metric. If a two formula lists
-        are given the intersection between the two is computed, returning a 
+        are given the intersection between the two is computed, returning a
         distance matrix of the form:
 
               X_0             X_1            X_2            ...
@@ -466,11 +466,11 @@ class ElM2D():
         intersection_dm = self._process_intersection(X, y, self.n_proc)
 
         return intersection_dm
-        
+
 
     def _process_intersection(self, X, y, n_proc):
         '''
-        Compute the 
+        Compute the
         '''
         pool_list = []
 
@@ -491,7 +491,7 @@ class ElM2D():
         for y in tqdm(range(len(y_mat))):
             sublist = [(y, x) for x in range(len(X_mat))]
             pool_list.append(sublist)
-        
+
 
         # Distribute amongst processes
         if self.verbose: print("Creating Process Pool")
@@ -504,7 +504,7 @@ class ElM2D():
         # if self.verbose: print("Flattening sublists")
         # Flattens list of lists to single list
         # distances = [dist for sublist in scores for dist in sublist]
-       
+
         return np.array(distances, dtype=np.float64)
 
 if __name__ == "__main__":
