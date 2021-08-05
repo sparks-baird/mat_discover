@@ -53,13 +53,17 @@ import plotly.io as pio
 
 from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map  
-from matminer.datasets import load_dataset
+# from matminer.datasets import load_dataset
 
 from ElMD import ElMD, EMD
 
 def main():
     df = load_dataset("matbench_expt_gap").head(1001)
-    mapper = ElM2D(metric="oliynyk")
+
+    df_1 = df.head(500)
+    df_2 = df.tail(500)
+    mapper = ElM2D(metric="mod_petti")
+    mapper.intersect(df_1["composition"], df_2["composition"])
     sorted_comps = mapper.sort(df["composition"])
     sorted_comps, sorted_inds = mapper.sort(df["composition"], return_inds=True)
     fts =  mapper.featurize()
@@ -237,8 +241,8 @@ class ElM2D():
         """
 
         if self.dm is None:
-            print("No distance matrix computed, call fit_transform with a list of compositions, or load a saved matrix with load_dm()")
-            return 
+            raise Exception("No distance matrix computed, call fit_transform with a list of compositions, or load a saved matrix with load_dm()")
+ 
 
         (n,n) = self.dm.shape
 
@@ -276,7 +280,7 @@ class ElM2D():
         """
 
         if formula_list is None and self.formula_list is None:
-            print("Must input a list of compositions or fit a list of compositions first") # TODO Exceptions?
+            raise Exception("Must input a list of compositions or fit a list of compositions first") # TODO Exceptions?
 
         elif formula_list is None:
             formula_list = self.formula_list
@@ -472,7 +476,7 @@ class ElM2D():
 
         return np.array(vectors)
 
-    def intersect(self, y, X=None):
+    def intersect(self, y=None, X=None):
         """
         Takes in a second formula list, y, and computes the intersectional distance 
         matrix between the two under the given metric. If a two formula lists
@@ -485,17 +489,32 @@ class ElM2D():
         f_2  ElMD(X_0, y_2)  ElMD(X_1, y_2)  ElMD(X_2, y_2)
         ...
         """
+        if X is None and y is None:
+            raise Exception("Must enter two lists of formula or fit a list of formula and enter an intersecting list of formula")
         if X is None:
             X = self.formula_list
 
-        intersection_dm = self._process_intersection(X, y, self.n_proc)
+        elmd = ElMD()
+        dm = []
+        process_pool = Pool(cpu_count())
 
-        return intersection_dm
+        for comp_1 in tqdm(X):
+            ionic = process_pool.starmap(elmd.elmd, ((comp_1, comp_2) for comp_2 in y))
+            dm.append(ionic)
+        
+        distance_matrix = np.array(dm)
+
+        return distance_matrix
+
+        # Not working currently, might be faster...
+        # intersection_dm = self._process_intersection(X, y, self.n_proc)
+
+        # return intersection_dm
         
 
     def _process_intersection(self, X, y, n_proc):
         '''
-        Compute the 
+        Compute the intersection of two lists of compositions
         '''
         pool_list = []
 
@@ -503,26 +522,23 @@ class ElM2D():
         X_mat = np.ndarray(shape=(len(X), n_elements), dtype=np.float64)
         y_mat = np.ndarray(shape=(len(y), n_elements), dtype=np.float64)
 
-        print("Parsing X Formula")
+        if self.verbose: print("Parsing X Formula")
         for i, formula in tqdm(list(enumerate(X))):
             X_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
 
-        print("Parsing Y Formula")
+        if self.verbose: print("Parsing Y Formula")
         for i, formula in tqdm(list(enumerate(y))):
             y_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
 
         # Create input pairings
-        print("Constructing joint compositional pairings")
+        if self.verbose: print("Constructing joint compositional pairings")
         for y in tqdm(range(len(y_mat))):
             sublist = [(y, x) for x in range(len(X_mat))]
             pool_list.append(sublist)
         
-
         # Distribute amongst processes
-        if self.verbose: print("Creating Process Pool")
-        if self.verbose:
-            print("Scattering compositions between processes and computing distances")
-            distances = process_map(self._pool_ElMD, pool_list, chunksize=self.chunksize)
+        if self.verbose: print("Creating Process Pool\nScattering compositions between processes and computing distances")
+        distances = process_map(self._pool_ElMD, pool_list, chunksize=self.chunksize)
 
         if self.verbose: print("Distances computed closing processes")
 
