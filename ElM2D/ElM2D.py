@@ -53,15 +53,16 @@ import plotly.io as pio
 
 from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map  
+from matminer.datasets import load_dataset
 
 from ElMD import ElMD, EMD
 
 def main():
-    from matminer.datasets import load_dataset
-    
     df = load_dataset("matbench_expt_gap").head(1001)
     mapper = ElM2D(metric="oliynyk")
-    mapper.featurize(df["composition"])
+    sorted_comps = mapper.sort(df["composition"])
+    sorted_comps, sorted_inds = mapper.sort(df["composition"], return_inds=True)
+    fts =  mapper.featurize()
     print()
 
 class ElM2D():
@@ -75,7 +76,8 @@ class ElM2D():
                        n_components=2,
                        verbose=True,
                        metric="mod_petti",
-                       chunksize=1):
+                       chunksize=1,
+                       umap_kwargs={}):
 
         self.verbose = verbose
 
@@ -88,6 +90,11 @@ class ElM2D():
 
         self.metric = metric
         self.chunksize=chunksize
+
+        self.umap_kwargs = umap_kwargs
+
+        self.umap_kwargs["n_components"] = n_components
+        self.umap_kwargs["metric"] = "precomputed"
 
         self.input_mat = None    # Pettifor vector representation of formula
         self.embedder = None     # For accessing UMAP object
@@ -190,7 +197,7 @@ class ElM2D():
         n_components - The number of dimensions to embed to
         """
         self.fit(X)
-        embedding = self.transform(how=how, n_components=n_components, y=y)
+        embedding = self.transform(how=how, n_components=self.umap_kwargs["n_components"], y=y)
         return embedding
 
     def transform(self, how="UMAP", n_components=2, y=None):
@@ -204,18 +211,19 @@ class ElM2D():
 
         if how == "UMAP":
             if y is None:
-                if self.verbose: print(f"Constructing UMAP Embedding to {n_components} dimensions")
-                self.embedder = umap.UMAP(n_components=n_components, verbose=self.verbose, metric="precomputed")
+                if self.verbose: print(f"Constructing UMAP Embedding to {self.umap_kwargs['n_components']} dimensions")
+                self.embedder = umap.UMAP(**self.umap_kwargs)
                 self.embedding = self.embedder.fit_transform(self.dm)
+
             else:
                 y = y.to_numpy(dtype=float)
-                if self.verbose: print(f"Constructing UMAP Embedding to {n_components} dimensions, with a targetted embedding")
-                self.embedder = umap.UMAP(n_components=n_components, verbose=self.verbose, metric="precomputed", target_metric="l2")
+                if self.verbose: print(f"Constructing UMAP Embedding to {self.umap_kwargs['n_components']} dimensions, with a targetted embedding")
+                self.embedder = umap.UMAP(**self.umap_kwargs)
                 self.embedding = self.embedder.fit_transform(self.dm, y)
 
         elif how == "PCA":
-            if self.verbose: print(f"Constructing PCA Embedding to {n_components} dimensions")
-            self.embedding = self.PCA(n_components=n_components)
+            if self.verbose: print(f"Constructing PCA Embedding to {self.umap_kwargs['n_components']} dimensions")
+            self.embedding = self.PCA(n_components=self.umap_kwargs["n_components"])
             if self.verbose: print(f"Finished Embedding")
 
         return self.embedding
@@ -254,26 +262,34 @@ class ElM2D():
 
         return Y[:, :n_components]
 
-    def sort(self):
+    def sort(self, formula_list=None):
         """
         Sorts compositions based on their ElMD similarity.
 
         Usage:
         mapper = ElM2D()
-        mapper.fit(df["formula"])
+        sorted_comps = mapper.sort(df["formula"])
+        sorted_comps, sorted_inds = mapper.sort(df["formula"], return_inds=True)
 
         sorted_indices = mapper.sort()
         sorted_comps = mapper.sorted_comps
         """
-        if self.formula_list is None:
-            print("Error must fit formulas first") # TODO Exceptions?
 
-        dists_1D = self.PCA(n_components=1)
-        sorted_indices = np.argsort(dists_1D.flatten())
+        if formula_list is None and self.formula_list is None:
+            print("Must input a list of compositions or fit a list of compositions first") # TODO Exceptions?
 
-        self.sorted_formulas = self.formula_list.to_numpy(str)[sorted_indices]
+        elif formula_list is None:
+            formula_list = self.formula_list
 
-        return sorted_indices
+        elif self.formula_list is None:
+            formula_list = process_map(ElMD, formula_list, chunksize=self.chunksize)
+            self.formula_list = formula_list
+
+        sorted_comps = sorted(formula_list)
+        self.sorted_comps = sorted_comps
+
+        return sorted_comps
+
 
 
     def cross_validate(self, y=None, X=None, k=5, shuffle=True, seed=42):
@@ -432,7 +448,16 @@ class ElM2D():
     def _pool_featurize(self, comp):
         return ElMD(comp, metric=self.metric).feature_vector
 
-    def featurize(self, compositions, how="mean"):
+    def featurize(self, formula_list=None, how="mean"):
+        if formula_list is None and self.formula_list is None:
+            raise Exception("You must enter a list of compositions first")
+
+        elif formula_list is None:
+            formula_list = self.formula_list
+
+        elif self.formula_list is None:
+            self.formula_list = formula_list
+
         elmd_obj = ElMD(metric=self.metric)
 
         # if type(elmd_obj.periodic_tab[self.metric]["H"]) is int:
@@ -441,7 +466,7 @@ class ElM2D():
         #     vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"])))
 
         print(f"Constructing compositionally weighted {self.metric} feature vectors for each composition")
-        vectors = process_map(self._pool_featurize, compositions, chunksize=self.chunksize)
+        vectors = process_map(self._pool_featurize, formula_list, chunksize=self.chunksize)
 
         print("Complete")
 
