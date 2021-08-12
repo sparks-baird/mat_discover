@@ -85,6 +85,7 @@ class ElM2D():
 
         self.formula_list = formula_list # Input formulae
         self.input_mat = None    # Pettifor vector representation of formula
+        self.input_mat2 = None   # Pettifor vector representation of 2nd set of formulae
         self.embedder = None     # For accessing UMAP object
         self.embedding = None    # Stores the last embedded coordinates
         self.dm = None           # Stores distance matrix
@@ -212,9 +213,30 @@ class ElM2D():
         elif how == "PCA":
             if self.verbose: print(f"Constructing PCA Embedding to {n_components} dimensions")
             self.embedding = self.PCA(n_components=n_components)
-            if self.verbose: print(f"Finished Embedding")
+            if self.verbose: print("Finished Embedding")
 
         return self.embedding
+    
+    def xy_dist_mat(self, Y):
+        """
+        Compute pairwise distance matrix between training data and new set of formulae.
+
+        Parameters
+        ----------
+        Y : array
+            The second set of formula with which to compare to the input features.
+
+        Returns
+        -------
+        distance matrix between X (training formulae) and a new set of formulae (Y)
+
+        See Also
+        --------
+        scipy.spatial: cdist(), distance_matrix()
+        """
+        X = self.formula_list
+        self.dm2 = self._process_list2(X, Y, n_proc=self.n_proc)
+        return self.dm2
 
     def PCA(self, n_components=5):
         """
@@ -240,12 +262,12 @@ class ElM2D():
         # From Principles of Multivariate Analysis: A User's Perspective (page 107).
         F = np.array(E - np.transpose(Er) - Es + np.mean(E))
 
-        if self.verbose: print(f"Computing Eigen Decomposition")
+        if self.verbose: print("Computing Eigen Decomposition")
         [U, S, V] = np.linalg.svd(F)
 
         Y = U * np.sqrt(S)
 
-        if self.verbose: print(f"PCA Projected Points Computed")
+        if self.verbose: print("PCA Projected Points Computed")
         self.mds_points = Y
 
         return Y[:, :n_components]
@@ -386,13 +408,76 @@ class ElM2D():
             print("Scattering compositions between processes and computing distances")
             scores = process_map(self._pool_ElMD, pool_list, chunksize=10)
         else:
-            scores = process_pool.map(self._pool_ElMD, pool_list)
+            scores = process_map(self._pool_ElMD, pool_list)
 
         if self.verbose: print("Distances computed closing processes")
 
         if self.verbose: print("Flattening sublists")
         # Flattens list of lists to single list
         distances = [dist for sublist in scores for dist in sublist]
+
+        return np.array(distances, dtype=np.float64)
+
+    def _process_list2(self, formula_list, formula_list2, n_proc = 1):
+        """
+        Calculate distances between two lists of formulae in parallel.
+        
+        Must be called after fit (which calls _process_list) so that input_mat is populated.
+
+        Parameters
+        ----------
+        formula_list : iterable list
+            First set of formulae (rows).
+        formula_list2 : iterable list
+            Second set of formulae (columns).
+        n_proc : int, optional
+            Number of processes. The default is 1.
+
+        Returns
+        -------
+        ARRAY
+            Pairwise distances between formula_list and formula_list2.
+
+        """
+        pool_list = []
+
+        n_elements = len(ElMD().periodic_tab[self.metric])
+        self.input_mat2 = np.ndarray(shape=(len(formula_list2), n_elements), dtype=np.float64)
+        
+        formulas = list(enumerate(formula_list2))
+        if self.verbose:
+            print("Parsing Formula2")
+            formulas = tqdm(formulas)
+            
+        for i, formula in formulas:
+            self.input_mat2[i] = ElMD(formula, metric=self.metric).ratio_vector
+
+        # Create input pairings
+        id_list = range(len(formula_list))
+        if self.verbose:
+            print("Constructing joint compositional pairings")
+            id_list = tqdm(id_list)
+        
+        id_list2 = range(len(formula_list2))
+        
+        for i in id_list:
+            sublist = [(i, j) for j in id_list2]
+            pool_list.append(sublist)
+
+        # Distribute amongst processes
+        if self.verbose: print("Creating Process Pool")
+
+        if self.verbose:
+            print("Scattering compositions between processes and computing distances")
+            scores = process_map(self._pool_ElMD2, pool_list, chunksize=10)
+        else:
+            scores = process_map(self._pool_ElMD2, pool_list)
+
+        if self.verbose: print("Distances computed closing processes")
+
+        if self.verbose: print("Flattening sublists")
+        # Flattens list of lists to single list
+        distances = [[dist for sublist in scores] for dist in sublist]
 
         return np.array(distances, dtype=np.float64)
 
@@ -409,6 +494,29 @@ class ElM2D():
                                elmd_obj.lookup,
                                elmd_obj.periodic_tab[self.metric])
 
+    def _pool_ElMD2(self, input_tuple):
+        """
+        Uses multiprocessing module to call the numba compiled EMD function
+    
+        Parameters
+        ----------
+        input_tuple : TUPLE LIST
+            The various index pairs between the two sets of formulae for which to compute distances.
+    
+        Returns
+        -------
+        LIST
+            Distances between pairs of formula from two sets.    
+        """
+        distances = np.ndarray(len(input_tuple))
+        elmd_obj = ElMD(metric=self.metric)
+    
+        for i, (input_1, input_2) in enumerate(input_tuple):
+            distances[i] = EMD(self.input_mat[input_1],
+                               self.input_mat2[input_2],
+                               elmd_obj.lookup,
+                               elmd_obj.periodic_tab[self.metric])
+    
         return distances
 
     def __repr__(self):
