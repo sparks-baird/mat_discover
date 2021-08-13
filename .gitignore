@@ -1,0 +1,3 @@
+build/**
+ElM2D.egg-info/**
+ElM2D/__pycache__/**
