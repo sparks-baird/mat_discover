@@ -279,7 +279,9 @@ def two_set_distance_matrix(U, V, U_weights, V_weights, out, metric_num):
             out[i, j] = d
 
 
-def dist_matrix(U, V=None, Uw=None, Vw=None, pairs=None, metric="euclidean"):
+def dist_matrix(
+    U, V=None, U_weights=None, V_weights=None, pairs=None, metric="euclidean"
+):
     """
     Compute pairwise distances using Numba/CUDA.
 
@@ -339,29 +341,29 @@ def dist_matrix(U, V=None, Uw=None, Vw=None, pairs=None, metric="euclidean"):
     if metric == "wasserstein":
         U_sorter = np.argsort(U)
         U = np.take_along_axis(U, U_sorter, axis=-1)
-        Uw = np.take_along_axis(Uw, U_sorter, axis=-1)
+        U_weights = np.take_along_axis(U_weights, U_sorter, axis=-1)
 
         if isXY:
             V_sorter = np.argsort(V)
             V = np.take_along_axis(V, V_sorter, axis=-1)
-            Vw = np.take_along_axis(Vw, V_sorter, axis=-1)
+            V_weights = np.take_along_axis(V_weights, V_sorter, axis=-1)
 
     out = np.zeros(shape, dtype=np_float)
 
     if isXY and not pairQ:
         # distance matrix between two sets of vectors
-        two_set_distance_matrix(U, V, Uw, Vw, out, metric_num)
+        two_set_distance_matrix(U, V, U_weights, V_weights, out, metric_num)
 
     elif not isXY and pairQ:
         # specified pairwise distances within single set of vectors
-        sparse_distance_matrix(U, U, Uw, Uw, pairs, out, isXY, metric_num)
+        sparse_distance_matrix(U, U, U_weights, U_weights, pairs, out, isXY, metric_num)
 
     elif not isXY and not pairQ:
         # distance matrix within single set of vectors
-        one_set_distance_matrix(U, Uw, out, metric_num)
+        one_set_distance_matrix(U, U_weights, out, metric_num)
 
     elif isXY and pairQ:
         # specified pairwise distances between two sets of vectors
-        sparse_distance_matrix(U, V, Uw, Vw, pairs, out, isXY, metric_num)
+        sparse_distance_matrix(U, V, U_weights, V_weights, pairs, out, isXY, metric_num)
 
     return out
