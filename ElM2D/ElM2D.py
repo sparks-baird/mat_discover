@@ -33,7 +33,8 @@ Requires umap which may be installed via:
 import os
 from operator import attrgetter
 from importlib import reload
-from multiprocessing import Pool, cpu_count
+
+from multiprocessing import cpu_count, freeze_support
 
 import numpy as np
 import pandas as pd
@@ -47,25 +48,26 @@ import plotly.express as px
 import plotly.io as pio
 
 from tqdm import tqdm
-from tqdm.contrib.concurrent import process_map
+
+# from tqdm.contrib.concurrent import process_map
 
 from ElMD import ElMD, EMD
+
 from njit_dist_matrix import dist_matrix as njit_dist_matrix
 
-
-# number of columns of U and V must be set as env var before import dist_matrix
+# number of columns of U and V must be set as env var before import
 n_elements = len(ElMD().periodic_tab["mod_petti"])
 os.environ["COLUMNS"] = str(n_elements)
 
-# other environment variables (set before importing dist_matrix)
+# other environment variables (set before importing cuda_dist_matrix)
 os.environ["USE_64"] = "0"
 os.environ["INLINE"] = "never"
 os.environ["FASTMATH"] = "1"
-os.environ["TARGET"] = "cuda"
+# os.environ["TARGET"] = "cuda"
 
 import cuda_dist_matrix  # noqa
 
-# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228) # noqa
 reload(cuda_dist_matrix)
 cuda_dist_matrix = cuda_dist_matrix.dist_matrix
 
@@ -439,7 +441,8 @@ class ElM2D:
             formula_list = self.formula_list
 
         elif self.formula_list is None:
-            formula_list = process_map(ElMD, formula_list, chunksize=self.chunksize)
+            E = ElMD
+            formula_list = map(E, formula_list, chunksize=self.chunksize)
             self.formula_list = formula_list
 
         sorted_comps = sorted(formula_list)
@@ -577,7 +580,8 @@ class ElM2D:
                     and computing distances"
             )
 
-        scores = process_map(self._pool_ElMD, pool_list, chunksize=self.chunksize)
+        # scores = process_map(self._pool_ElMD, pool_list, chunksize=self.chunksize)
+        scores = map(self._pool_ElMD, pool_list)
 
         if self.verbose:
             print("Distances computed closing processes")
@@ -659,17 +663,37 @@ class ElM2D:
             elif self.target == "cuda":
                 target = "cuda"
 
-        if target == "cpu":
-            dist_matrix = njit_dist_matrix
-        elif target == "cuda":
-            dist_matrix = cuda_dist_matrix
+        # if target == "cpu":
+        #     dist_matrix = njit_dist_matrix
+        # elif target == "cuda":
+        #     dist_matrix = cuda_dist_matrix
 
         if isXY:
-            distances = dist_matrix(
-                U, V=V, U_weights=U_weights, V_weights=V_weights, metric="wasserstein",
-            )
+            if target == "cpu":
+                distances = njit_dist_matrix(
+                    U,
+                    V=V,
+                    U_weights=U_weights,
+                    V_weights=V_weights,
+                    metric="wasserstein",
+                )
+            elif target == "cuda":
+                distances = cuda_dist_matrix(
+                    U,
+                    V=V,
+                    U_weights=U_weights,
+                    V_weights=V_weights,
+                    metric="wasserstein",
+                )
         else:
-            distances = dist_matrix(U, U_weights=U_weights, metric="wasserstein")
+            if target == "cpu":
+                distances = njit_dist_matrix(
+                    U, U_weights=U_weights, metric="wasserstein"
+                )
+            elif target == "cuda":
+                distances = cuda_dist_matrix(
+                    U, U_weights=U_weights, metric="wasserstein"
+                )
 
         # package
         self.U = U
@@ -790,9 +814,10 @@ class ElM2D:
             f"Constructing compositionally weighted {self.metric} feature vectors \
                 for each composition"
         )
-        vectors = process_map(
-            self._pool_featurize, formula_list, chunksize=self.chunksize
-        )
+        # vectors = process_map(
+        #     self._pool_featurize, formula_list, chunksize=self.chunksize
+        # )
+        vectors = map(self._pool_featurize, formula_list)
 
         print("Complete")
 
@@ -821,17 +846,21 @@ class ElM2D:
         if X is None:
             X = self.formula_list
 
-        elmd = ElMD()
-        dm = []
-        process_pool = Pool(cpu_count())
+        # elmd = ElMD()
+        # dm = []
 
-        for comp_1 in tqdm(X):
-            ionic = process_pool.starmap(elmd.elmd, ((comp_1, comp_2) for comp_2 in y))
-            dm.append(ionic)
+        # with Pool(cpu_count()) as process_pool:
+        #     for comp_1 in tqdm(X):
+        #         ionic = process_pool.starmap(
+        #             elmd.elmd, ((comp_1, comp_2) for comp_2 in y)
+        #         )
+        #         dm.append(ionic)
 
-        distance_matrix = np.array(dm)
+        # distance_matrix = np.array(dm)
 
-        return distance_matrix
+        distances = self.EM2D(X, formulas2=y)
+
+        return distances
 
         # Not working currently, might be faster...
         # intersection_dm = self._process_intersection(X, y, self.n_proc)
@@ -869,7 +898,8 @@ class ElM2D:
                 "Creating Process Pool\nScattering compositions between processes \
                     and computing distances"
             )
-        distances = process_map(self._pool_ElMD, pool_list, chunksize=self.chunksize)
+        # distances = process_map(self._pool_ElMD, pool_list, chunksize=self.chunksize)
+        distances = map(self._pool_ElMD, pool_list)
 
         if self.verbose:
             print("Distances computed closing processes")
@@ -882,4 +912,5 @@ class ElM2D:
 
 
 if __name__ == "__main__":
+    freeze_support()
     main()
