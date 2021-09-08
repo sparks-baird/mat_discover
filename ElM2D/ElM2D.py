@@ -106,7 +106,7 @@ class ElM2D:
         metric="mod_petti",
         chunksize=1,
         umap_kwargs={},
-        edm_algorithm="network_simplex",
+        emd_algorithm="wasserstein",
     ):
 
         self.verbose = verbose
@@ -130,7 +130,7 @@ class ElM2D:
         self.embedder = None  # For accessing UMAP object
         self.embedding = None  # Stores the last embedded coordinates
         self.dm = None  # Stores distance matrix
-        self.edm_algorithm = edm_algorithm
+        self.emd_algorithm = emd_algorithm
 
     def save(self, filepath):
         """
@@ -653,15 +653,15 @@ class ElM2D:
                 U, V=V, U_weights=U_weights, V_weights=V_weights, metric="wasserstein",
             )
         else:
-            distances = dist_matrix(
-                self.U, U_weights=self.U_weights, metric="wasserstein"
-            )
+            distances = dist_matrix(U, U_weights=U_weights, metric="wasserstein")
 
         # package
         self.U = U
-        self.V = V
         self.U_weights = U_weights
-        self.V_weights = V_weights
+
+        if isXY:
+            self.V = V
+            self.V_weights = V_weights
 
         return distances
 
