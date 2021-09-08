@@ -32,19 +32,13 @@ https://networkx.github.io/documentation/networkx-1.10/_modules/networkx/algorit
 Requies umap which may be installed via
 conda install -c conda-forge umap-learn
 """
-import re, json, csv
-
 from multiprocessing import Pool, cpu_count
-
-from copy import deepcopy
-from collections import Counter
 
 import numpy as np
 import pandas as pd
-import pickle as pk 
+import pickle as pk
 
 from scipy.spatial.distance import squareform
-from numba import njit 
 
 import umap
 
@@ -52,13 +46,12 @@ import plotly.express as px
 import plotly.io as pio
 
 from tqdm import tqdm
-from tqdm.contrib.concurrent import process_map  
-# from matminer.datasets import load_dataset
+from tqdm.contrib.concurrent import process_map
 
 from ElMD import ElMD, EMD
 
 def main():
-    df = load_dataset("matbench_expt_gap").head(1001)
+    df = pd.read_csv("train-debug.csv")
 
     df_1 = df.head(500)
     df_2 = df.tail(500)
