@@ -27,8 +27,12 @@ class Testing(unittest.TestCase):
         # df = pd.read_csv("train-debug.csv")
         df = pd.read_csv("stable-mp.csv")
         formulas = df["formula"]
-        sub_formulas = formulas[0:5000]
-        with Timer("fit-wasserstein"):
+        sub_formulas = formulas[0:10]
+        with Timer("fit-cuda-wasserstein"):
+            mapper.fit(sub_formulas, target="cuda")
+            dm_wasserstein = mapper.dm
+
+        with Timer("fit-cpu-wasserstein"):
             mapper.fit(sub_formulas)
             dm_wasserstein = mapper.dm
 
