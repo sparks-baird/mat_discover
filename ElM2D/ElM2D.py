@@ -50,6 +50,8 @@ from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 
 from ElMD import ElMD, EMD
+from njit_dist_matrix import dist_matrix as njit_dist_matrix
+
 
 # number of columns of U and V must be set as env var before import dist_matrix
 n_elements = len(ElMD().periodic_tab["mod_petti"])
@@ -65,7 +67,7 @@ import dist_matrix  # noqa
 
 # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
 reload(dist_matrix)
-dist_matrix = dist_matrix.dist_matrix
+cuda_dist_matrix = dist_matrix.dist_matrix
 
 
 def main():
@@ -107,6 +109,7 @@ class ElM2D:
         chunksize=1,
         umap_kwargs={},
         emd_algorithm="wasserstein",
+        target="cpu",
     ):
 
         self.verbose = verbose
@@ -131,6 +134,7 @@ class ElM2D:
         self.embedding = None  # Stores the last embedded coordinates
         self.dm = None  # Stores distance matrix
         self.emd_algorithm = emd_algorithm
+        self.target = target  # "cuda" or "cpu"
 
     def save(self, filepath):
         """
@@ -283,9 +287,9 @@ class ElM2D:
 
         return fig
 
-    def fit(self, X):
+    def fit(self, X, target="cpu"):
         """
-        Construct and store an ElMD distsance matrix.
+        Construct and store an ElMD distance matrix.
 
         Take an input vector, either of a precomputed distance matrix, or
         an iterable of strings of composition formula, construct an ElMD distance
@@ -330,9 +334,9 @@ class ElM2D:
                 dist_vec = self._process_list(X, n_proc=self.n_proc)
                 self.dm = squareform(dist_vec)
             elif self.emd_algorithm == "wasserstein":
-                self.dm = self.EM2D(X, X)
+                self.dm = self.EM2D(X, X, target=target)
 
-    def fit_transform(self, X, y=None, how="UMAP", n_components=2):
+    def fit_transform(self, X, y=None, how="UMAP", n_components=2, target="cpu"):
         """
         Successively call fit and transform.
 
@@ -353,7 +357,7 @@ class ElM2D:
             DESCRIPTION.
 
         """
-        self.fit(X)
+        self.fit(X, target=target)
         embedding = self.transform(
             how=how, n_components=self.umap_kwargs["n_components"], y=y
         )
@@ -587,7 +591,7 @@ class ElM2D:
 
         return distances
 
-    def EM2D(self, formulas, formulas2=None):
+    def EM2D(self, formulas, formulas2=None, target="cpu"):
         """
         Earth Mover's 2D distances. See also EMD.
 
@@ -647,6 +651,11 @@ class ElM2D:
         U = get_mod_pettis(U_weights)
         if isXY:
             V = get_mod_pettis(V_weights)
+
+        if target == "cpu":
+            dist_matrix = njit_dist_matrix
+        elif target == "cuda":
+            dist_matrix = cuda_dist_matrix
 
         if isXY:
             distances = dist_matrix(
