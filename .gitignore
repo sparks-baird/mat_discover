@@ -3,3 +3,7 @@ ElM2D.egg-info/**
 ElM2D/__pycache__/**
 __pycache__/setup.cpython-37.pyc
 ElM2D/.ipynb_checkpoints/os-exception-stackoverflow-checkpoint.ipynb
+ElM2D/ael_bulk_modulus_voigt/test.csv
+ElM2D/ael_bulk_modulus_voigt/train-debug.csv
+ElM2D/ael_bulk_modulus_voigt/train.csv
+ElM2D/ael_bulk_modulus_voigt/val.csv
