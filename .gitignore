@@ -1,0 +1,5 @@
+build/**
+__pycache__/**
+ElM2D.egg-info/**
+ElM2D/.ipynb_checkpoints/**
+ElM2D/__pycache__/**
