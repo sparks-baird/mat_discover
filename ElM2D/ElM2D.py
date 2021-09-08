@@ -63,11 +63,11 @@ os.environ["INLINE"] = "never"
 os.environ["FASTMATH"] = "1"
 os.environ["TARGET"] = "cuda"
 
-import dist_matrix  # noqa
+import cuda_dist_matrix  # noqa
 
 # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
-reload(dist_matrix)
-cuda_dist_matrix = dist_matrix.dist_matrix
+reload(cuda_dist_matrix)
+cuda_dist_matrix = cuda_dist_matrix.dist_matrix
 
 
 def main():
