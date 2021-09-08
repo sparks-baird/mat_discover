@@ -1,0 +1,1 @@
+This project was created in order to find the "OSError: exception: access violation reading ..." error when compiling Numba code for CUDA platform.
