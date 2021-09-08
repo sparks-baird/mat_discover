@@ -50,16 +50,16 @@ from tqdm.contrib.concurrent import process_map
 
 from ElMD import ElMD, EMD
 
+
 def main():
     df = pd.read_csv("train-debug.csv")
-
     df_1 = df.head(500)
     df_2 = df.tail(500)
     mapper = ElM2D(metric="mod_petti")
     mapper.intersect(df_1["composition"], df_2["composition"])
     sorted_comps = mapper.sort(df["composition"])
     sorted_comps, sorted_inds = mapper.sort(df["composition"], return_inds=True)
-    fts =  mapper.featurize()
+    mapper.featurize()
     print()
 
 class ElM2D():
@@ -68,6 +68,7 @@ class ElM2D():
     distance matrix wrt EMD and a two dimensional embedding using either PCA or 
     UMAP
     '''
+    
     def __init__(self, formula_list=None,
                        n_proc=None,
                        n_components=2,
