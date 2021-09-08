@@ -1,7 +1,5 @@
 """
-A class to construct an ElM2D plot of a list of inorganic compostions based on
-the Element Movers Distance Between These.
-
+Construct ElM2D plot of a list of inorganic compostions via Element Movers Distance.
 
 Copyright (C) 2021  Cameron Hargreaves
 
@@ -29,8 +27,8 @@ https://iopscience.iop.org/article/10.1088/1367-2630/18/9/093011
 Network simplex source modified to use numba from
 https://networkx.github.io/documentation/networkx-1.10/_modules/networkx/algorithms/flow/networksimplex.html#network_simplex
 
-Requies umap which may be installed via
-conda install -c conda-forge umap-learn
+Requires umap which may be installed via:
+    conda install -c conda-forge umap-learn
 """
 from multiprocessing import Pool, cpu_count
 
@@ -52,6 +50,14 @@ from ElMD import ElMD, EMD
 
 
 def main():
+    """
+    Perform a test of basic features such as intersection, sorting, and featurization.
+
+    Returns
+    -------
+    None.
+
+    """
     df = pd.read_csv("train-debug.csv")
     df_1 = df.head(500)
     df_2 = df.tail(500)
@@ -62,53 +68,83 @@ def main():
     mapper.featurize()
     print()
 
-class ElM2D():
-    '''
-    This class takes in a list of compound formula and creates the intercompound
-    distance matrix wrt EMD and a two dimensional embedding using either PCA or 
-    UMAP
-    '''
-    
-    def __init__(self, formula_list=None,
-                       n_proc=None,
-                       n_components=2,
-                       verbose=True,
-                       metric="mod_petti",
-                       chunksize=1,
-                       umap_kwargs={}):
+
+class ElM2D:
+    """
+    Create intercompound EMD distance matrix and embedding via list of formulas.
+
+    Embedding types are:
+        - PCA
+        - UMAP
+    """
+
+    def __init__(
+        self,
+        formula_list=None,
+        n_proc=None,
+        n_components=2,
+        verbose=True,
+        metric="mod_petti",
+        chunksize=1,
+        umap_kwargs={},
+    ):
 
         self.verbose = verbose
 
         if n_proc is None:
             self.n_proc = cpu_count()
-        else: 
+        else:
             self.n_proc = n_proc
 
-        self.formula_list = formula_list # Input formulae
+        self.formula_list = formula_list  # Input formulae
 
         self.metric = metric
-        self.chunksize=chunksize
+        self.chunksize = chunksize
 
         self.umap_kwargs = umap_kwargs
 
         self.umap_kwargs["n_components"] = n_components
         self.umap_kwargs["metric"] = "precomputed"
 
-        self.input_mat = None    # Pettifor vector representation of formula
-        self.embedder = None     # For accessing UMAP object
-        self.embedding = None    # Stores the last embedded coordinates
-        self.dm = None           # Stores distance matrix
-
+        self.input_mat = None  # Pettifor vector representation of formula
+        self.embedder = None  # For accessing UMAP object
+        self.embedding = None  # Stores the last embedded coordinates
+        self.dm = None  # Stores distance matrix
 
     def save(self, filepath):
-        # Save all variables except for the distance matrix
+        """
+        Save all variables except for the distance matrix.
+
+        Parameters
+        ----------
+        filepath : str
+            Filepath for which to save the pickle.
+
+        Returns
+        -------
+        None.
+
+        """
         save_dict = {k: v for k, v in self.__dict__.items()}
-        f_handle = open(filepath + ".pk", 'wb')
+        f_handle = open(filepath + ".pk", "wb")
         pk.dump(save_dict, f_handle)
         f_handle.close()
-        
+
     def load(self, filepath):
-        f_handle = open(filepath + ".pk", 'rb')
+        """
+        Load variables from pickle file.
+
+        Parameters
+        ----------
+        filepath : str
+            Filepath for which to load the pickle.
+
+        Returns
+        -------
+        None.
+
+        """
+        f_handle = open(filepath + ".pk", "rb")
         load_dict = pk.load(f_handle)
         f_handle.close()
 
@@ -116,31 +152,106 @@ class ElM2D():
             self.__dict__[k] = v
 
     def plot(self, fp=None, color=None, embedding=None):
+        """
+        Generate plots based on embedding dimension.
+
+        Parameters
+        ----------
+        fp : str, optional
+            Filepath for which to write plotly html. The default is None.
+        color : str, optional
+            Color to use for scatter points. The default is None.
+        embedding : 2D array, optional
+            From self.embedding if not specified. The default is None.
+
+        Returns
+        -------
+        fig : plotly figure
+            Handle to the plotly figure.
+
+        """
         if self.embedding is None:
-            print("No embedding in memory, call transform() first.")    
-            return 
+            print("No embedding in memory, call transform() first.")
+            return
 
         if embedding is None:
             embedding = self.embedding
 
+        x = embedding[:, 0]
+        y = embedding[:, 1]
         if embedding.shape[1] == 2:
             if color is None:
-                df = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1], "formula": self.formula_list})
-                fig = px.scatter(df, x="x", y="y", hover_name="formula", hover_data={"x":False, "y":False})
+                df = pd.DataFrame({"x": x, "y": y, "formula": self.formula_list})
+                fig = px.scatter(
+                    df,
+                    x="x",
+                    y="y",
+                    hover_name="formula",
+                    hover_data={"x": False, "y": False},
+                )
 
             else:
-                df = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1], "formula": self.formula_list, color.name: color.to_numpy()})
-                fig = px.scatter(df, x="x", y="y",color=color.name, hover_data={"formula": True, color.name: True, "x":False, "y":False})
+                df = pd.DataFrame(
+                    {
+                        "x": x,
+                        "y": y,
+                        "formula": self.formula_list,
+                        color.name: color.to_numpy(),
+                    }
+                )
+                fig = px.scatter(
+                    df,
+                    x="x",
+                    y="y",
+                    color=color.name,
+                    hover_data={
+                        "formula": True,
+                        color.name: True,
+                        "x": False,
+                        "y": False,
+                    },
+                )
 
         elif embedding.shape[1] == 3:
+            z = embedding[:, 2]
             if color is None:
-                df = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1], "z": embedding[:, 2], "formula": self.formula_list})
-                fig = px.scatter_3d(df, x="x", y="y", z="z", hover_name="formula", hover_data={"x":False, "y":False, "z":False})
+                df = pd.DataFrame(
+                    {"x": x, "y": y, "z": z, "formula": self.formula_list}
+                )
+                fig = px.scatter_3d(
+                    df,
+                    x="x",
+                    y="y",
+                    z="z",
+                    hover_name="formula",
+                    hover_data={"x": False, "y": False, "z": False},
+                )
 
             else:
-                df = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1], "z": embedding[:, 2], "formula": self.formula_list, color.name: color.to_numpy()})
-                fig = px.scatter_3d(df, x="x", y="y", z="z", color=color.name, hover_data={"formula": True, color.name: True, "x":False, "y":False, "z":False})
-        
+                df = pd.DataFrame(
+                    {
+                        "x": x,
+                        "y": y,
+                        "z": z,
+                        "formula": self.formula_list,
+                        color.name: color.to_numpy(),
+                    }
+                )
+                fig = px.scatter_3d(
+                    df,
+                    x="x",
+                    y="y",
+                    z="z",
+                    color=color.name,
+                    hover_data={
+                        "formula": True,
+                        color.name: True,
+                        "x": False,
+                        "y": False,
+                        "z": False,
+                    },
+                )
+
         elif embedding.shape[1] > 3:
             print("Too many dimensions to plot directly, using first three components")
             fig = self.plot(fp=fp, color=color, embedding=embedding[:, :3])
@@ -152,19 +263,30 @@ class ElM2D():
         return fig
 
     def fit(self, X):
-        '''
+        """
+        Construct and store an ElMD distsance matrix.
+
         Take an input vector, either of a precomputed distance matrix, or
         an iterable of strings of composition formula, construct an ElMD distance
         matrix and store to self.dm.
 
-        Input
-        X - A list of compound formula strings, or a precomputed distance matrix
-        (ensure self.metric = "precomputed")
-        '''
+        Parameters
+        ----------
+        X : list of str OR 2D array
+            A list of compound formula strings, or a precomputed distance matrix. If
+            using a precomputed distance matrix, ensure self.metric == "precomputed"
+
+
+        Returns
+        -------
+        None.
+
+        """
         self.formula_list = X
         n = len(X)
 
-        if self.verbose: print(f"Fitting {self.metric} kernel matrix")
+        if self.verbose:
+            print(f"Fitting {self.metric} kernel matrix")
         if self.metric == "precomputed":
             self.dm = X
 
@@ -176,86 +298,132 @@ class ElM2D():
                 x = ElMD(X[i], metric=self.metric)
                 for j in range(i + 1, n):
                     distances.append(x.elmd(X[j]))
-            
+
             dist_vec = np.array(distances)
             self.dm = squareform(dist_vec)
 
         else:
-            if self.verbose: print("Constructing distances")
+            if self.verbose:
+                print("Constructing distances")
             dist_vec = self._process_list(X, n_proc=self.n_proc)
             self.dm = squareform(dist_vec)
 
     def fit_transform(self, X, y=None, how="UMAP", n_components=2):
         """
-        Successively call fit and transform
+        Successively call fit and transform.
 
-        Parameters:
-        X - List of compositions to embed 
-        how - "UMAP" or "PCA", the embedding technique to use
-        n_components - The number of dimensions to embed to
+        Parameters
+        ----------
+        X : list of str
+            Compositions to embed.
+        y : 1D numerical array, optional
+            Target values to use for supervised UMAP embedding. The default is None.
+        how : str, optional
+            How to perform embedding ("UMAP" or "PCA"). The default is "UMAP".
+        n_components : int, optional
+            Number of dimensions to embed to. The default is 2.
+
+        Returns
+        -------
+        embedding : TYPE
+            DESCRIPTION.
+
         """
         self.fit(X)
-        embedding = self.transform(how=how, n_components=self.umap_kwargs["n_components"], y=y)
+        embedding = self.transform(
+            how=how, n_components=self.umap_kwargs["n_components"], y=y
+        )
         return embedding
 
     def transform(self, how="UMAP", n_components=2, y=None):
         """
-        Call the selected embedding method (UMAP or PCA) and embed to 
-        n_components dimensions.
+        Call the selected embedding method (UMAP or PCA) and embed.
+
+        Parameters
+        ----------
+        how : str, optional
+            How to perform embedding ("UMAP" or "PCA"). The default is "UMAP".
+            The default is "UMAP".
+        n_components : int, optional
+            Number of dimensions to embed to. The default is 2.
+        y : 1D numerical array, optional
+            Target values to use for supervised UMAP embedding. The default is None.
+
+        Returns
+        -------
+        2D array
+            UMAP or PCA embedding.
+
+        """
+        """
+
         """
         if self.dm is None:
             print("No distance matrix computed, run fit() first")
-            return 
+            return
 
+        n = self.umap_kwargs["n_components"]
         if how == "UMAP":
             if y is None:
-                if self.verbose: print(f"Constructing UMAP Embedding to {self.umap_kwargs['n_components']} dimensions")
+                if self.verbose:
+                    print(f"Constructing UMAP Embedding to {n} dimensions")
                 self.embedder = umap.UMAP(**self.umap_kwargs)
                 self.embedding = self.embedder.fit_transform(self.dm)
 
             else:
                 y = y.to_numpy(dtype=float)
-                if self.verbose: print(f"Constructing UMAP Embedding to {self.umap_kwargs['n_components']} dimensions, with a targetted embedding")
+                if self.verbose:
+                    print(
+                        f"Constructing UMAP Embedding to {n} dimensions, with \
+                            a targeted embedding"
+                    )
                 self.embedder = umap.UMAP(**self.umap_kwargs)
                 self.embedding = self.embedder.fit_transform(self.dm, y)
 
         elif how == "PCA":
-            if self.verbose: print(f"Constructing PCA Embedding to {self.umap_kwargs['n_components']} dimensions")
+            if self.verbose:
+                print(f"Constructing PCA Embedding to {n} dimensions")
             self.embedding = self.PCA(n_components=self.umap_kwargs["n_components"])
-            if self.verbose: print(f"Finished Embedding")
+            if self.verbose:
+                print("Finished Embedding")
 
         return self.embedding
 
     def PCA(self, n_components=5):
         """
-        Multidimensional Scaling - Given a matrix of interpoint distances,
-        find a set of low dimensional points that have similar interpoint
+        Perform multidimensional scaling (MDS) on a matrix of interpoint distances.
+
+        This finds a set of low dimensional points that have similar interpoint
         distances.
-        https://github.com/stober/mds/blob/master/src/mds.py
+        Source: https://github.com/stober/mds/blob/master/src/mds.py
         """
-
         if self.dm is None:
-            raise Exception("No distance matrix computed, call fit_transform with a list of compositions, or load a saved matrix with load_dm()")
- 
+            raise Exception(
+                "No distance matrix computed, call fit_transform with a list of \
+                    compositions, or load a saved matrix with load_dm()"
+            )
 
-        (n,n) = self.dm.shape
+        (n, n) = self.dm.shape
 
-        if self.verbose: print(f"Constructing {n}x{n_components} Gram matrix")
-        E = (-0.5 * self.dm**2)
+        if self.verbose:
+            print(f"Constructing {n}x{n_components} Gram matrix")
+        E = -0.5 * self.dm ** 2
 
         # Use this matrix to get column and row means
-        Er = np.mat(np.mean(E,1))
-        Es = np.mat(np.mean(E,0))
+        Er = np.mat(np.mean(E, 1))
+        Es = np.mat(np.mean(E, 0))
 
         # From Principles of Multivariate Analysis: A User's Perspective (page 107).
         F = np.array(E - np.transpose(Er) - Es + np.mean(E))
 
-        if self.verbose: print(f"Computing Eigen Decomposition")
+        if self.verbose:
+            print("Computing Eigen Decomposition")
         [U, S, V] = np.linalg.svd(F)
 
         Y = U * np.sqrt(S)
 
-        if self.verbose: print(f"PCA Projected Points Computed")
+        if self.verbose:
+            print("PCA Projected Points Computed")
         self.mds_points = Y
 
         return Y[:, :n_components]
@@ -272,9 +440,11 @@ class ElM2D():
         sorted_indices = mapper.sort()
         sorted_comps = mapper.sorted_comps
         """
-
         if formula_list is None and self.formula_list is None:
-            raise Exception("Must input a list of compositions or fit a list of compositions first") # TODO Exceptions?
+            # TODO Exceptions?
+            raise Exception(
+                "Must input a list of compositions or fit a list of compositions first"
+            )
 
         elif formula_list is None:
             formula_list = self.formula_list
@@ -288,23 +458,23 @@ class ElM2D():
 
         return sorted_comps
 
-
-
     def cross_validate(self, y=None, X=None, k=5, shuffle=True, seed=42):
         """
-        Implementation of cross validation with K-Folds.
-        
-        Splits the formula_list into k equal sized partitions and returns five 
-        tuples of training and test sets. Returns a list of length k, each item 
-        containing 2 (4 with target data) numpy arrays of formulae of 
+        Cross validate with K-Folds.
+
+        Splits the formula_list into k equal sized partitions and returns five
+        tuples of training and test sets. Returns a list of length k, each item
+        containing 2 (4 with target data) numpy arrays of formulae of
         length n - n/k and n/k.
 
-        Parameters:
+        Parameters
+        ----------
             y=None: (optional) a numpy array of target properties to cross validate
             k=5: Number of k-folds
             shuffle=True: whether to shuffle the input formulae or not
 
-        Usage:
+        Usage
+        -----
             cvs = mapper.cross_validate()
             for i, (X_train, X_test) in enumerate(cvs):
                 sub_mapper = ElM2D()
@@ -320,29 +490,29 @@ class ElM2D():
                 errors.append(mae(y_pred, y_test))
             print(np.mean(errors))
         """
-        inds = np.arange(len(self.formula_list)) # TODO Exception
+        inds = np.arange(len(self.formula_list))  # TODO Exception
 
         if shuffle:
-            np.random.seed(seed) 
+            np.random.seed(seed)
             np.random.shuffle(inds)
 
         if X is None:
             formulas = self.formula_list.to_numpy(str)[inds]
-        
+
         else:
             formulas = X
-        
+
         splits = np.array_split(formulas, k)
 
         X_ret = []
-        
+
         for i in range(k):
             train_splits = np.delete(np.arange(k), i)
             X_train = splits[train_splits[0]]
 
             for index in train_splits[1:]:
                 X_train = np.concatenate((X_train, splits[index]))
-            
+
             X_test = splits[i]
             X_ret.append((X_train, X_test))
 
@@ -359,26 +529,43 @@ class ElM2D():
 
             for index in train_splits[1:]:
                 y_train = np.concatenate((y_train, y_splits[index]))
-            
+
             y_test = y_splits[i]
             y_ret.append((y_train, y_test))
 
         return [(X_ret[i][0], X_ret[i][1], y_ret[i][0], y_ret[i][1]) for i in range(k)]
 
     def _process_list(self, formula_list, n_proc):
-        '''
-        Given an iterable list of formulas in composition form
-        use multiple processes to convert these to pettifor ratio
-        vector form, and then calculate the distance between these
-        pairings, returning this as a condensed distance vector
-        '''
+        """
+        Process a list of formulas into a pairwise distance matrix.
+
+        Parameters
+        ----------
+        formula_list : list of str
+            Chemical formulas.
+        n_proc : int
+            number of processors (i.e. CPU cores).
+
+        Returns
+        -------
+        TYPE
+            DESCRIPTION.
+
+        """
+        """
+
+        Given an iterable list of formulas in composition form use multiple processes
+        to convert these to pettifor ratio vector form, and then calculate the
+        distance between these pairings, returning this as a condensed distance vector.
+        """
         pool_list = []
 
-
         n_elements = len(ElMD().periodic_tab[self.metric])
-        self.input_mat = np.ndarray(shape=(len(formula_list), n_elements), dtype=np.float64)
+        self.input_mat = np.ndarray(
+            shape=(len(formula_list), n_elements), dtype=np.float64
+        )
 
-        if self.verbose: 
+        if self.verbose:
             print("Parsing Formula")
             for i, formula in tqdm(list(enumerate(formula_list))):
                 self.input_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
@@ -387,7 +574,7 @@ class ElM2D():
                 self.input_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
 
         # Create input pairings
-        if self.verbose: 
+        if self.verbose:
             print("Constructing joint compositional pairings")
             for i in tqdm(range(len(formula_list) - 1)):
                 sublist = [(i, j) for j in range(i + 1, len(formula_list))]
@@ -398,55 +585,72 @@ class ElM2D():
                 pool_list.append(sublist)
 
         # Distribute amongst processes
-        if self.verbose: print("Creating Process Pool\nScattering compositions between processes and computing distances")
-        
-        scores = process_map(self._pool_ElMD, pool_list, chunksize=self.chunksize)
-        
-        if self.verbose: print("Distances computed closing processes")
+        if self.verbose:
+            print(
+                "Creating Process Pool\nScattering compositions between processes \
+                    and computing distances"
+            )
 
-        if self.verbose: print("Flattening sublists")
+        scores = process_map(self._pool_ElMD, pool_list, chunksize=self.chunksize)
+
+        if self.verbose:
+            print("Distances computed closing processes")
+
+        if self.verbose:
+            print("Flattening sublists")
         # Flattens list of lists to single list
-        distances = [dist for sublist in scores for dist in sublist]
-       
-        return np.array(distances, dtype=np.float64)
+        distances = np.array(
+            [dist for sublist in scores for dist in sublist], dtype=np.float64
+        )
+
+        return distances
 
     def _pool_ElMD(self, input_tuple):
-        '''
-        Uses multiprocessing module to call the numba compiled EMD function
-        '''
+        """Use multiprocessing module to call the numba compiled EMD function."""
         distances = np.ndarray(len(input_tuple))
         elmd_obj = ElMD(metric=self.metric)
-        
+
         for i, (input_1, input_2) in enumerate(input_tuple):
-            distances[i] = EMD(self.input_mat[input_1], 
-                               self.input_mat[input_2],
-                               elmd_obj.lookup,
-                               elmd_obj.periodic_tab[self.metric])
+            distances[i] = EMD(
+                self.input_mat[input_1],
+                self.input_mat[input_2],
+                elmd_obj.lookup,
+                elmd_obj.periodic_tab[self.metric],
+            )
 
         return distances
 
     def __repr__(self):
+        """Summary of ElM2D object: length, diversity, and max distance if dm exists."""
         if self.dm is not None:
-            return f"ElM2D(size={len(self.formula_list)},  chemical_diversity={np.mean(self.dm)} +/- {np.std(self.dm)}, maximal_distance={np.max(self.dm)})"
+            return f"ElM2D(size={len(self.formula_list)},  \
+                chemical_diversity={np.mean(self.dm)} +/- {np.std(self.dm)}, \
+                    maximal_distance={np.max(self.dm)})"
         else:
-            return f"ElM2D()"
+            return "ElM2D()"
 
     def export_dm(self, path):
+        """Export distance matrix as .csv to path."""
         np.savetxt(path, self.dm, delimiter=",")
-        
+
     def import_dm(self, path):
+        """Import distance matrix from .csv file located at path."""
         self.dm = np.loadtxt(path, delimiter=",")
 
     def export_embedding(self, path):
+        """Export embedding as .csv file to path."""
         np.savetxt(path, self.embedding, delimiter=",")
-        
+
     def import_embedding(self, path):
+        """Import embedding from .csv file located at path."""
         self.embedding = np.loadtxt(path, delimiter=",")
 
     def _pool_featurize(self, comp):
+        """Extract the feature vector for a given composition (comp)."""
         return ElMD(comp, metric=self.metric).feature_vector
 
     def featurize(self, formula_list=None, how="mean"):
+        """Featurize a list of formulas."""
         if formula_list is None and self.formula_list is None:
             raise Exception("You must enter a list of compositions first")
 
@@ -456,15 +660,24 @@ class ElM2D():
         elif self.formula_list is None:
             self.formula_list = formula_list
 
-        elmd_obj = ElMD(metric=self.metric)
+        # elmd_obj = ElMD(metric=self.metric)
 
         # if type(elmd_obj.periodic_tab[self.metric]["H"]) is int:
-        #     vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric])))
+        #     vectors = np.ndarray(
+        #         (len(compositions), len(elmd_obj.periodic_tab[self.metric]))
+        #     )
         # else:
-        #     vectors = np.ndarray((len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"])))
+        #     vectors = np.ndarray(
+        #         (len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"]))
+        #     )
 
-        print(f"Constructing compositionally weighted {self.metric} feature vectors for each composition")
-        vectors = process_map(self._pool_featurize, formula_list, chunksize=self.chunksize)
+        print(
+            f"Constructing compositionally weighted {self.metric} feature vectors \
+                for each composition"
+        )
+        vectors = process_map(
+            self._pool_featurize, formula_list, chunksize=self.chunksize
+        )
 
         print("Complete")
 
@@ -472,9 +685,11 @@ class ElM2D():
 
     def intersect(self, y=None, X=None):
         """
-        Takes in a second formula list, y, and computes the intersectional distance 
+        Find intersectional distance matrix between two formula lists.
+
+        Takes in a second formula list, y, and computes the intersectional distance
         matrix between the two under the given metric. If a two formula lists
-        are given the intersection between the two is computed, returning a 
+        are given the intersection between the two is computed, returning a
         distance matrix of the form:
 
               X_0             X_1            X_2            ...
@@ -484,7 +699,10 @@ class ElM2D():
         ...
         """
         if X is None and y is None:
-            raise Exception("Must enter two lists of formula or fit a list of formula and enter an intersecting list of formula")
+            raise Exception(
+                "Must enter two lists of formula or fit a list of formula and enter \
+                    an intersecting list of formula"
+            )
         if X is None:
             X = self.formula_list
 
@@ -495,7 +713,7 @@ class ElM2D():
         for comp_1 in tqdm(X):
             ionic = process_pool.starmap(elmd.elmd, ((comp_1, comp_2) for comp_2 in y))
             dm.append(ionic)
-        
+
         distance_matrix = np.array(dm)
 
         return distance_matrix
@@ -504,43 +722,49 @@ class ElM2D():
         # intersection_dm = self._process_intersection(X, y, self.n_proc)
 
         # return intersection_dm
-        
 
     def _process_intersection(self, X, y, n_proc):
-        '''
-        Compute the intersection of two lists of compositions
-        '''
+        """Compute the intersection of two lists of compositions."""
         pool_list = []
 
         n_elements = len(ElMD().periodic_tab[self.metric])
         X_mat = np.ndarray(shape=(len(X), n_elements), dtype=np.float64)
         y_mat = np.ndarray(shape=(len(y), n_elements), dtype=np.float64)
 
-        if self.verbose: print("Parsing X Formula")
+        if self.verbose:
+            print("Parsing X Formula")
         for i, formula in tqdm(list(enumerate(X))):
             X_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
 
-        if self.verbose: print("Parsing Y Formula")
+        if self.verbose:
+            print("Parsing Y Formula")
         for i, formula in tqdm(list(enumerate(y))):
             y_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
 
         # Create input pairings
-        if self.verbose: print("Constructing joint compositional pairings")
+        if self.verbose:
+            print("Constructing joint compositional pairings")
         for y in tqdm(range(len(y_mat))):
             sublist = [(y, x) for x in range(len(X_mat))]
             pool_list.append(sublist)
-        
+
         # Distribute amongst processes
-        if self.verbose: print("Creating Process Pool\nScattering compositions between processes and computing distances")
+        if self.verbose:
+            print(
+                "Creating Process Pool\nScattering compositions between processes \
+                    and computing distances"
+            )
         distances = process_map(self._pool_ElMD, pool_list, chunksize=self.chunksize)
 
-        if self.verbose: print("Distances computed closing processes")
+        if self.verbose:
+            print("Distances computed closing processes")
 
         # if self.verbose: print("Flattening sublists")
         # Flattens list of lists to single list
         # distances = [dist for sublist in scores for dist in sublist]
-       
+
         return np.array(distances, dtype=np.float64)
+
 
 if __name__ == "__main__":
     main()
