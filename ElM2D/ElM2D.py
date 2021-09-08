@@ -30,6 +30,9 @@ https://networkx.github.io/documentation/networkx-1.10/_modules/networkx/algorit
 Requires umap which may be installed via:
     conda install -c conda-forge umap-learn
 """
+import os
+from operator import attrgetter
+from importlib import reload
 from multiprocessing import Pool, cpu_count
 
 import numpy as np
@@ -47,6 +50,22 @@ from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 
 from ElMD import ElMD, EMD
+
+# number of columns of U and V must be set as env var before import dist_matrix
+n_elements = len(ElMD().periodic_tab["mod_petti"])
+os.environ["COLUMNS"] = str(n_elements)
+
+# other environment variables (set before importing dist_matrix)
+os.environ["USE_64"] = "0"
+os.environ["INLINE"] = "never"
+os.environ["FASTMATH"] = "1"
+os.environ["TARGET"] = "cuda"
+
+import dist_matrix  # noqa
+
+# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+reload(dist_matrix)
+dist_matrix = dist_matrix.dist_matrix
 
 
 def main():
@@ -87,6 +106,7 @@ class ElM2D:
         metric="mod_petti",
         chunksize=1,
         umap_kwargs={},
+        edm_algorithm="network_simplex",
     ):
 
         self.verbose = verbose
@@ -110,6 +130,7 @@ class ElM2D:
         self.embedder = None  # For accessing UMAP object
         self.embedding = None  # Stores the last embedded coordinates
         self.dm = None  # Stores distance matrix
+        self.edm_algorithm = edm_algorithm
 
     def save(self, filepath):
         """
@@ -305,8 +326,11 @@ class ElM2D:
         else:
             if self.verbose:
                 print("Constructing distances")
-            dist_vec = self._process_list(X, n_proc=self.n_proc)
-            self.dm = squareform(dist_vec)
+            if self.emd_algorithm == "network_simplex":
+                dist_vec = self._process_list(X, n_proc=self.n_proc)
+                self.dm = squareform(dist_vec)
+            elif self.emd_algorithm == "wasserstein":
+                self.dm = self.EM2D(X, X)
 
     def fit_transform(self, X, y=None, how="UMAP", n_components=2):
         """
@@ -388,45 +412,6 @@ class ElM2D:
                 print("Finished Embedding")
 
         return self.embedding
-
-    def PCA(self, n_components=5):
-        """
-        Perform multidimensional scaling (MDS) on a matrix of interpoint distances.
-
-        This finds a set of low dimensional points that have similar interpoint
-        distances.
-        Source: https://github.com/stober/mds/blob/master/src/mds.py
-        """
-        if self.dm is None:
-            raise Exception(
-                "No distance matrix computed, call fit_transform with a list of \
-                    compositions, or load a saved matrix with load_dm()"
-            )
-
-        (n, n) = self.dm.shape
-
-        if self.verbose:
-            print(f"Constructing {n}x{n_components} Gram matrix")
-        E = -0.5 * self.dm ** 2
-
-        # Use this matrix to get column and row means
-        Er = np.mat(np.mean(E, 1))
-        Es = np.mat(np.mean(E, 0))
-
-        # From Principles of Multivariate Analysis: A User's Perspective (page 107).
-        F = np.array(E - np.transpose(Er) - Es + np.mean(E))
-
-        if self.verbose:
-            print("Computing Eigen Decomposition")
-        [U, S, V] = np.linalg.svd(F)
-
-        Y = U * np.sqrt(S)
-
-        if self.verbose:
-            print("PCA Projected Points Computed")
-        self.mds_points = Y
-
-        return Y[:, :n_components]
 
     def sort(self, formula_list=None):
         """
@@ -548,11 +533,8 @@ class ElM2D:
 
         Returns
         -------
-        TYPE
-            DESCRIPTION.
-
-        """
-        """
+        2D array
+            2D distance matrix.
 
         Given an iterable list of formulas in composition form use multiple processes
         to convert these to pettifor ratio vector form, and then calculate the
@@ -604,6 +586,123 @@ class ElM2D:
         )
 
         return distances
+
+    def EM2D(self, formulas, formulas2=None):
+        """
+        Earth Mover's 2D distances. See also EMD.
+
+        Parameters
+        ----------
+        formulas : list of str
+            First list of formulas for which to compute distances. If only formulas
+            is specified, then a `pdist`-like array is returned, i.e. pairwise
+            distances within a single set.
+        formulas2 : list of str, optional
+                Second list of formulas, which if specified, causes `cdist`-like
+                behavior (i.e. pairwise distances between two sets).
+
+        Returns
+        -------
+        2D array
+            Pairwise distances.
+
+        """
+        isXY = formulas2 is None
+        E = ElMD()
+
+        def gen_ratio_vector(comp):
+            """Create a numpy array from a composition dictionary."""
+            if isinstance(comp, str):
+                comp = E._parse_formula(comp)
+                comp = E._normalise_composition(comp)
+
+            sorted_keys = sorted(comp.keys())
+            comp_labels = [E._get_position(k) for k in sorted_keys]
+            comp_ratios = [comp[k] for k in sorted_keys]
+
+            indices = np.array(comp_labels, dtype=np.int64)
+            ratios = np.array(comp_ratios, dtype=np.float64)
+
+            numeric = np.zeros(shape=len(E.periodic_tab[E.metric]), dtype=np.float64)
+            numeric[indices] = ratios
+
+            return numeric
+
+        def gen_ratio_vectors(comps):
+            return np.array([gen_ratio_vector(comp) for comp in comps])
+
+        U_weights = gen_ratio_vectors(formulas)
+        if isXY:
+            V_weights = gen_ratio_vectors(formulas2)
+
+        lookup, periodic_tab, metric = attrgetter("lookup", "periodic_tab", "metric")(E)
+        ptab_metric = periodic_tab[metric]
+
+        def get_mod_petti(x):
+            return [ptab_metric[lookup[a]] if b > 0 else 0 for a, b in enumerate(x)]
+
+        def get_mod_pettis(X):
+            return np.array([get_mod_petti(x) for x in X])
+
+        U = get_mod_pettis(U_weights)
+        if isXY:
+            V = get_mod_pettis(V_weights)
+
+        if isXY:
+            distances = dist_matrix(
+                U, V=V, U_weights=U_weights, V_weights=V_weights, metric="wasserstein",
+            )
+        else:
+            distances = dist_matrix(
+                self.U, U_weights=self.U_weights, metric="wasserstein"
+            )
+
+        # package
+        self.U = U
+        self.V = V
+        self.U_weights = U_weights
+        self.V_weights = V_weights
+
+        return distances
+
+    def PCA(self, n_components=5):
+        """
+        Perform multidimensional scaling (MDS) on a matrix of interpoint distances.
+
+        This finds a set of low dimensional points that have similar interpoint
+        distances.
+        Source: https://github.com/stober/mds/blob/master/src/mds.py
+        """
+        if self.dm == []:
+            raise Exception(
+                "No distance matrix computed, call fit_transform with a list of \
+                    compositions, or load a saved matrix with load_dm()"
+            )
+
+        (n, n) = self.dm.shape
+
+        if self.verbose:
+            print(f"Constructing {n}x{n_components} Gram matrix")
+        E = -0.5 * self.dm ** 2
+
+        # Use this matrix to get column and row means
+        Er = np.mat(np.mean(E, 1))
+        Es = np.mat(np.mean(E, 0))
+
+        # From Principles of Multivariate Analysis: A User's Perspective (page 107).
+        F = np.array(E - np.transpose(Er) - Es + np.mean(E))
+
+        if self.verbose:
+            print("Computing Eigen Decomposition")
+        [U, S, V] = np.linalg.svd(F)
+
+        Y = U * np.sqrt(S)
+
+        if self.verbose:
+            print("PCA Projected Points Computed")
+        self.mds_points = Y
+
+        return Y[:, :n_components]
 
     def _pool_ElMD(self, input_tuple):
         """Use multiprocessing module to call the numba compiled EMD function."""
