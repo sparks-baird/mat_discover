@@ -109,7 +109,7 @@ class ElM2D:
         chunksize=1,
         umap_kwargs={},
         emd_algorithm="wasserstein",
-        target="cpu",
+        target=None,
     ):
 
         self.verbose = verbose
@@ -287,7 +287,7 @@ class ElM2D:
 
         return fig
 
-    def fit(self, X, target="cpu"):
+    def fit(self, X, target=None):
         """
         Construct and store an ElMD distance matrix.
 
@@ -336,7 +336,7 @@ class ElM2D:
             elif self.emd_algorithm == "wasserstein":
                 self.dm = self.EM2D(X, X, target=target)
 
-    def fit_transform(self, X, y=None, how="UMAP", n_components=2, target="cpu"):
+    def fit_transform(self, X, y=None, how="UMAP", n_components=2, target=None):
         """
         Successively call fit and transform.
 
@@ -651,6 +651,13 @@ class ElM2D:
         U = get_mod_pettis(U_weights)
         if isXY:
             V = get_mod_pettis(V_weights)
+
+        # decide whether to use cpu or cuda version
+        if target is None:
+            if self.target is None or self.target == "cpu":
+                target = "cpu"
+            elif self.target == "cuda":
+                target = "cuda"
 
         if target == "cpu":
             dist_matrix = njit_dist_matrix
