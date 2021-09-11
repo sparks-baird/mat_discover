@@ -21,11 +21,11 @@ os.environ["TARGET"] = "cuda"
 
 from helper import Timer  # noqa
 from numba.cuda.testing import unittest, CUDATestCase  # noqa
-import dist_matrix  # noqa
+import cuda_dist_matrix  # noqa
 
 # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
-reload(dist_matrix)
-dist_matrix = dist_matrix.dist_matrix
+reload(cuda_dist_matrix)
+dist_matrix = cuda_dist_matrix.dist_matrix
 
 verbose_test = True
 
@@ -74,7 +74,8 @@ class TestDistMat(CUDATestCase):
             """
             np.random.seed(42)
             [U, V, U_weights, V_weights] = [
-                np.random.rand(rows, cols) for i in range(4)]
+                np.random.rand(rows, cols) for i in range(4)
+            ]
             return U, V, U_weights, V_weights
 
         def my_wasserstein_distance(u_uw, v_vw):
@@ -97,13 +98,12 @@ class TestDistMat(CUDATestCase):
             # split into values and weights
             n = len(u_uw)
             i = n // 2
-            u = u_uw[0: i]
-            uw = u_uw[i: n]
-            v = v_vw[0: i]
-            vw = v_vw[i: n]
+            u = u_uw[0:i]
+            uw = u_uw[i:n]
+            v = v_vw[0:i]
+            vw = v_vw[i:n]
             # calculate distance
-            distance = scipy_wasserstein_distance(
-                u, v, u_weights=uw, v_weights=vw)
+            distance = scipy_wasserstein_distance(u, v, u_weights=uw, v_weights=vw)
             return distance
 
         def join_wasserstein(U, V, Uw, Vw):
@@ -152,37 +152,51 @@ class TestDistMat(CUDATestCase):
             if testQ:
                 rows = 6
             else:
-                rows = 1000
+                rows = 5000
             print("====[PARTIAL TEST WITH {} ROWS]====".format(rows))
             U, V, U_weights, V_weights = test_data(rows, cols)
-            Utest, Vtest, Uwtest, Vwtest = [x[0:6] for x in [U, V, U_weights, V_weights]]  # noqa
+            Utest, Vtest, Uwtest, Vwtest = [
+                x[0:6] for x in [U, V, U_weights, V_weights]
+            ]  # noqa
 
             for target in ["cuda"]:  # "cpu" not implemented
-                for metric in ['euclidean', 'wasserstein']:
-                    print('[' + target.upper() + "_" + metric.upper() + ']')
+                for metric in ["euclidean", "wasserstein"]:
+                    print("[" + target.upper() + "_" + metric.upper() + "]")
 
                     if testQ:
                         # compile
                         dist_matrix(Utest, U_weights=Uwtest, metric=metric)
                         with Timer("one set"):
                             one_set = dist_matrix(
-                                U, U_weights=U_weights, metric=metric)  # noqa
+                                U, U_weights=U_weights, metric=metric
+                            )  # noqa
                             if verbose_test:
-                                print(one_set, '\n')
+                                print(one_set, "\n")
 
                     # compile
-                    dist_matrix(Utest, V=Vtest, U_weights=Uwtest,
-                                V_weights=Vwtest, metric=metric)
+                    dist_matrix(
+                        Utest,
+                        V=Vtest,
+                        U_weights=Uwtest,
+                        V_weights=Vwtest,
+                        metric=metric,
+                    )
                     with Timer("two set"):
-                        two_set = dist_matrix(U, V=V, U_weights=U_weights,
-                                              V_weights=V_weights, metric=metric)  # noqa
+                        two_set = dist_matrix(
+                            U,
+                            V=V,
+                            U_weights=U_weights,
+                            V_weights=V_weights,
+                            metric=metric,
+                        )  # noqa
                         if testQ and verbose_test:
-                            print(two_set, '\n')
+                            print(two_set, "\n")
 
                         one_set_sparse = dist_matrix(
-                            U, U_weights=U_weights, pairs=pairs, metric=metric)  # noqa
+                            U, U_weights=U_weights, pairs=pairs, metric=metric
+                        )  # noqa
                         if testQ and verbose_test:
-                            print(one_set_sparse, '\n')
+                            print(one_set_sparse, "\n")
 
                     two_set_sparse = dist_matrix(
                         U,
@@ -193,7 +207,7 @@ class TestDistMat(CUDATestCase):
                         metric=metric,
                     )
                     if testQ and verbose_test:
-                        print(two_set_sparse, '\n')
+                        print(two_set_sparse, "\n")
 
                     if testQ:
                         if metric == "euclidean":
@@ -202,46 +216,70 @@ class TestDistMat(CUDATestCase):
                             with Timer("two set check (cdist)"):
                                 two_set_check = cdist(U, V)
 
-                            one_sparse_check = [
-                                euclidean(U[i], U[j]) for i, j in pairs]
-                            two_sparse_check = [
-                                euclidean(U[i], V[j]) for i, j in pairs]
+                            one_sparse_check = [euclidean(U[i], U[j]) for i, j in pairs]
+                            two_sparse_check = [euclidean(U[i], V[j]) for i, j in pairs]
 
                         elif metric == "wasserstein":
-                            U_Uw, V_Vw = join_wasserstein(
-                                U, V, U_weights, V_weights)
+                            U_Uw, V_Vw = join_wasserstein(U, V, U_weights, V_weights)
 
                             with Timer("one set check (cdist)"):
                                 one_set_check = cdist(
-                                    U_Uw, U_Uw, metric=my_wasserstein_distance)
+                                    U_Uw, U_Uw, metric=my_wasserstein_distance
+                                )
                             with Timer("two set check (cdist)"):
                                 two_set_check = cdist(
-                                    U_Uw, V_Vw, metric=my_wasserstein_distance)
+                                    U_Uw, V_Vw, metric=my_wasserstein_distance
+                                )
 
-                            one_sparse_check = [my_wasserstein_distance(U_Uw[i], U_Uw[j])  # noqa
-                                                for i, j in pairs]
-                            two_sparse_check = [my_wasserstein_distance(U_Uw[i], V_Vw[j])  # noqa
-                                                for i, j in pairs]
+                            one_sparse_check = [
+                                my_wasserstein_distance(U_Uw[i], U_Uw[j])  # noqa
+                                for i, j in pairs
+                            ]
+                            two_sparse_check = [
+                                my_wasserstein_distance(U_Uw[i], V_Vw[j])  # noqa
+                                for i, j in pairs
+                            ]
 
                         # check results
                         assert_allclose(
-                            one_set.ravel(), one_set_check.ravel(), rtol=tol,
-                            err_msg="one set {} {} distance matrix inaccurate".format(target, metric))  # noqa
+                            one_set.ravel(),
+                            one_set_check.ravel(),
+                            rtol=tol,
+                            err_msg="one set {} {} distance matrix inaccurate".format(
+                                target, metric
+                            ),
+                        )  # noqa
                         assert_allclose(
-                            two_set.ravel(), two_set_check.ravel(), rtol=tol,
-                            err_msg="two set {} {} distance matrix inaccurate".format(target, metric))  # noqa
+                            two_set.ravel(),
+                            two_set_check.ravel(),
+                            rtol=tol,
+                            err_msg="two set {} {} distance matrix inaccurate".format(
+                                target, metric
+                            ),
+                        )  # noqa
                         assert_allclose(
-                            one_set_sparse, one_sparse_check, rtol=tol,
-                            err_msg="one set {} {} sparse distance matrix inaccurate".format(target, metric))  # noqa
+                            one_set_sparse,
+                            one_sparse_check,
+                            rtol=tol,
+                            err_msg="one set {} {} sparse distance matrix \
+                                inaccurate".format(
+                                target, metric
+                            ),
+                        )  # noqa
                         assert_allclose(
-                            two_set_sparse, two_sparse_check, rtol=tol,
-                            err_msg="two set {} {} distance matrix inaccurate".format(target, metric))  # noqa
+                            two_set_sparse,
+                            two_sparse_check,
+                            rtol=tol,
+                            err_msg="two set {} {} distance matrix inaccurate".format(
+                                target, metric
+                            ),
+                        )  # noqa
                     elif metric == "euclidean":
                         with Timer("two set check (cdist)"):
                             two_set_check = cdist(U, V)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 
