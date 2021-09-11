@@ -33,6 +33,7 @@ Requires umap which may be installed via:
 import os
 from operator import attrgetter
 from importlib import reload
+from numba import cuda
 
 from multiprocessing import cpu_count, freeze_support
 
@@ -595,7 +596,7 @@ class ElM2D:
 
         return distances
 
-    def EM2D(self, formulas, formulas2=None, target="cpu"):
+    def EM2D(self, formulas, formulas2=None, target=None):
         """
         Earth Mover's 2D distances. See also EMD.
 
@@ -658,9 +659,9 @@ class ElM2D:
 
         # decide whether to use cpu or cuda version
         if target is None:
-            if self.target is None or self.target == "cpu":
+            if self.target is None or not cuda.is_available():
                 target = "cpu"
-            elif self.target == "cuda":
+            elif self.target == "cuda" or cuda.is_available():
                 target = "cuda"
 
         # if target == "cpu":
