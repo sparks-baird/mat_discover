@@ -114,7 +114,32 @@ class ElM2D:
         emd_algorithm="wasserstein",
         target=None,
     ):
+        """
+        Initialize parameters for Element Mover's Distance.
 
+        Parameters
+        ----------
+        formula_list : list of str, optional
+            List of chemical formulas, by default None
+        n_proc : int, optional
+            Number of processors to use (deprecated), by default None
+        n_components : int, optional
+            Number of embedding dimensions, by default 2
+        verbose : bool, optional
+            Whether to output verbose information, by default True
+        metric : str, optional
+            Which type of periodic element properties to use, by default "mod_petti"
+        chunksize : int, optional
+            Size of chunks for multiprocessing (deprecated), by default 1
+        umap_kwargs : dict, optional
+            Arguments to pass into umap_kwargs, by default {}
+        emd_algorithm : str, optional
+            How to compute the earth mover's distances, by default "wasserstein"
+        target : str, optional
+            Compute device to use: "cuda" or "cpu". If None, defaults to
+            fit() "target". If fit() target value is also None, uses "cuda"
+            if compatible GPU is available, otherwise "cpu", by default None
+        """
         self.verbose = verbose
 
         if n_proc is None:
