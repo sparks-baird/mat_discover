@@ -41,7 +41,7 @@ plt.rcParams["text.usetex"] = True
 
 pio.renderers.default = "browser"
 
-mapper = ElM2D(target="cuda")
+mapper = ElM2D(target="cuda")  # type: ignore
 
 
 # %% import validation data
@@ -75,14 +75,14 @@ plt_df = pd.DataFrame(
         "neigh_avg_targ": neigh_avg_targ,
         "target": target,
         "formulas": formulas,
-        "diff": target - neigh_avg_targ,
+        "Peak height (GPa)": target - neigh_avg_targ,
     }
 )
 fig = px.scatter(
     plt_df,
     "neigh_avg_targ",
     "target",
-    color="diff",
+    color="Peak height (GPa)",
     color_continuous_scale=px.colors.sequential.Blackbody_r,
     hover_data=["formulas"],
 )
@@ -158,7 +158,7 @@ plt.show()
 mn = np.amin(std_emb, axis=0)
 mx = np.amax(std_emb, axis=0)
 num = 200
-x, y = np.mgrid[mn[0] : mx[0] : num * 1j, mn[1] : mx[1] : num * 1j]
+x, y = np.mgrid[mn[0] : mx[0] : num * 1j, mn[1] : mx[1] : num * 1j]  # type: ignore
 pos = np.dstack((x, y))
 
 
