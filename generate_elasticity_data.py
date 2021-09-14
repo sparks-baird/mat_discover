@@ -117,19 +117,23 @@ def generate_elasticity_data(download_data=False):
                 del all_struct_dicts
 
     n = 10000
+    all_comp = all_comp[:n]
+    all_formulas = all_formulas[:n]
     all_mpids = all_mpids[:n]
     all_structures = all_structures[:n]
 
     all_df = pd.DataFrame(
         data={
             "composition": all_comp,
+            "formula": all_formulas,
             "structure": all_structures,
             "task_id": all_mpids,
             "target": np.zeros((len(all_mpids))),
         }
     )
 
-    all_df.to_csv(crabnet_path("val.csv"), headers=["formula", "target"])
+    all_df.to_csv(crabnet_path("val.csv"), columns=["formula", "target"])
+
 
 if __name__ == "__main__":
     generate_elasticity_data()
