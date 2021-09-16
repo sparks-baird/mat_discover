@@ -12,6 +12,7 @@ Created on Mon Sep  6 23:15:27 2021.
 
 @author: sterg
 """
+# %% Imports
 # import sys
 
 # sys.path.append("C:/Users/sterg/Documents/GitHub/sparks-baird/ElM2D/ElM2D")  # noqa
@@ -31,7 +32,6 @@ import hdbscan
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
-import plotly.io as pio
 
 # from ElM2D.helper import Timer
 from ElM2D import ElM2D
@@ -39,17 +39,16 @@ from helper import Timer
 
 plt.rcParams["text.usetex"] = True
 
-pio.renderers.default = "browser"
-
 mapper = ElM2D(target="cuda")  # type: ignore
 
 
 # %% import validation data
 fpath = "C:/Users/sterg/Documents/GitHub/sparks-baird/ElM2D/CrabNet/model_predictions/elasticity_val_output.csv"
+# fpath = "C:/Users/sterg/Documents/GitHub/sparks-baird/ElM2D/CrabNet/model_predictions/example_materials_property_val_output.csv"
 val_df = pd.read_csv(fpath)
 
-formulas = val_df["composition"]
-target = val_df["pred-0"]
+formulas = val_df["composition"] #[0:1000]
+target = val_df["pred-0"] #[0:1000]
 
 # %% Distance Matrix
 with Timer("fit-wasserstein"):
@@ -58,39 +57,138 @@ with Timer("fit-wasserstein"):
 
 # %% Nearest Neighbors within Radius
 mean_wasserstein, std_wasserstein = (np.mean(dm_wasserstein), np.std(dm_wasserstein))
-radius = mean_wasserstein - 2 * std_wasserstein
+radius = mean_wasserstein - 1.5 * std_wasserstein
 NN = NearestNeighbors(radius=radius, metric="precomputed")
 NN.fit(dm_wasserstein)
 neigh_dist, neigh_ind = NN.radius_neighbors()
 
-neigh_target = np.array([target[ind] for ind in neigh_ind])
-neigh_avg_targ = np.array([np.mean(t) if t != [] else np.nan for t in neigh_target])
+neigh_target = np.array([target[ind] for ind in neigh_ind], dtype="object")
+neigh_avg_targ = np.array([np.mean(t) if len(t) > 0 else float(0) for t in neigh_target])
 num_neigh = np.array([len(ind) for ind in neigh_ind])
 
 # fig = plt.figure()
 
 # %% Pareto-esque Front
-plt_df = pd.DataFrame(
+
+# Fairly fast for many datapoints, less fast for many costs, somewhat readable
+def is_pareto_efficient_simple(costs):
+    """
+    Find the pareto-efficient points.
+
+    :param costs: An (n_points, n_costs) array
+    :return: A (n_points, ) boolean array, indicating whether each point is Pareto efficient
+    """
+    mx = np.max(costs)
+    costs = np.nan_to_num(costs, nan=mx)
+    is_efficient = np.ones(costs.shape[0], dtype=bool)
+    for i, c in enumerate(costs):
+        if is_efficient[i]:
+            is_efficient[is_efficient] = np.any(
+                costs[is_efficient] < c, axis=1
+            )  # Keep any point with a lower cost
+            is_efficient[i] = True  # And keep self
+    return is_efficient
+
+def pareto_plot(
+    df,
+    x="proxy",
+    y="target",
+    color="Peak height (GPa)",
+    hover_data=["formulas"],
+    fpath="pareto-front",
+    reverse_x=True,
+    parity_type="max-of-both",
+    pareto_front=True,
+):
+    """Generate and save pareto plot for two variables.
+
+    Parameters
+    ----------
+    df : DataFrame
+        Contains relevant variables for pareto plot.
+    x : str, optional
+        Name of df column to use for x-axis, by default "proxy"
+    y : str, optional
+        Name of df column to use for y-axis, by default "target"
+    color : str, optional
+        Name of df column to use for colors, by default "Peak height (GPa)"
+    hover_data : list of str, optional
+        Name(s) of df columns to display on hover, by default ["formulas"]
+    fpath : str, optional
+        Filepath to which to save HTML and PNG. Specify as None if no saving
+        is desired, by default "pareto-plot"
+    reverse_x : bool, optional
+        Whether to reverse the x-axis (i.e. for maximize y and minimize x front)
+    parity_type : str, optional
+        What kind of parity line to plot: "max-of-both", "max-of-each", or "none"
+    """
+    fig = px.scatter(
+        df,
+        x=x,
+        y=y,
+        color=color,
+        color_continuous_scale=px.colors.sequential.Blackbody_r,
+        hover_data=hover_data,
+    )
+
+    # unpack
+    proxy = df[x]
+    target = df[y]
+
+    if pareto_front:
+        if reverse_x:
+            inpt = [proxy, -target]
+        else:
+            inpt = [-proxy, -target]
+        pareto_ind = np.nonzero(
+                is_pareto_efficient_simple(np.array(inpt).T)
+            )
+        # pf_hover_data = df.loc[:, hover_data].iloc[pareto_ind]
+        # fig.add_scatter(x=proxy[pareto_ind], y=target[pareto_ind])
+        # Add scatter trace with medium sized markers
+        fig.add_scatter(
+                        mode="markers",
+                        x=proxy.iloc[pareto_ind],
+                        y=target.iloc[pareto_ind],
+                        marker_symbol="circle-open",
+                        marker_size=10,
+                        hoverinfo='skip',
+                        name="Pareto Front",
+                        )
+
+    # parity line
+    if parity_type == "max-of-both":
+        mx = np.nanmax([proxy, target])
+        mx2 = mx
+    elif parity_type == "max-of-each":
+        mx, mx2 = np.nanmax(proxy), np.nanmax(target)
+
+    if parity_type != "none":
+        fig.add_trace(go.Line(x=[0, mx], y=[0, mx2], name="parity"))
+
+    # legend and reversal
+    fig.update_layout(legend_orientation="h", legend_y=1.1)
+    if reverse_x:
+        fig.update_layout(xaxis=dict(autorange="reversed"))
+    fig.show()
+
+    # saving
+    if fpath is not None:
+        fig.write_image(fpath + ".png")
+        fig.write_html(fpath + ".html")
+    
+    return fig, pareto_ind
+
+peak_df = pd.DataFrame(
     {
-        "neigh_avg_targ": neigh_avg_targ,
-        "target": target,
+        "neigh_avg_targ (GPa)": neigh_avg_targ,
+        "target (GPa)": target,
         "formulas": formulas,
         "Peak height (GPa)": target - neigh_avg_targ,
     }
 )
-fig = px.scatter(
-    plt_df,
-    "neigh_avg_targ",
-    "target",
-    color="Peak height (GPa)",
-    color_continuous_scale=px.colors.sequential.Blackbody_r,
-    hover_data=["formulas"],
-)
-mx = np.nanmax([neigh_avg_targ, target.to_numpy()])
-fig.add_trace(go.Line(x=[0, mx], y=[0, mx], name="parity"))
-fig.update_layout(xaxis=dict(autorange="reversed"), legend_orientation="h")
-fig.show()
-fig.write_html("pareto-front.html")
+
+fig, pareto_ind = pareto_plot(peak_df, x="neigh_avg_targ (GPa)", y="target (GPa)", fpath="pf-peak-proxy", pareto_front=True)
 
 # %% UMAP
 dens_lambda = 1
@@ -112,9 +210,10 @@ with Timer("fit-UMAP"):
 umap_emb, r_orig, r_emb = attrgetter("embedding_", "rad_orig_", "rad_emb_")(umap_trans)
 
 # fit for visualization
-std_trans = umap.UMAP(
-    densmap=True, output_dens=True, dens_lambda=dens_lambda, metric="precomputed"
-).fit(dm_wasserstein)
+with Timer("fit-vis-UMAP"):
+    std_trans = umap.UMAP(
+        densmap=True, output_dens=True, dens_lambda=dens_lambda, metric="precomputed"
+    ).fit(dm_wasserstein)
 
 # embedding and radii
 std_emb, std_r_orig, std_r_emb = attrgetter("embedding_", "rad_orig_", "rad_emb_")(
@@ -123,12 +222,15 @@ std_emb, std_r_orig, std_r_emb = attrgetter("embedding_", "rad_orig_", "rad_emb_
 
 # %%
 # clustering
-clusterer = hdbscan.HDBSCAN(
-    min_samples=1, cluster_selection_epsilon=0.63, min_cluster_size=50
-).fit(umap_emb)
+with Timer("HDBSCAN*"):
+    clusterer = hdbscan.HDBSCAN(
+        min_samples=1, cluster_selection_epsilon=0.63, min_cluster_size=50
+    ).fit(umap_emb)
+# extract
 labels, probabilities = attrgetter("labels_", "probabilities_")(clusterer)
 
 # plotting
+# fig = plt.Figure()
 ax1 = plt.scatter(
     std_emb[:, 0], std_emb[:, 1], c=labels, s=5, cmap=plt.cm.nipy_spectral, label=labels
 )
@@ -145,54 +247,69 @@ unique_labels = np.unique(labels)
 col_trans = col_scl.fit(unique_labels.reshape(-1, 1))
 scl_vals = col_trans.transform(unique_labels.reshape(-1, 1))
 color = plt.cm.nipy_spectral(scl_vals)
+
+# fig = plt.Figure()
 plt.bar(*np.unique(labels, return_counts=True), color=color)
 plt.show()
 
 # target value scatter plot
+# fig = plt.Figure()
 plt.scatter(std_emb[:, 0], std_emb[:, 1], c=target, s=15, cmap="Spectral")
 plt.axis("off")
 plt.colorbar(label="Bulk Modulus (GPa)")
 plt.show()
 
 # %% multivariate normal probability summation
-mn = np.amin(std_emb, axis=0)
-mx = np.amax(std_emb, axis=0)
-num = 200
-x, y = np.mgrid[mn[0] : mx[0] : num * 1j, mn[1] : mx[1] : num * 1j]  # type: ignore
-pos = np.dstack((x, y))
+# mn = np.amin(std_emb, axis=0)
+# mx = np.amax(std_emb, axis=0)
+# num = 20
+# x, y = np.mgrid[mn[0] : mx[0] : num * 1j, mn[1] : mx[1] : num * 1j]  # type: ignore
+# pos = np.dstack((x, y))
 
 
 def my_mvn(mu_x, mu_y, r):
     """Calculate multivariate normal at (mu_x, mu_y) with constant radius, r."""
     return multivariate_normal([mu_x, mu_y], [[r, 0], [0, r]])
 
+# with Timer("pdf-summation"):
+#     mvn_list = list(map(my_mvn, std_emb[:, 0], std_emb[:, 1], np.exp(r_orig)))
+#     pdf_list = [mvn.pdf(pos) for mvn in mvn_list]
+#     pdf_sum = np.sum(pdf_list, axis=0)
 
-mvn_list = list(map(my_mvn, std_emb[:, 0], std_emb[:, 1], np.exp(r_orig)))
-pdf_list = [mvn.pdf(pos) for mvn in mvn_list]
-pdf_sum = np.sum(pdf_list, axis=0)
+# # density scatter plot
+# plt.scatter(x, y, c=pdf_sum)
+# plt.axis("off")
+# plt.colorbar(label="Density")
+# plt.show()
 
+# # density and target value scatter plot
+# plt.scatter(x, y, c=pdf_sum)
+# plt.scatter(
+#     std_emb[:, 0],
+#     std_emb[:, 1],
+#     c=target,
+#     s=15,
+#     cmap="Spectral",
+#     edgecolors="none",
+#     alpha=0.15,
+# )
+# plt.axis("off")
+# plt.show()
+
+# %% density pareto plot
+# density estimation for each of the input points
 dens = np.exp(r_orig)
+log_dens = np.log(dens)
 
-# density scatter plot
-plt.scatter(x, y, c=pdf_sum)
-plt.axis("off")
-plt.colorbar(label="Density")
-plt.show()
-
-# density and target value scatter plot
-plt.scatter(x, y, c=pdf_sum)
-plt.scatter(
-    std_emb[:, 0],
-    std_emb[:, 1],
-    c=target,
-    s=15,
-    cmap="Spectral",
-    edgecolors="none",
-    alpha=0.15,
+dens_df = pd.DataFrame(
+    {
+        "log-density": log_dens,
+        "target (GPa)": target,
+        "formulas": formulas,
+    }
 )
-plt.axis("off")
-plt.show()
 
+fig, pareto_ind = pareto_plot(dens_df, x="log-density", y="target (GPa)", fpath="pf-dens-proxy", parity_type="none", color=None, pareto_front=True)
 
 # %% CODE GRAVEYARD
 # datapath = join("ael_bulk_modulus_voigt", "train.csv")
@@ -209,24 +326,27 @@ plt.show()
 # plt.show()
 
 
-# # Fairly fast for many datapoints, less fast for many costs, somewhat readable
-# def is_pareto_efficient_simple(costs):
-#     """
-#     Find the pareto-efficient points.
-
-#     :param costs: An (n_points, n_costs) array
-#     :return: A (n_points, ) boolean array, indicating whether each point is Pareto efficient
-#     """
-#     is_efficient = np.ones(costs.shape[0], dtype=bool)
-#     for i, c in enumerate(costs):
-#         if is_efficient[i]:
-#             is_efficient[is_efficient] = np.any(
-#                 costs[is_efficient] < c, axis=1
-#             )  # Keep any point with a lower cost
-#             is_efficient[i] = True  # And keep self
-#     return is_efficient
-
-
 # pareto_ind = np.nonzero(
 #     is_pareto_efficient_simple(np.array([1 / neigh_avg_targ, target]).T)
+# )
+
+
+# marker=dict(
+#     opacity=0.5,
+#     size=12,
+#     line=dict(
+#         color='Black',
+#         width=1,
+#         ),
+#     )
+
+# fig.add_trace(
+#     go.Scatter(
+#         mode='markers',
+#         x=proxy.iloc[pareto_ind],
+#         y=target.iloc[pareto_ind],
+#         hover_data=pf_hover_data,
+#         name="Pareto Front",
+#         showlegend=True,
+#         )
 # )
