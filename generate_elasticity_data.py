@@ -1,16 +1,19 @@
 """
 Download and partition elasticity data using Materials Project API.
 
+Use pymatgen environment.
+
 Created on Sat Sep 11 17:02:10 2021
 
 @author: sterg
 """
 from os.path import join
 import pickle
-from ElM2D.helper import Timer
+from ElM2D.Timer import Timer
 
 import numpy as np
 import pandas as pd
+
 
 from pymatgen.ext.matproj import MPRester
 from pymatgen.core.structure import Structure
@@ -116,11 +119,11 @@ def generate_elasticity_data(download_data=False):
                 all_structures = [Structure.from_dict(s) for s in all_struct_dicts]
                 del all_struct_dicts
 
-    n = 10000
-    all_comp = all_comp[:n]
-    all_formulas = all_formulas[:n]
-    all_mpids = all_mpids[:n]
-    all_structures = all_structures[:n]
+    # n = 10000
+    # all_comp = all_comp[:n]
+    # all_formulas = all_formulas[:n]
+    # all_mpids = all_mpids[:n]
+    # all_structures = all_structures[:n]
 
     all_df = pd.DataFrame(
         data={
