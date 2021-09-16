@@ -1,6 +1,8 @@
 """
 Train CrabNet using elasticity data from Materials Project.
 
+Use crabnet environment.
+
 Created on Sat Sep 11 21:12:54 2021
 
 @author: sterg
