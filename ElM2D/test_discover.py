@@ -32,7 +32,8 @@ Created on Mon Sep  6 23:15:27 2021.
 
 @author: sterg
 """
-# %% Imports
+# %% Setup
+# imports
 from os.path import join, expanduser
 
 import pandas as pd
@@ -41,7 +42,7 @@ from discover import Discover
 
 disc = Discover()
 
-# %% import validation data
+# load validation data
 data_dir = expanduser(
     join(
         "~",
@@ -59,60 +60,9 @@ val_df = pd.read_csv(fpath)
 
 n = 100
 tmp_df = val_df.iloc[:n, :]
-# formulas = val_df["composition"][:n]
-# target = val_df["pred-0"][:n]
 
 # %% fit
 disc.fit(tmp_df)
 
 
 # %% CODE GRAVEYARD
-# datapath = join("ael_bulk_modulus_voigt", "train.csv")
-# datapath = "train-debug.csv"
-# df = pd.read_csv(datapath)
-# formulas = df["formula"]
-# target = df["target"]
-
-# fig2 = px.line(x=[0, max(neigh_avg_targ)], y=[0, max(target)])
-# fig3 = go.Figure(data=fig1.data + fig2.data)
-# fig3.show()
-# px.xlabel(r"neigh_avg_targ$^{-1}$ (GPa)$^{-1}$")
-# plt.ylabel("target (GPa)")
-# plt.show()
-
-
-# pareto_ind = np.nonzero(
-#     is_pareto_efficient_simple(np.array([1 / neigh_avg_targ, target]).T)
-# )
-
-
-# marker=dict(
-#     opacity=0.5,
-#     size=12,
-#     line=dict(
-#         color='Black',
-#         width=1,
-#         ),
-#     )
-
-# fig.add_trace(
-#     go.Scatter(
-#         mode='markers',
-#         x=proxy.iloc[pareto_ind],
-#         y=target.iloc[pareto_ind],
-#         hover_data=pf_hover_data,
-#         name="Pareto Front",
-#         showlegend=True,
-#         )
-# )
-
-# import sys
-
-# sys.path.append("C:/Users/sterg/Documents/GitHub/sparks-baird/ElM2D/ElM2D")  # noqa
-# import numpy as np
-
-# from ElM2D.helper import Timer
-# from ElM2D import ElM2D
-# from utils.pareto import pareto_plot
-
-# mapper = ElM2D(target="cuda")  # type: ignore
