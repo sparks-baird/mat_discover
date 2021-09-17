@@ -9,7 +9,7 @@ Created on Sat Sep 11 21:12:54 2021
 """
 import os
 
-# HACK
+# HACK: remove directory structure dependence
 os.chdir("CrabNet")
 from CrabNet.train_crabnet import main  # noqa
 
