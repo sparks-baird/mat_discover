@@ -97,7 +97,7 @@ def generate_elasticity_data(download_data=False):
 
     elast_df.to_csv(crabnet_path("train.csv"), columns=["formula", "target"])
 
-    # TODO - make separate "prediction" df that doesn't include training data
+    # TODO: make separate "prediction" df that doesn't include training data
     # separate mpids and other properties for all data
     all_mpids = [d["task_id"] for d in all_results]
     all_cifs = [d["cif"] for d in all_results]
