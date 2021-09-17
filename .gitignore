@@ -3,3 +3,4 @@ __pycache__/**
 ElM2D.egg-info/**
 ElM2D/.ipynb_checkpoints/**
 ElM2D/__pycache__/**
+ElM2D/utils/__pycache__/**
