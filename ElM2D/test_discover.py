@@ -28,7 +28,7 @@ for cluster in clusters:
 # FIGURE: cluster-wise cross-val parity plots (6 clusters with highest (mean?) target value) - 2x3 tile
 # SUPP-FIGURE: cluster-wise cross-val parity plots for all clusters (Nx3)
 
-Created on Mon Sep  6 23:15:27 2021.
+Created on Mon Sep 6 23:15:27 2021.
 
 @author: sterg
 """
@@ -54,15 +54,14 @@ data_dir = expanduser(
         "model_predictions",
     )
 )
-fpath = join(data_dir, "elasticity_val_output.csv")
-# fpath = "C:/Users/sterg/Documents/GitHub/sparks-baird/ElM2D/CrabNet/model_predictions/example_materials_property_val_output.csv"
+name = "elasticity_val_output.csv"  # "example_materials_property_val_output.csv"
+fpath = join(data_dir, name)
 val_df = pd.read_csv(fpath)
 
-n = 100
+# take small subset
+n = 10000
 tmp_df = val_df.iloc[:n, :]
-
 # %% fit
 disc.fit(tmp_df)
-
 
 # %% CODE GRAVEYARD
