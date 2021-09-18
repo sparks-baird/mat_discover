@@ -9,7 +9,7 @@ Created on Sat Sep 11 17:02:10 2021
 """
 from os.path import join
 import pickle
-from ElM2D.Timer import Timer
+from ElM2D.utils.Timer import Timer
 
 import numpy as np
 import pandas as pd
