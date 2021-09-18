@@ -14,17 +14,23 @@ Created on Mon Sep  6 23:15:27 2021.
 
 @author: sterg
 """
+import os
+from warnings import warn
 from operator import attrgetter
 from utils.Timer import Timer, NoTimer
 import matplotlib.pyplot as plt
 
+from math import ceil
 import numpy as np
 import pandas as pd
 from scipy.stats import multivariate_normal
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import LeaveOneGroupOut
 
 import umap
 import hdbscan
+
+from CrabNet.train_crabnet import main as crabnet_main  # noqa
 
 from ElM2D import ElM2D
 
@@ -61,8 +67,9 @@ class Discover:
         self.n_neighbors = n_neighbors
 
         self.mapper = ElM2D(target="cuda")  # type: ignore
+        self.dm = None
 
-    def fit(self, df):
+    def fit(self, df, plotting=None):
         # unpack
         self.formulas = df["composition"]
         self.target = df["pred-0"]
@@ -70,19 +77,28 @@ class Discover:
         # distance matrix
         with self.Timer("fit-wasserstein"):
             self.mapper.fit(self.formulas)
-            X = self.mapper.dm
+            self.dm = self.mapper.dm
+
+        # HACK: remove directory structure dependence
+        os.chdir("CrabNet")
+
+        if __name__ == "__main__":
+            crabnet_main(mat_prop="elasticity")
+            os.chdir("..")
 
         # nearest neighbors
-        rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(X, self.target)
+        rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
+            self.dm, self.target
+        )
 
         # UMAP
-        umap_trans = self.umap_fit_cluster(X)
-        std_trans = self.umap_fit_vis(X)
+        umap_trans = self.umap_fit_cluster(self.dm)
+        std_trans = self.umap_fit_vis(self.dm)
 
         self.umap_emb = self.extract_emb_rad(umap_trans)[0]
         self.std_emb, self.std_r_orig = self.extract_emb_rad(std_trans)[:2]
 
-        # HDBSCAN
+        # HDBSCAN*
         clusterer = self.cluster(self.umap_emb)
         self.labels = self.extract_labels_probs(clusterer)[0]
 
@@ -93,13 +109,83 @@ class Discover:
             )
 
         # Plotting
-        if self.plotting:
+        if (self.plotting and plotting is None) or plotting:
             self.plot()
+
+    def group_cross_val(self, df):
+        # unpack
+        self.formulas = df["composition"]
+        self.target = df["pred-0"]
+
+        # distance matrix
+        with self.Timer("fit-wasserstein"):
+            self.mapper.fit(self.formulas)
+            if self.dm is not None:
+                warn("Overwriting self.dm")
+            self.dm = self.mapper.dm
+
+        umap_trans = self.umap_fit_cluster(self.dm)
+        self.umap_emb = self.extract_emb_rad(umap_trans)[0]
+
+        # HDBSCAN*
+        clusterer = self.cluster(self.umap_emb)
+        self.labels = self.extract_labels_probs(clusterer)[0]
+
+        logo = LeaveOneGroupOut()
+
+        n_clusters = np.max(self.labels)
+        n_test_clusters = ceil(1, int(n_clusters * 0.1))
+
+        """Considered repeatably set aside a test set for a given clustering result;
+        however, by changing clustering parameters, the test clusters might change"""
+        # np.random.default_rng(seed=42)
+        test_cluster_ids = np.random.choice(n_clusters + 1, n_test_clusters)
+        test_ids = np.isin(self.labels, test_cluster_ids)
+        tv_cluster_ids = np.setdiff1d(np.arange(-1, n_clusters + 1), test_cluster_ids)
+        tv_ids = np.isin(self.labels, tv_cluster_ids)
+        # np.random.default_rng()
+
+        X, y = self.formulas, self.target
+        X_test, y_test = X[test_ids], y[test_ids]  # noqa
+        X_tv, y_tv = X[tv_ids], y[tv_ids]
+        # X_tv, X_test, y_tv, y_test = train_test_split(
+        #     X, y, test_size=n_test_clusters, random_state=42
+        # )
+        for train_index, val_index in logo.split(X_tv, y_tv, self.labels):
+            X_train, X_val = X[train_index], X[val_index]
+            y_train, y_val = y[train_index], y[val_index]
+
+            train_df = pd.DataFrame({"formula": X_train, "property": y_train})
+            val_df = pd.DataFrame({"formula": X_val, "property": y_val})
+            # REVIEW: comment when ready for publication
+            test_df = None
+
+            # REVIEW: uncomment when ready for publication
+            # test_df = pd.DataFrame({"formula": X_test, "property": y_test})
+
+            # train CrabNet
+            # HACK: remove directory structure dependence
+            os.chdir("CrabNet")
+            from CrabNet.train_crabnet import main  # noqa
+
+            if __name__ == "__main__":
+                train_pred_df, val_pred_df, test_pred_df = main(
+                    mat_prop="elasticity",
+                    train_df=train_df,
+                    val_df=val_df,
+                    test_df=test_df,
+                )
+                os.chdir("..")
+
+        # self.fit(df, plotting=False)
 
     def cluster(self, umap_emb):
         with self.Timer("HDBSCAN*"):
             clusterer = hdbscan.HDBSCAN(
-                min_samples=1, cluster_selection_epsilon=0.63, min_cluster_size=50
+                min_samples=1,
+                cluster_selection_epsilon=0.63,
+                min_cluster_size=50,
+                # allow_single_cluster=True,
             ).fit(umap_emb)
         return clusterer
 
@@ -150,14 +236,14 @@ class Discover:
         emb, r_orig, r_emb = attrgetter("embedding_", "rad_orig_", "rad_emb_")(trans)
         return emb, r_orig, r_emb
 
-    def mvn_prob_sum(self, std_emb, r_orig, n=20):
+    def mvn_prob_sum(self, std_emb, r_orig, n=100):
         # multivariate normal probability summation
         mn = np.amin(std_emb, axis=0)
         mx = np.amax(std_emb, axis=0)
         x, y = np.mgrid[mn[0] : mx[0] : n * 1j, mn[1] : mx[1] : n * 1j]  # type: ignore
         pos = np.dstack((x, y))
 
-        with Timer("pdf-summation"):
+        with self.Timer("pdf-summation"):
             mvn_list = list(map(my_mvn, std_emb[:, 0], std_emb[:, 1], np.exp(r_orig)))
             pdf_list = [mvn.pdf(pos) for mvn in mvn_list]
             pdf_sum = np.sum(pdf_list, axis=0)
