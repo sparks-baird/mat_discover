@@ -22,8 +22,6 @@ from pymatgen.core.composition import Composition
 
 def generate_elasticity_data(download_data=False):
     """Download (or reload) elasticity data using MPRester."""
-    # test data
-    download_data = False
     # download and save Materials Project dataset
     if download_data:
         # download
@@ -95,7 +93,9 @@ def generate_elasticity_data(download_data=False):
         }
     )
 
-    elast_df.to_csv(crabnet_path("train.csv"), columns=["formula", "target"])
+    elast_df.to_csv(
+        crabnet_path("train.csv"), columns=["formula", "target"], index=False
+    )
 
     # TODO: make separate "prediction" df that doesn't include training data
     # separate mpids and other properties for all data
@@ -135,7 +135,7 @@ def generate_elasticity_data(download_data=False):
         }
     )
 
-    all_df.to_csv(crabnet_path("val.csv"), columns=["formula", "target"])
+    all_df.to_csv(crabnet_path("val.csv"), columns=["formula", "target"], index=False)
 
 
 if __name__ == "__main__":
