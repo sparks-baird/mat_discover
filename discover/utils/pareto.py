@@ -27,16 +27,28 @@ def is_pareto_efficient_simple(costs):
     return is_efficient
 
 
+def get_pareto_ind(proxy, target, reverse_x=True):
+    # use reverse_x if using "peak"
+    if reverse_x:
+        inpt = [proxy, -target]
+    else:
+        inpt = [-proxy, -target]
+    pareto_ind = np.nonzero(is_pareto_efficient_simple(np.array(inpt).T))
+    return pareto_ind
+
+
 def pareto_plot(
     df,
     x="neigh_avg_targ (GPa)",
     y="target (GPa)",
     color="Peak height (GPa)",
-    hover_data=["formulas"],
+    hover_data=["formula"],
     fpath="pareto-front",
     reverse_x=True,
     parity_type="max-of-both",
     pareto_front=True,
+    color_continuous_scale=None,
+    color_discrete_map=None,
 ):
     """Generate and save pareto plot for two variables.
 
@@ -60,13 +72,31 @@ def pareto_plot(
     parity_type : str, optional
         What kind of parity line to plot: "max-of-both", "max-of-each", or "none"
     """
+    if color_continuous_scale is None and color_discrete_map is None:
+        if isinstance(df[color][0], (int, np.integer)):
+            if np.max(df[color]) < 20:
+                df.loc[:, color] = df[color].astype(str)
+            scatter_color_kwargs = {
+                "color_discrete_sequence": px.colors.qualitative.Dark24
+            }
+        else:
+            scatter_color_kwargs = {
+                "color_continuous_scale": px.colors.sequential.Blackbody_r
+            }
+    elif color_continuous_scale is not None:
+        scatter_color_kwargs = {"color_continuous_scale": color_continuous_scale}
+    elif color_discrete_map is not None:
+        scatter_color_kwargs = {"color_discrete_sequence": color_discrete_map}
+
+    # TODO: update trace order
+    df = df.sort_values(color)
     fig = px.scatter(
         df,
         x=x,
         y=y,
         color=color,
-        color_continuous_scale=px.colors.sequential.Blackbody_r,
         hover_data=hover_data,
+        **scatter_color_kwargs,
     )
 
     # unpack
@@ -74,11 +104,8 @@ def pareto_plot(
     target = df[y]
 
     if pareto_front:
-        if reverse_x:
-            inpt = [proxy, -target]
-        else:
-            inpt = [-proxy, -target]
-        pareto_ind = np.nonzero(is_pareto_efficient_simple(np.array(inpt).T))
+        pareto_ind = get_pareto_ind(proxy, target, reverse_x=reverse_x)
+
         # pf_hover_data = df.loc[:, hover_data].iloc[pareto_ind]
         # fig.add_scatter(x=proxy[pareto_ind], y=target[pareto_ind])
         # Add scatter trace with medium sized markers

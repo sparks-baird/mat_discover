@@ -50,6 +50,8 @@ def _nearest_neigh_props(
         mean, std = (np.mean(X), np.std(X))
         radius = mean - r_strength * std
 
+    if n_neighbors > X.shape[0]:
+        n_neighbors = X.shape[0]
     NN = NearestNeighbors(
         radius=radius, n_neighbors=n_neighbors, metric="precomputed", **NN_kwargs
     )
