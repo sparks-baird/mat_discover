@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.stats import multivariate_normal, wasserstein_distance
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 from sklearn.model_selection import LeaveOneGroupOut
 
 import umap
@@ -60,6 +60,7 @@ class Discover:
         pdf: bool = True,
         n_neighbors: int = 10,
         verbose: bool = True,
+        mat_prop_name="test-property",
     ):
         if timed:
             self.Timer = Timer
@@ -71,48 +72,74 @@ class Discover:
         self.pdf = pdf
         self.n_neighbors = n_neighbors
         self.verbose = verbose
+        self.mat_prop_name = mat_prop_name
 
         self.mapper = ElM2D(target="cuda")  # type: ignore
         self.dm = None
         self.formula = None
         self.target = None
-        self.df = None
+        self.train_df = None
+        self.val_df = None
 
-    def fit(self, df, plotting=None, umap_random_state=None):
+    def fit(self, train_df):
         # unpack
-        self.df = df
-        self.formula = df["formula"]
-        self.target = df["target"]
-
-        # distance matrix
-        with self.Timer("fit-wasserstein"):
-            self.mapper.fit(self.formula)
-            self.dm = self.mapper.dm
+        self.train_df = train_df
+        self.formula = train_df["formula"]
+        self.target = train_df["target"]
 
         # HACK: remove directory structure dependence
         os.chdir("CrabNet")
         with Timer("train-CrabNet"):
             self.crabnet_model = get_model(
-                mat_prop="elasticity", train_df=df, learningcurve=False
+                mat_prop=self.mat_prop_name, train_df=train_df, learningcurve=False
             )
         # crabnet_main(mat_prop="elasticity", train_df=df)
         os.chdir("..")
 
-        # nearest neighbors
-        rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
-            self.dm, self.target
-        )
+        # TODO: UMAP on new data (i.e. add metric != "precomputed" functionality)
 
-        # UMAP
+    def predict(
+        self,
+        val_df,
+        plotting=None,
+        umap_random_state=None,
+        pred_weight=2,
+        Scaler=MinMaxScaler,
+    ):
+        # pred_weight - how much to weight the prediction values relative to val_ratio
+        self.val_df = val_df
+        train_formula = self.train_df["formula"]
+        train_target = self.train_df["target"]
+
+        val_formula = self.val_df["formula"]
+
+        ntrain, nval = len(train_formula), len(val_formula)
+        ntot = ntrain + nval
+        all_formula = pd.concat((train_formula, val_formula), axis=0)
+        train_ids, val_ids = np.arange(ntrain), np.arange(ntrain, ntot)
+
+        # CrabNet
+        # (act, pred, formulae, uncert)
+        _, train_pred, _, train_sigma = self.crabnet_model.predict(self.train_df)
+        _, val_pred, _, val_sigma = self.crabnet_model.predict(self.val_df)
+        pred = np.concatenate((train_pred, val_pred), axis=0)
+
+        # distance matrix
+        with self.Timer("fit-wasserstein"):
+            self.mapper.fit(all_formula)
+            self.dm = self.mapper.dm
+
+        # UMAP (clustering and visualization)
         umap_trans = self.umap_fit_cluster(self.dm, random_state=umap_random_state)
         std_trans = self.umap_fit_vis(self.dm, random_state=umap_random_state)
 
-        self.umap_emb = self.extract_emb_rad(umap_trans)[0]
+        self.umap_emb, self.umap_r_orig = self.extract_emb_rad(umap_trans)[:2]
         self.std_emb, self.std_r_orig = self.extract_emb_rad(std_trans)[:2]
 
         # HDBSCAN*
         clusterer = self.cluster(self.umap_emb)
         self.labels = self.extract_labels_probs(clusterer)[0]
+        unique_labels = np.unique(self.labels)
 
         # Probability Density Function Summation
         if self.pdf:
@@ -120,28 +147,52 @@ class Discover:
                 self.std_emb, self.std_r_orig
             )
 
+        # TODO: implement "score" method: validation density contributed by training densities
+        # train_emb = self.umap_emb[:ntrain]
+        # val_emb = self.umap_emb[ntrain:]
+
+        # cluster-wise predicted average
+        cluster_pred = np.array([pred[self.labels == lbl] for lbl in unique_labels])
+        self.cluster_avg = np.vectorize(np.mean)(cluster_pred).reshape(-1, 1)
+
+        # cluster-wise validation fraction
+        train_ct, val_ct = np.array(
+            [
+                [np.count_nonzero(self.labels[ids] == lbl) for lbl in unique_labels]
+                for ids in [train_ids, val_ids]
+            ]
+        )
+        self.val_frac = (val_ct / (train_ct + val_ct)).reshape(-1, 1)
+
+        # Scale and weight the data
+        # REVIEW: Which Scaler to use? RobustScaler means no set limits on "score"
+        pred_scaler = Scaler().fit(self.cluster_avg)
+        ratio_scaler = Scaler().fit(self.val_frac)
+
+        pred_scaled = pred_weight * pred_scaler.transform(self.cluster_avg)
+        ratio_scaled = ratio_scaler.transform(self.val_frac)
+
+        # combined data
+        comb_data = pred_scaled + ratio_scaled
+        comb_scaler = Scaler().fit(comb_data)
+
+        # scores range between 0 and 1
+        self.score = comb_scaler.transform(comb_data)
+
+        # REVIEW: val_frac OK or use density of validation data relative to training data?
+
+        # TODO: Nearest Neighbor properties (for plotting only), incorporate as separate "score" type
+        rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
+            self.dm, self.target
+        )
+
         # Plotting
         if (self.plotting and plotting is None) or plotting:
             self.plot()
 
-    def predict(self, df):
-        proxy = df["formula"]
-        target = df["target"]
-        # TODO: UMAP on new data (i.e. remove "precomputed" functionality)
-        # TODO: Obtain CrabNet predictions
-        # TODO: determine density of validation data relative to training data
-        # TODO: determine
-        get_pareto_ind(proxy, target)
-        # TODO: Return list of recommended candidates?
+        return self.score
 
-    def group_cross_val(self, df=None, umap_random_state=None):
-        # unpack
-        if df is None and self.df is not None:
-            df = self.df
-        elif df is None and self.df is None:
-            raise SyntaxError(
-                "df must be assigned via fit() or supplied to group_cross_val directly"
-            )
+    def group_cross_val(self, df, umap_random_state=None):
         if self.formula is None:
             warn("Overwriting self.formula")
             self.formula = df["formula"]
@@ -316,7 +367,7 @@ class Discover:
         #     and val_avg_targ < 0.5 * np.max(val_neigh_avg_targ)
         # ]
 
-        # # log densUMAP densities
+        # # log densMAP densities
         # log_dens = self.log_density()
         # val_dens = log_dens[val_index]
 
@@ -419,7 +470,6 @@ class Discover:
                 "cluster ID": self.labels,
             }
         )
-
         # peak pareto plot
         # TODO: double check if cluster labels are correct between the two pareto plots
         fig, pk_pareto_ind = pareto_plot(
@@ -429,6 +479,25 @@ class Discover:
             color="cluster ID",
             fpath="pf-peak-proxy",
             pareto_front=True,
+        )
+
+        # cluster-wise average vs. cluster-wise validation fraction
+        frac_df = pd.DataFrame(
+            {
+                x: self.val_frac,
+                y: self.cluster_avg,
+                "formula": self.all_formula,
+                "cluster ID": self.labels,
+            }
+        )
+        fig, frac_pareto_ind = pareto_plot(
+            frac_df,
+            x=x,
+            y=y,
+            color="cluster ID",
+            fpath="pf-frac-proxy",
+            pareto_front=True,
+            reverse_x=False,
         )
 
         # Scatter plot colored by clusters
@@ -460,7 +529,6 @@ class Discover:
                 "cluster ID": self.labels + 1,
             }
         )
-
         # dens pareto plot
         fig, dens_pareto_ind = pareto_plot(
             dens_df,
@@ -552,6 +620,8 @@ class Discover:
         plt.axis("off")
         plt.show()
 
+    # TODO: write function to visualize Wasserstein metric (barchart with height = color)
+
 
 # %% CODE GRAVEYARD
 # remove dependence on paths
@@ -583,3 +653,21 @@ class Discover:
 # ]
 
 # self.score = np.mean(self.scores)
+
+# if val_df is not None:
+#     cat_df = pd.concat((df, val_df), axis=0)
+# else:
+#     cat_df = df
+
+# REVIEW: whether to return ratio or fraction (maybe doesn't matter)
+# self.val_ratio = val_ct / train_ct
+
+# # unpack
+# if df is None and self.df is not None:
+#     df = self.df
+# elif df is None and self.df is None:
+#     raise SyntaxError(
+#         "df must be assigned via fit() or supplied to group_cross_val directly"
+#     )
+
+# self.val_score = self.score[val_ids]
