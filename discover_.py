@@ -118,28 +118,30 @@ class Discover:
         umap_random_state=None,
         pred_weight=2,  # pred_weight - how much to weight the prediction values relative to val_ratio
         Scaler=MinMaxScaler,
+        # score_method="train-density",  # "validation-fraction", "train-density"
         dummy_run=None,
     ):
         self.val_df = val_df
 
         # CrabNet
+        # TODO: parity plot
         # (act, pred, formulae, uncert)
         _, train_pred, _, train_sigma = self.crabnet_model.predict(self.train_df)
-        _, val_pred, _, val_sigma = self.crabnet_model.predict(self.val_df)
-        pred = np.concatenate((train_pred, val_pred), axis=0)
+        _, self.val_pred, _, val_sigma = self.crabnet_model.predict(self.val_df)
+        pred = np.concatenate((train_pred, self.val_pred), axis=0)
 
         train_formula = self.train_df["formula"]
         train_target = self.train_df["target"]
-        val_formula = self.val_df["formula"]
+        self.val_formula = self.val_df["formula"]
         if "target" in self.val_df.columns:
             val_target = self.val_df["target"]
         else:
-            val_target = val_pred
+            val_target = self.val_pred
 
-        self.all_formula = pd.concat((train_formula, val_formula), axis=0)
+        self.all_formula = pd.concat((train_formula, self.val_formula), axis=0)
         self.all_target = pd.concat((train_target, val_target), axis=0)
 
-        ntrain, nval = len(train_formula), len(val_formula)
+        ntrain, nval = len(train_formula), len(self.val_formula)
         ntot = ntrain + nval
         train_ids, val_ids = np.arange(ntrain), np.arange(ntrain, ntot)
 
@@ -148,8 +150,7 @@ class Discover:
             self.mapper.fit(self.all_formula)
             self.dm = self.mapper.dm
 
-        # UMAP (clustering and visualization)
-        # TODO: swap with PCA for quick test
+        # UMAP (clustering and visualization) (or MDS for a quick run)
         if (dummy_run is None and self.dummy_run) or dummy_run:
             umap_trans = MDS(n_components=2, dissimilarity="precomputed").fit(self.dm)
             std_trans = umap_trans
@@ -160,8 +161,6 @@ class Discover:
         else:
             umap_trans = self.umap_fit_cluster(self.dm, random_state=umap_random_state)
             std_trans = self.umap_fit_vis(self.dm, random_state=umap_random_state)
-
-            # TODO: swap with random numbers for quick test
             self.umap_emb, self.umap_r_orig = self.extract_emb_rad(umap_trans)[:2]
             self.std_emb, self.std_r_orig = self.extract_emb_rad(std_trans)[:2]
 
@@ -173,6 +172,7 @@ class Discover:
         clusterer = self.cluster(self.umap_emb, min_cluster_size=min_cluster_size)
         self.labels = self.extract_labels_probs(clusterer)[0]
         self.unique_labels = np.unique(self.labels)
+        self.val_labels = self.labels[val_ids]
 
         # Probability Density Function Summation
         if self.pdf:
@@ -181,12 +181,22 @@ class Discover:
             )
 
         # TODO: implement "score" method: validation density contributed by training densities
-        # train_emb = self.umap_emb[:ntrain]
-        # val_emb = self.umap_emb[ntrain:]
+        train_emb = self.umap_emb[:ntrain]
+        train_r_orig = self.umap_r_orig[:ntrain]
+        val_emb = self.umap_emb[ntrain:]
+
+        with self.Timer("train-val-pdf-summation"):
+            mvn_list = list(
+                map(my_mvn, train_emb[:, 0], train_emb[:, 1], np.exp(train_r_orig))
+            )
+            pdf_list = [mvn.pdf(val_emb) for mvn in mvn_list]
+            self.val_dens = np.sum(pdf_list, axis=0)
+            self.val_log_dens = np.log(self.val_dens).reshape(-1, 1)
 
         # cluster-wise predicted average
         cluster_pred = np.array(
-            [pred[self.labels == lbl] for lbl in self.unique_labels], dtype=object
+            [pred.ravel()[self.labels == lbl] for lbl in self.unique_labels],
+            dtype=object,
         )
         self.cluster_avg = np.vectorize(np.mean)(cluster_pred).reshape(-1, 1)
 
@@ -202,23 +212,30 @@ class Discover:
         )
         self.val_frac = (val_ct / (train_ct + val_ct)).reshape(-1, 1)
 
-        # Scale and weight the data
+        # Scale and weight the cluster data
         # REVIEW: Which Scaler to use? RobustScaler means no set limits on "score"
         pred_scaler = Scaler().fit(self.cluster_avg)
-        # frac_scaler = Scaler().fit(self.val_frac)
-
         pred_scaled = pred_weight * pred_scaler.transform(self.cluster_avg)
-        # frac_scaled = frac_scaler.transform(self.val_frac)
         frac_scaled = self.val_frac  # already between 0 and 1
 
-        # combined data
+        # combined cluster data
         comb_data = pred_scaled + frac_scaled
         comb_scaler = Scaler().fit(comb_data)
 
-        # scores range between 0 and 1
-        self.score = comb_scaler.transform(comb_data)
+        # cluster scores range between 0 and 1
+        self.cluster_score = comb_scaler.transform(comb_data)
 
-        # REVIEW: val_frac OK or use density of validation data relative to training data?
+        # compound-wise score (i.e. individual compounds)
+        y = self.val_pred.reshape(-1, 1)
+        pred_scaler2 = Scaler().fit(y)
+        pred_scaled2 = pred_weight * pred_scaler2.transform(y)
+        log_dens_scaler = Scaler().fit(self.val_log_dens)
+        log_dens_scaled = log_dens_scaler.transform(self.val_log_dens)
+
+        # combined compound data
+        comb_data2 = pred_scaled2 + log_dens_scaled
+        comb_scaler2 = Scaler().fit(comb_data2)
+        self.score = comb_scaler2.transform(comb_data2)
 
         # TODO: Nearest Neighbor properties (for plotting only), incorporate as separate "score" type
         rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(self.dm, pred)
@@ -230,7 +247,7 @@ class Discover:
         return self.score
 
     def group_cross_val(self, df, umap_random_state=None, dummy_run=None):
-        # TODO: remind people to use a separate Discover() instance if they wish to access fit and gcv attributes
+        # TODO: remind people in documentation to use a separate Discover() instance if they wish to access fit and gcv attributes
         self.all_formula = df["formula"]
         self.all_target = df["target"]
 
@@ -256,10 +273,10 @@ class Discover:
         # Group Cross Validation Setup
         logo = LeaveOneGroupOut()
 
-        n_clusters = np.max(self.labels)
-        if n_clusters == -1:
+        self.n_clusters = np.max(self.labels)
+        if self.n_clusters == -1:
             raise ValueError("no clusters")
-        n_test_clusters = np.max([1, int(n_clusters * 0.1)])
+        n_test_clusters = np.max([1, int(self.n_clusters * 0.1)])
 
         """Difficult to repeatably set aside a test set for a given clustering result;
         by changing clustering parameters, the test clusters might change, so using
@@ -267,11 +284,13 @@ class Discover:
         Note that "unclustered" is never assigned as a test_cluster, and so is always
         included in tv_cluster_ids (tv===train_validation)."""
         np.random.default_rng(seed=10)
-        test_cluster_ids = np.random.choice(n_clusters + 1, n_test_clusters)
+        test_cluster_ids = np.random.choice(self.n_clusters + 1, n_test_clusters)
         np.random.default_rng()
 
         test_ids = np.isin(self.labels, test_cluster_ids)
-        tv_cluster_ids = np.setdiff1d(np.arange(-1, n_clusters + 1), test_cluster_ids)
+        tv_cluster_ids = np.setdiff1d(
+            np.arange(-1, self.n_clusters + 1), test_cluster_ids
+        )
         tv_ids = np.isin(self.labels, tv_cluster_ids)
 
         X, y = self.all_formula, self.all_target
@@ -282,6 +301,7 @@ class Discover:
         # HACK: remove directory structure dependence
         os.chdir("CrabNet")
         # for train_index, val_index in logo.split(X_tv, y_tv, self.labels):
+        # TODO: group cross-val parity plot
         avg_targ = [
             self.single_group_cross_val(X_tv, y_tv, train_index, val_index, i)
             for i, (train_index, val_index) in enumerate(
@@ -428,7 +448,6 @@ class Discover:
         # pkval_pareto_ind = get_pareto_ind(val_avg_targ, val_targ)
         # densval_pareto_ind = get_pareto_ind(val_dens, val_targ)
 
-        # TODO: return (or save) the average of the training targets (for a more accurate dummy_error to be pedantically correct)
         return true_avg_targ, pred_avg_targ, train_avg_targ
 
     def cluster(self, umap_emb, min_cluster_size=50):
@@ -557,6 +576,28 @@ class Discover:
             parity_type=None,
         )
 
+        x = "train contribution to validation log-density"
+        y = "validation predictions (GPa)"
+        # cluster-wise average vs. cluster-wise validation fraction
+        frac_df = pd.DataFrame(
+            {
+                x: self.val_log_dens.ravel(),
+                y: self.val_pred.ravel(),
+                "cluster ID": self.val_labels,
+                "formula": self.val_formula,
+            }
+        )
+        fig, frac_pareto_ind = pareto_plot(
+            frac_df,
+            x=x,
+            y=y,
+            color="cluster ID",
+            fpath="pf-train-contrib-proxy",
+            pareto_front=True,
+            reverse_x=False,
+            parity_type=None,
+        )
+
         # Scatter plot colored by clusters
         self.umap_cluster_scatter(self.std_emb, self.labels)
 
@@ -587,6 +628,7 @@ class Discover:
             }
         )
         # dens pareto plot
+        # TODO: make the colorscale discrete / more varied
         fig, dens_pareto_ind = pareto_plot(
             dens_df,
             x=x,
@@ -634,6 +676,7 @@ class Discover:
             )
             plt.legend([ax2], ["Unclassified: " + "{:.1%}".format(unclass_frac)])
 
+        # TODO: update label ints so they don't overlap so much (skip some based on length of labels)
         lbl_ints = np.arange(np.amax(labels) + 1)
         if unclass_frac != 1.0:
             plt.colorbar(ax, boundaries=lbl_ints - 0.5, label="Cluster ID").set_ticks(
@@ -649,6 +692,8 @@ class Discover:
         color = plt.cm.nipy_spectral(scl_vals)
 
         plt.bar(*np.unique(labels, return_counts=True), color=color)
+        plt.xlabel("cluster ID")
+        plt.ylabel("number of compounds")
         plt.show()
 
     def target_scatter(self, std_emb, target):
@@ -658,6 +703,7 @@ class Discover:
         plt.show()
 
     def dens_scatter(self, x, y, pdf_sum):
+        # TODO: add callouts to specific locations (high-scoring compounds)
         plt.scatter(x, y, c=pdf_sum)
         plt.axis("off")
         plt.colorbar(label="Density")
@@ -740,3 +786,6 @@ class Discover:
 
 # dummy_df = train_df.iloc[:1, :]
 # dummy_df["target"] = np.nan
+
+# frac_scaler = Scaler().fit(self.val_frac)
+# frac_scaled = frac_scaler.transform(self.val_frac)
