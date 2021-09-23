@@ -25,6 +25,9 @@ import pandas as pd
 from scipy.stats import multivariate_normal, wasserstein_distance
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 from sklearn.model_selection import LeaveOneGroupOut
+from sklearn.manifold import MDS
+
+# from sklearn.decomposition import PCA
 
 import umap
 import hdbscan
@@ -61,6 +64,7 @@ class Discover:
         n_neighbors: int = 10,
         verbose: bool = True,
         mat_prop_name="test-property",
+        dummy_run=False,
     ):
         if timed:
             self.Timer = Timer
@@ -73,25 +77,34 @@ class Discover:
         self.n_neighbors = n_neighbors
         self.verbose = verbose
         self.mat_prop_name = mat_prop_name
+        self.dummy_run = dummy_run
 
         self.mapper = ElM2D(target="cuda")  # type: ignore
         self.dm = None
-        self.formula = None
-        self.target = None
+        # self.formula = None
+        # self.target = None
+        self.train_formula = None
+        self.train_target = None
         self.train_df = None
         self.val_df = None
 
     def fit(self, train_df):
         # unpack
         self.train_df = train_df
-        self.formula = train_df["formula"]
-        self.target = train_df["target"]
+        self.train_formula = train_df["formula"]
+        self.train_target = train_df["target"]
 
         # HACK: remove directory structure dependence
         os.chdir("CrabNet")
+        # TODO: remove the "val MAE", which is wrong (should be NaN or just not displayed)
+        # turns out this is a bit more difficult because of use of self.data_loader
+        # dummy_df = train_df.iloc[:1, :]
+        # dummy_df["target"] = np.mean(train_df["target"])
         with Timer("train-CrabNet"):
             self.crabnet_model = get_model(
-                mat_prop=self.mat_prop_name, train_df=train_df, learningcurve=False
+                mat_prop=self.mat_prop_name,
+                train_df=train_df,
+                learningcurve=False,
             )
         # crabnet_main(mat_prop="elasticity", train_df=df)
         os.chdir("..")
@@ -103,20 +116,11 @@ class Discover:
         val_df,
         plotting=None,
         umap_random_state=None,
-        pred_weight=2,
+        pred_weight=2,  # pred_weight - how much to weight the prediction values relative to val_ratio
         Scaler=MinMaxScaler,
+        dummy_run=None,
     ):
-        # pred_weight - how much to weight the prediction values relative to val_ratio
         self.val_df = val_df
-        train_formula = self.train_df["formula"]
-        train_target = self.train_df["target"]
-
-        val_formula = self.val_df["formula"]
-
-        ntrain, nval = len(train_formula), len(val_formula)
-        ntot = ntrain + nval
-        all_formula = pd.concat((train_formula, val_formula), axis=0)
-        train_ids, val_ids = np.arange(ntrain), np.arange(ntrain, ntot)
 
         # CrabNet
         # (act, pred, formulae, uncert)
@@ -124,22 +128,51 @@ class Discover:
         _, val_pred, _, val_sigma = self.crabnet_model.predict(self.val_df)
         pred = np.concatenate((train_pred, val_pred), axis=0)
 
+        train_formula = self.train_df["formula"]
+        train_target = self.train_df["target"]
+        val_formula = self.val_df["formula"]
+        if "target" in self.val_df.columns:
+            val_target = self.val_df["target"]
+        else:
+            val_target = val_pred
+
+        self.all_formula = pd.concat((train_formula, val_formula), axis=0)
+        self.all_target = pd.concat((train_target, val_target), axis=0)
+
+        ntrain, nval = len(train_formula), len(val_formula)
+        ntot = ntrain + nval
+        train_ids, val_ids = np.arange(ntrain), np.arange(ntrain, ntot)
+
         # distance matrix
         with self.Timer("fit-wasserstein"):
-            self.mapper.fit(all_formula)
+            self.mapper.fit(self.all_formula)
             self.dm = self.mapper.dm
 
         # UMAP (clustering and visualization)
-        umap_trans = self.umap_fit_cluster(self.dm, random_state=umap_random_state)
-        std_trans = self.umap_fit_vis(self.dm, random_state=umap_random_state)
+        # TODO: swap with PCA for quick test
+        if (dummy_run is None and self.dummy_run) or dummy_run:
+            umap_trans = MDS(n_components=2, dissimilarity="precomputed").fit(self.dm)
+            std_trans = umap_trans
+            self.umap_emb = umap_trans.embedding_
+            self.std_emb = umap_trans.embedding_
+            self.umap_r_orig = np.random.rand(self.dm.shape[0])
+            self.std_r_orig = np.random.rand(self.dm.shape[0])
+        else:
+            umap_trans = self.umap_fit_cluster(self.dm, random_state=umap_random_state)
+            std_trans = self.umap_fit_vis(self.dm, random_state=umap_random_state)
 
-        self.umap_emb, self.umap_r_orig = self.extract_emb_rad(umap_trans)[:2]
-        self.std_emb, self.std_r_orig = self.extract_emb_rad(std_trans)[:2]
+            # TODO: swap with random numbers for quick test
+            self.umap_emb, self.umap_r_orig = self.extract_emb_rad(umap_trans)[:2]
+            self.std_emb, self.std_r_orig = self.extract_emb_rad(std_trans)[:2]
 
         # HDBSCAN*
-        clusterer = self.cluster(self.umap_emb)
+        if (dummy_run is None and self.dummy_run) or dummy_run:
+            min_cluster_size = 5
+        else:
+            min_cluster_size = 50
+        clusterer = self.cluster(self.umap_emb, min_cluster_size=min_cluster_size)
         self.labels = self.extract_labels_probs(clusterer)[0]
-        unique_labels = np.unique(self.labels)
+        self.unique_labels = np.unique(self.labels)
 
         # Probability Density Function Summation
         if self.pdf:
@@ -152,13 +185,18 @@ class Discover:
         # val_emb = self.umap_emb[ntrain:]
 
         # cluster-wise predicted average
-        cluster_pred = np.array([pred[self.labels == lbl] for lbl in unique_labels])
+        cluster_pred = np.array(
+            [pred[self.labels == lbl] for lbl in self.unique_labels], dtype=object
+        )
         self.cluster_avg = np.vectorize(np.mean)(cluster_pred).reshape(-1, 1)
 
         # cluster-wise validation fraction
         train_ct, val_ct = np.array(
             [
-                [np.count_nonzero(self.labels[ids] == lbl) for lbl in unique_labels]
+                [
+                    np.count_nonzero(self.labels[ids] == lbl)
+                    for lbl in self.unique_labels
+                ]
                 for ids in [train_ids, val_ids]
             ]
         )
@@ -167,13 +205,14 @@ class Discover:
         # Scale and weight the data
         # REVIEW: Which Scaler to use? RobustScaler means no set limits on "score"
         pred_scaler = Scaler().fit(self.cluster_avg)
-        ratio_scaler = Scaler().fit(self.val_frac)
+        # frac_scaler = Scaler().fit(self.val_frac)
 
         pred_scaled = pred_weight * pred_scaler.transform(self.cluster_avg)
-        ratio_scaled = ratio_scaler.transform(self.val_frac)
+        # frac_scaled = frac_scaler.transform(self.val_frac)
+        frac_scaled = self.val_frac  # already between 0 and 1
 
         # combined data
-        comb_data = pred_scaled + ratio_scaled
+        comb_data = pred_scaled + frac_scaled
         comb_scaler = Scaler().fit(comb_data)
 
         # scores range between 0 and 1
@@ -182,9 +221,7 @@ class Discover:
         # REVIEW: val_frac OK or use density of validation data relative to training data?
 
         # TODO: Nearest Neighbor properties (for plotting only), incorporate as separate "score" type
-        rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
-            self.dm, self.target
-        )
+        rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(self.dm, pred)
 
         # Plotting
         if (self.plotting and plotting is None) or plotting:
@@ -192,26 +229,28 @@ class Discover:
 
         return self.score
 
-    def group_cross_val(self, df, umap_random_state=None):
-        if self.formula is None:
-            warn("Overwriting self.formula")
-            self.formula = df["formula"]
-        if self.target is None:
-            warn("Overwriting self.target")
-            self.target = df["target"]
+    def group_cross_val(self, df, umap_random_state=None, dummy_run=None):
+        # TODO: remind people to use a separate Discover() instance if they wish to access fit and gcv attributes
+        self.all_formula = df["formula"]
+        self.all_target = df["target"]
 
         # distance matrix
         with self.Timer("fit-wasserstein"):
-            self.mapper.fit(self.formula)
-            if self.dm is not None:
-                warn("Overwriting self.dm")
+            self.mapper.fit(self.all_formula)
             self.dm = self.mapper.dm
 
-        umap_trans = self.umap_fit_cluster(self.dm, random_state=umap_random_state)
-        self.umap_emb = self.extract_emb_rad(umap_trans)[0]
+        # UMAP (clustering and visualization)
+        if (dummy_run is None and self.dummy_run) or dummy_run:
+            umap_trans = MDS(n_components=2, dissimilarity="precomputed").fit(self.dm)
+            self.umap_emb = umap_trans.embedding_
+            min_cluster_size = 5
+        else:
+            umap_trans = self.umap_fit_cluster(self.dm, random_state=umap_random_state)
+            self.umap_emb = self.extract_emb_rad(umap_trans)[0]
+            min_cluster_size = 50
 
         # HDBSCAN*
-        clusterer = self.cluster(self.umap_emb)
+        clusterer = self.cluster(self.umap_emb, min_cluster_size=min_cluster_size)
         self.labels = self.extract_labels_probs(clusterer)[0]
 
         # Group Cross Validation Setup
@@ -235,7 +274,7 @@ class Discover:
         tv_cluster_ids = np.setdiff1d(np.arange(-1, n_clusters + 1), test_cluster_ids)
         tv_ids = np.isin(self.labels, tv_cluster_ids)
 
-        X, y = self.formula, self.target
+        X, y = self.all_formula, self.all_target
         X_test, y_test = X[test_ids], y[test_ids]  # noqa
         X_tv, y_tv, labels_tv = X[tv_ids], y[tv_ids], self.labels[tv_ids]
 
@@ -249,15 +288,19 @@ class Discover:
                 logo.split(X_tv, y_tv, labels_tv)
             )
         ]
-        self.true_avg_targ, self.pred_avg_targ = np.array(avg_targ).T
+        out = np.array(avg_targ).T
+        self.true_avg_targ, self.pred_avg_targ, self.train_avg_targ = out
 
         # Sorting "Error" Setup
         u = np.flip(np.cumsum(np.linspace(0, 1, len(self.true_avg_targ))))
         v = u.copy()
         # sorting indices from high to low
         self.sorter = np.flip(self.true_avg_targ.argsort())
+
+        # sort everything by same indices to preserve cluster order
         u_weights = self.true_avg_targ[self.sorter]
         v_weights = self.pred_avg_targ[self.sorter]
+        dummy_v_weights = self.train_avg_targ[self.sorter]
 
         # Weighted distance between CDFs as proxy for "how well sorted" (i.e. sorting metric)
         self.error = wasserstein_distance(
@@ -267,12 +310,11 @@ class Discover:
             print("Weighted group cross validation error =", self.error)
 
         # Dummy Error (i.e. if you "guess" the mean of training targets)
-        # TODO: change to actually use training targets instead of prediction targets
         self.dummy_error = wasserstein_distance(
             u,
             v,
             u_weights=u_weights,
-            v_weights=np.mean(self.true_avg_targ) * np.ones_like(self.true_avg_targ),
+            v_weights=dummy_v_weights,
         )
         # HACK: remove directory structure dependence
         os.chdir("..")
@@ -325,27 +367,39 @@ class Discover:
         # test_df = pd.DataFrame({"formula": X_test, "property": y_test})
 
         # train CrabNet
-        train_pred_df, val_pred_df, test_pred_df = crabnet_main(
-            mat_prop="elasticity",
+        # train_pred_df, val_pred_df, test_pred_df = crabnet_main(
+        #     mat_prop="elasticity",
+        #     train_df=train_df,
+        #     val_df=val_df,
+        #     test_df=test_df,
+        #     learningcurve=False,
+        #     verbose=False,
+        # )
+
+        self.crabnet_model = get_model(
+            mat_prop=self.mat_prop_name,
             train_df=train_df,
             val_df=val_df,
-            test_df=test_df,
             learningcurve=False,
             verbose=False,
         )
 
-        # targets, nearest neighbors, and pareto front indices
-        true_targ = val_df["target"]
-        pred_targ = val_pred_df["pred-0"]
-        target_tmp = (train_df["target"], val_pred_df["pred-0"])
-        target = pd.concat(target_tmp, axis=0)
+        # (act, pred, formulae, uncert)
+        train_true, train_pred, _, train_sigma = self.crabnet_model.predict(train_df)
+        val_true, val_pred, _, val_sigma = self.crabnet_model.predict(val_df)
+        if test_df is not None:
+            _, test_pred, _, test_sigma = self.crabnet_model.predict(test_df)
+        # true_targ = np.concatenate((train_true, val_true), axis=0)
+        # pred_targ = np.concatenate((train_pred, val_pred), axis=0)
 
-        true_avg_targ = np.mean(true_targ)
-        pred_avg_targ = np.mean(pred_targ)
+        true_avg_targ = np.mean(val_true)
+        pred_avg_targ = np.mean(val_pred)
+
+        train_avg_targ = np.mean(train_true)
 
         # nearest neighbors
         # rad_neigh_avg_targ, k_neigh_avg_targ = nearest_neigh_props(
-        #     self.dm, self.target
+        #     self.dm, self.all_target
         # )
 
         # pareto_ind = get_pareto_ind(k_neigh_avg_targ, target)
@@ -375,14 +429,14 @@ class Discover:
         # densval_pareto_ind = get_pareto_ind(val_dens, val_targ)
 
         # TODO: return (or save) the average of the training targets (for a more accurate dummy_error to be pedantically correct)
-        return true_avg_targ, pred_avg_targ
+        return true_avg_targ, pred_avg_targ, train_avg_targ
 
-    def cluster(self, umap_emb):
+    def cluster(self, umap_emb, min_cluster_size=50):
         with self.Timer("HDBSCAN*"):
             clusterer = hdbscan.HDBSCAN(
                 min_samples=1,
                 cluster_selection_epsilon=0.63,
-                min_cluster_size=50,
+                min_cluster_size=min_cluster_size,
                 # allow_single_cluster=True,
             ).fit(umap_emb)
         return clusterer
@@ -464,9 +518,9 @@ class Discover:
         peak_df = pd.DataFrame(
             {
                 x: self.k_neigh_avg_targ,
-                y: self.target,
-                "formula": self.formula,
-                "Peak height (GPa)": self.target - self.k_neigh_avg_targ,
+                y: self.all_target,
+                "formula": self.all_formula,
+                "Peak height (GPa)": self.all_target - self.k_neigh_avg_targ,
                 "cluster ID": self.labels,
             }
         )
@@ -481,23 +535,26 @@ class Discover:
             pareto_front=True,
         )
 
+        x = "cluster-wise validation fraction"
+        y = "cluster-wise average target (GPa)"
         # cluster-wise average vs. cluster-wise validation fraction
         frac_df = pd.DataFrame(
             {
-                x: self.val_frac,
-                y: self.cluster_avg,
-                "formula": self.all_formula,
-                "cluster ID": self.labels,
+                x: self.val_frac.ravel(),
+                y: self.cluster_avg.ravel(),
+                "cluster ID": self.unique_labels,
             }
         )
         fig, frac_pareto_ind = pareto_plot(
             frac_df,
             x=x,
             y=y,
+            hover_data=None,
             color="cluster ID",
             fpath="pf-frac-proxy",
             pareto_front=True,
             reverse_x=False,
+            parity_type=None,
         )
 
         # Scatter plot colored by clusters
@@ -507,14 +564,14 @@ class Discover:
         self.cluster_count_hist(self.labels)
 
         # Scatter plot colored by target values
-        self.target_scatter(self.std_emb, self.target)
+        self.target_scatter(self.std_emb, self.all_target)
 
         # PDF evaluated on grid of points
         if self.pdf:
             self.dens_scatter(self.pdf_x, self.pdf_y, self.pdf_sum)
 
             self.dens_targ_scatter(
-                self.std_emb, self.target, self.pdf_x, self.pdf_y, self.pdf_sum
+                self.std_emb, self.all_target, self.pdf_x, self.pdf_y, self.pdf_sum
             )
 
         # dens pareto plot setup
@@ -524,8 +581,8 @@ class Discover:
         dens_df = pd.DataFrame(
             {
                 x: log_dens,
-                y: self.target,
-                "formula": self.formula,
+                y: self.all_target,
+                "formula": self.all_formula,
                 "cluster ID": self.labels + 1,
             }
         )
@@ -535,7 +592,7 @@ class Discover:
             x=x,
             y=y,
             fpath="pf-dens-proxy",
-            parity_type="none",
+            parity_type=None,
             color="cluster ID",
             pareto_front=True,
         )
@@ -586,9 +643,9 @@ class Discover:
 
     def cluster_count_hist(self, labels):
         col_scl = MinMaxScaler()
-        unique_labels = np.unique(labels)
-        col_trans = col_scl.fit(unique_labels.reshape(-1, 1))
-        scl_vals = col_trans.transform(unique_labels.reshape(-1, 1))
+        self.unique_labels = np.unique(labels)
+        col_trans = col_scl.fit(self.unique_labels.reshape(-1, 1))
+        scl_vals = col_trans.transform(self.unique_labels.reshape(-1, 1))
         color = plt.cm.nipy_spectral(scl_vals)
 
         plt.bar(*np.unique(labels, return_counts=True), color=color)
@@ -671,3 +728,15 @@ class Discover:
 #     )
 
 # self.val_score = self.score[val_ids]
+
+# val_target = np.array([np.nan] * len(val_formula))
+
+
+# # targets, nearest neighbors, and pareto front indices
+# true_targ = val_df["target"]
+# pred_targ = val_pred_df["pred-0"]
+# target_tmp = (train_df["target"], val_pred_df["pred-0"])
+# target = pd.concat(target_tmp, axis=0)
+
+# dummy_df = train_df.iloc[:1, :]
+# dummy_df["target"] = np.nan

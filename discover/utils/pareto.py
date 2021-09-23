@@ -126,7 +126,7 @@ def pareto_plot(
     elif parity_type == "max-of-each":
         mx, mx2 = np.nanmax(proxy), np.nanmax(target)
 
-    if parity_type != "none":
+    if parity_type is not None:
         fig.add_trace(go.Line(x=[0, mx], y=[0, mx2], name="parity"))
 
     # legend and reversal

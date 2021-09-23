@@ -7,8 +7,9 @@ Test DISCOVER algorithm.
 - search for interesting materials, for example:
      - high-target/low-density
      - materials with high-target surrounded by materials with low targets
+     - high mean cluster target/high fraction of validation points within cluster
 
-Run using elm2d_ environment.
+Run using discover environment.
 
 # Stick with ~10k elasticity datapoints
 # Perform UMAP and HDBSCAN
@@ -36,9 +37,12 @@ Created on Mon Sep 6 23:15:27 2021.
 # imports
 from os.path import join
 import pandas as pd
+from sklearn.model_selection import train_test_split
 from discover_ import Discover
+from discover.utils.Timer import Timer
 
-disc = Discover()
+dummy_run = False
+disc = Discover(dummy_run=dummy_run)
 
 # load validation data
 # HACK: absolute path while stick working out dependency structure
@@ -48,6 +52,7 @@ fpath = join(data_dir, name)
 df = pd.read_csv(fpath)
 
 # df = df.groupby(by="formula", as_index=False).mean()
+# if there are two compounds with the same formula, we're more interested in the higher GPa
 group_filter = "max"  # "mean"
 grp_df = (
     df.reset_index()
@@ -59,21 +64,28 @@ grp_df = (
 # REVIEW: drop pure elements here?
 
 # take small subset
-n = 1000
-n2 = 100
-train_df = grp_df.iloc[:n, :]
-val_df = grp_df.iloc[n : n + n2, :]
+if dummy_run:
+    n = 100
+    n2 = 10
+    train_df = grp_df.iloc[:n, :]
+    val_df = grp_df.iloc[n : n + n2, :]
+else:
+    train_df, val_df = train_test_split(grp_df, train_size=0.8)
 # %% fit
 # slower if umap_random_state is not None
-disc.fit(train_df)
-score = disc.predict(val_df)
+with Timer("DISCOVER-fit"):
+    disc.fit(train_df)
+# %% predict
+with Timer("DISCOVER-predict"):
+    score = disc.predict(val_df)
 # %% plot
-disc.plot()
-# %% CODE GRAVEYARD
+with Timer("DISCOVER-plot"):
+    disc.plot()
 # %% group-cv
-# disc.group_cross_val(tmp_df)
-# print("scaled test error = ", disc.scaled_error)
-
+cat_df = pd.concat((train_df, val_df), axis=0)
+with Timer("DISCOVER-group-cross-val"):
+    disc.group_cross_val(cat_df)
+print("scaled test error = ", disc.scaled_error)
 # %% CODE GRAVEYARD
 # from os.path import join, expanduser
 # "~",
