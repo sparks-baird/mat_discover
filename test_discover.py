@@ -60,16 +60,19 @@ grp_df = (
 
 # take small subset
 n = 1000
-tmp_df = grp_df.iloc[:n, :]
+n2 = 100
+train_df = grp_df.iloc[:n, :]
+val_df = grp_df.iloc[n : n + n2, :]
 # %% fit
 # slower if umap_random_state is not None
-disc.fit(tmp_df, umap_random_state=42)
+disc.fit(train_df)
+score = disc.predict(val_df)
 # %% plot
-# disc.plot()
+disc.plot()
 # %% CODE GRAVEYARD
 # %% group-cv
-disc.group_cross_val(tmp_df)
-print("scaled test error = ", disc.scaled_error)
+# disc.group_cross_val(tmp_df)
+# print("scaled test error = ", disc.scaled_error)
 
 # %% CODE GRAVEYARD
 # from os.path import join, expanduser
