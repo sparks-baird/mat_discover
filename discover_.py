@@ -19,6 +19,7 @@ from warnings import warn
 from operator import attrgetter
 from ElM2D.utils.Timer import Timer, NoTimer
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 import numpy as np
 import pandas as pd
@@ -41,6 +42,15 @@ import torch
 
 from CrabNet.train_crabnet import main as crabnet_main  # noqa
 from CrabNet.train_crabnet import get_model
+
+plt.rcParams.update(
+    {
+        "figure.autolayout": True,
+        "figure.figsize": [3.5, 3.5],
+        "figure.dpi": 300,
+        "xtick.direction": "in",
+    }
+)
 
 use_cuda = torch.cuda.is_available()
 
@@ -150,6 +160,8 @@ class Discover:
             self.mapper.fit(self.all_formula)
             self.dm = self.mapper.dm
 
+        # TODO: look into UMAP via GPU
+        # TODO: use fast, built-in Wasserstein UMAP method
         # UMAP (clustering and visualization) (or MDS for a quick run)
         if (dummy_run is None and self.dummy_run) or dummy_run:
             umap_trans = MDS(n_components=2, dissimilarity="precomputed").fit(self.dm)
@@ -180,7 +192,7 @@ class Discover:
                 self.std_emb, self.std_r_orig
             )
 
-        # TODO: implement "score" method: validation density contributed by training densities
+        # validation density contributed by training densities
         train_emb = self.umap_emb[:ntrain]
         train_r_orig = self.umap_r_orig[:ntrain]
         val_emb = self.umap_emb[ntrain:]
@@ -576,9 +588,9 @@ class Discover:
             parity_type=None,
         )
 
-        x = "train contribution to validation log-density"
+        x = "validation log-density"
         y = "validation predictions (GPa)"
-        # cluster-wise average vs. cluster-wise validation fraction
+        # cluster-wise average vs. cluster-wise validation log-density
         frac_df = pd.DataFrame(
             {
                 x: self.val_log_dens.ravel(),
@@ -587,6 +599,7 @@ class Discover:
                 "formula": self.val_formula,
             }
         )
+        # FIXME: manually set the lower and upper bounds of the cmap here (or convert to dict)
         fig, frac_pareto_ind = pareto_plot(
             frac_df,
             x=x,
@@ -594,24 +607,23 @@ class Discover:
             color="cluster ID",
             fpath="pf-train-contrib-proxy",
             pareto_front=True,
-            reverse_x=False,
             parity_type=None,
         )
 
         # Scatter plot colored by clusters
-        self.umap_cluster_scatter(self.std_emb, self.labels)
+        fig = self.umap_cluster_scatter(self.std_emb, self.labels)
 
         # Histogram of cluster counts
-        self.cluster_count_hist(self.labels)
+        fig = self.cluster_count_hist(self.labels)
 
         # Scatter plot colored by target values
-        self.target_scatter(self.std_emb, self.all_target)
+        fig = self.target_scatter(self.std_emb, self.all_target)
 
         # PDF evaluated on grid of points
         if self.pdf:
-            self.dens_scatter(self.pdf_x, self.pdf_y, self.pdf_sum)
+            fig = self.dens_scatter(self.pdf_x, self.pdf_y, self.pdf_sum)
 
-            self.dens_targ_scatter(
+            fig = self.dens_targ_scatter(
                 self.std_emb, self.all_target, self.pdf_x, self.pdf_y, self.pdf_sum
             )
 
@@ -628,7 +640,8 @@ class Discover:
             }
         )
         # dens pareto plot
-        # TODO: make the colorscale discrete / more varied
+        # FIXME: manually set the lower and upper bounds of the cmap here (or convert to dict)
+        # TODO: make the colorscale discrete
         fig, dens_pareto_ind = pareto_plot(
             dens_df,
             x=x,
@@ -644,37 +657,37 @@ class Discover:
 
     def umap_cluster_scatter(self, std_emb, labels):
         # TODO: update plotting commands to have optional arguments (e.g. std_emb and labels)
-        # plt.scatter(
-        #     std_emb[:, 0],
-        #     std_emb[:, 1],
-        #     c=labels,
-        #     s=5,
-        #     cmap=plt.cm.nipy_spectral,
-        #     label=labels,
-        # )
+        cmap = plt.cm.nipy_spectral
+        mx = np.max(labels)
+        # cmap = sns.color_palette("Spectral", mx + 1, as_cmap=True)
         class_ids = labels != -1
+        fig = plt.Figure()
         ax = plt.scatter(
             std_emb[:, 0],
             std_emb[:, 1],
             c=labels,
             s=5,
-            cmap=plt.cm.nipy_spectral,
+            cmap=cmap,
             label=labels,
         )
         unclass_ids = np.invert(class_ids)
         unclass_frac = np.sum(unclass_ids) / len(labels)
         plt.axis("off")
 
-        if unclass_frac != 0.0:
-            ax2 = plt.scatter(
-                std_emb[unclass_ids, 0],
-                std_emb[unclass_ids, 1],
-                c=labels[unclass_ids],
-                s=5,
-                cmap=plt.cm.nipy_spectral,
-                label=labels[unclass_ids],
-            )
-            plt.legend([ax2], ["Unclassified: " + "{:.1%}".format(unclass_frac)])
+        # if unclass_frac != 0.0:
+        #     ax2 = plt.scatter(
+        #         std_emb[unclass_ids, 0],
+        #         std_emb[unclass_ids, 1],
+        #         c=labels[unclass_ids],
+        #         s=5,
+        #         cmap=plt.cm.nipy_spectral,
+        #         label=labels[unclass_ids],
+        #     )
+        #     plt.legend([ax2], ["Unclassified: " + "{:.1%}".format(unclass_frac)])
+        plt.tight_layout()
+        plt.savefig("umap-cluster-scatter")
+        plt.show()
+        return fig
 
         # TODO: update label ints so they don't overlap so much (skip some based on length of labels)
         lbl_ints = np.arange(np.amax(labels) + 1)
@@ -690,26 +703,40 @@ class Discover:
         col_trans = col_scl.fit(self.unique_labels.reshape(-1, 1))
         scl_vals = col_trans.transform(self.unique_labels.reshape(-1, 1))
         color = plt.cm.nipy_spectral(scl_vals)
+        # mx = np.max(labels)
+        # cmap = sns.color_palette("Spectral", mx + 1, as_cmap=True)
+        # color = cmap(scl_vals)
 
-        plt.bar(*np.unique(labels, return_counts=True), color=color)
+        fig = plt.bar(*np.unique(labels, return_counts=True), color=color)
         plt.xlabel("cluster ID")
         plt.ylabel("number of compounds")
+        plt.tight_layout()
+        plt.savefig("cluster-count-hist")
         plt.show()
+        return fig
 
     def target_scatter(self, std_emb, target):
-        plt.scatter(std_emb[:, 0], std_emb[:, 1], c=target, s=15, cmap="Spectral")
+        # TODO: change to log colorscale or a higher-contrast
+        fig = plt.scatter(std_emb[:, 0], std_emb[:, 1], c=target, s=15, cmap="Spectral")
         plt.axis("off")
         plt.colorbar(label="Bulk Modulus (GPa)")
+        plt.tight_layout()
+        plt.savefig("target-scatter")
         plt.show()
+        return fig
 
     def dens_scatter(self, x, y, pdf_sum):
         # TODO: add callouts to specific locations (high-scoring compounds)
-        plt.scatter(x, y, c=pdf_sum)
+        fig = plt.scatter(x, y, c=pdf_sum)
         plt.axis("off")
-        plt.colorbar(label="Density")
+        plt.tight_layout()
+        # plt.colorbar(label="Density")
+        plt.savefig("dens-scatter")
         plt.show()
+        return fig
 
     def dens_targ_scatter(self, std_emb, target, x, y, pdf_sum):
+        fig = plt.Figure()
         plt.scatter(x, y, c=pdf_sum)
         plt.scatter(
             std_emb[:, 0],
@@ -721,7 +748,10 @@ class Discover:
             alpha=0.15,
         )
         plt.axis("off")
+        plt.tight_layout()
+        plt.savefig("dens-targ-scatter")
         plt.show()
+        return fig
 
     # TODO: write function to visualize Wasserstein metric (barchart with height = color)
 
