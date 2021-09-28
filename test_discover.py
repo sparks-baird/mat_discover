@@ -36,6 +36,7 @@ Created on Mon Sep 6 23:15:27 2021.
 # %% Setup
 # imports
 from os.path import join
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from discover_ import Discover
@@ -45,7 +46,7 @@ dummy_run = False
 disc = Discover(dummy_run=dummy_run)
 
 # load validation data
-# HACK: absolute path while stick working out dependency structure
+# HACK: absolute path while still working out dependency structure
 data_dir = join("CrabNet", "data", "materials_data", "elasticity")
 name = "train.csv"  # "example_materials_property_val_output.csv", #elasticity_val_output.csv"
 fpath = join(data_dir, name)
@@ -63,6 +64,9 @@ grp_df = (
 
 # REVIEW: drop pure elements here?
 
+# REVIEW: drop noble gases
+noble_ids = np.nonzero(np.isin(grp_df.formula, ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]))[0]
+grp_df.drop(noble_ids, inplace=True)
 # take small subset
 if dummy_run:
     n = 100
@@ -70,6 +74,7 @@ if dummy_run:
     train_df = grp_df.iloc[:n, :]
     val_df = grp_df.iloc[n : n + n2, :]
 else:
+    # REVIEW: consider changing train_size to 0.2
     train_df, val_df = train_test_split(grp_df, train_size=0.8)
 # %% fit
 # slower if umap_random_state is not None
@@ -81,11 +86,12 @@ with Timer("DISCOVER-predict"):
 # %% plot
 with Timer("DISCOVER-plot"):
     disc.plot()
+1 + 1
 # %% group-cv
-cat_df = pd.concat((train_df, val_df), axis=0)
-with Timer("DISCOVER-group-cross-val"):
-    disc.group_cross_val(cat_df)
-print("scaled test error = ", disc.scaled_error)
+# cat_df = pd.concat((train_df, val_df), axis=0)
+# with Timer("DISCOVER-group-cross-val"):
+#     disc.group_cross_val(cat_df)
+# print("scaled test error = ", disc.scaled_error)
 # %% CODE GRAVEYARD
 # from os.path import join, expanduser
 # "~",
