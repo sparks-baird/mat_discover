@@ -1,7 +1,11 @@
 """Helper functions for finding and plotting a pareto front."""
+import sys
+from PyQt5.QtWidgets import QApplication
+
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 
 
 def is_pareto_efficient_simple(costs):
@@ -72,24 +76,44 @@ def pareto_plot(
     parity_type : str, optional
         What kind of parity line to plot: "max-of-both", "max-of-each", or "none"
     """
+    mx = np.max(df[color])
     if color_continuous_scale is None and color_discrete_map is None:
-        if isinstance(df[color][0], (int, np.integer)):
-            if np.max(df[color]) < 20:
-                df.loc[:, color] = df[color].astype(str)
+        if isinstance(df[color].iloc[0], (int, np.integer)):
+            # if mx < 24:
+            #     df.loc[:, color] = df[color].astype(str)
+
+            # color_discrete_map = px.colors.qualitative.Dark24
+            # color_discrete_map = sns.color_palette("Spectral", mx + 1, as_cmap=True)
+            # scatter_color_kwargs = {"color_continuous_scale": color_discrete_map}
+
+            def mpl_to_plotly(cmap, pl_entries=11, rdigits=2):
+                # cmap - colormap
+                # pl_entries - int = number of Plotly colorscale entries
+                # rdigits - int -=number of digits for rounding scale values
+                scale = np.linspace(0, 1, pl_entries)
+                colors = (cmap(scale)[:, :3] * 255).astype(np.uint8)
+                pl_colorscale = [
+                    [round(s, rdigits), f"rgb{tuple(color)}"]
+                    for s, color in zip(scale, colors)
+                ]
+                return pl_colorscale
+
+            nipy_spectral = mpl_to_plotly(
+                plt.cm.nipy_spectral, pl_entries=mx + 1, rdigits=3
+            )
+
             scatter_color_kwargs = {
-                "color_discrete_sequence": px.colors.qualitative.Dark24
-            }
-        else:
-            scatter_color_kwargs = {
-                "color_continuous_scale": px.colors.sequential.Blackbody_r
+                "color_continuous_scale": nipy_spectral  # px.colors.sequential.Blackbody_r
             }
     elif color_continuous_scale is not None:
         scatter_color_kwargs = {"color_continuous_scale": color_continuous_scale}
     elif color_discrete_map is not None:
         scatter_color_kwargs = {"color_discrete_sequence": color_discrete_map}
 
-    # TODO: update trace order
-    df = df.sort_values(color)
+    # TODO: update trace order to count 0, 1, 2, ... instead of 0, 1, 10, 11
+    df["color_num"] = df[color].astype(int)
+    df = df.sort_values("color_num")
+
     fig = px.scatter(
         df,
         x=x,
@@ -109,14 +133,16 @@ def pareto_plot(
         # pf_hover_data = df.loc[:, hover_data].iloc[pareto_ind]
         # fig.add_scatter(x=proxy[pareto_ind], y=target[pareto_ind])
         # Add scatter trace with medium sized markers
+        sorter = np.flip(np.argsort(target.iloc[pareto_ind]))
         fig.add_scatter(
-            mode="markers",
-            x=proxy.iloc[pareto_ind],
-            y=target.iloc[pareto_ind],
+            mode="lines",
+            line={"color": "black", "width": 1, "dash": "dash"},
+            x=proxy.iloc[pareto_ind].iloc[sorter],
+            y=target.iloc[pareto_ind].iloc[sorter],
             marker_symbol="circle-open",
             marker_size=10,
             hoverinfo="skip",
-            name="Pareto Front",
+            name="pareto front",
         )
 
     # parity line
@@ -130,14 +156,64 @@ def pareto_plot(
         fig.add_trace(go.Line(x=[0, mx], y=[0, mx2], name="parity"))
 
     # legend and reversal
-    fig.update_layout(legend_orientation="h", legend_y=1.1)
+    fig.update_layout(legend_orientation="h", legend_y=1.1, legend_yanchor="bottom")
+
     if reverse_x:
         fig.update_layout(xaxis=dict(autorange="reversed"))
+
     fig.show()
+
+    if fpath is not None:
+        fig.write_html(fpath + ".html")
+
+    # make it look more like matplotlib
+    # modified from: https://medium.com/swlh/formatting-a-plotly-figure-with-matplotlib-style-fa56ddd97539)
+    font_dict = dict(family="Arial", size=26, color="black")
+
+    app = QApplication(sys.argv)
+    screen = app.screens()[0]
+    dpi = screen.physicalDotsPerInch()
+    app.quit()
+
+    fig.update_layout(
+        font=font_dict,
+        plot_bgcolor="white",
+        width=3.5 * dpi,
+        height=3.5 * dpi,
+        margin=dict(r=40, t=20, b=10),
+    )
+
+    fig.update_yaxes(
+        showline=True,  # add line at x=0
+        linecolor="black",  # line color
+        linewidth=2.4,  # line size
+        ticks="inside",  # ticks outside axis
+        tickfont=font_dict,  # tick label font
+        mirror="allticks",  # add ticks to top/right axes
+        tickwidth=2.4,  # tick width
+        tickcolor="black",  # tick color
+    )
+
+    fig.update_xaxes(
+        showline=True,
+        showticklabels=True,
+        linecolor="black",
+        linewidth=2.4,
+        ticks="inside",
+        tickfont=font_dict,
+        mirror="allticks",
+        tickwidth=2.4,
+        tickcolor="black",
+    )
+    fig.update(layout_coloraxis_showscale=False)
 
     # saving
     if fpath is not None:
-        fig.write_image(fpath + ".png")
-        fig.write_html(fpath + ".html")
+        width_inches = 3.5
+        width_default_px = fig.layout.width
+        targ_dpi = 300
+        scale = width_inches / (width_default_px / dpi) * (targ_dpi / dpi)
+
+        fig.write_image(fpath + ".png", scale=scale)
 
     return fig, pareto_ind
