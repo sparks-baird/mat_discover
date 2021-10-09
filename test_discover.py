@@ -41,6 +41,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from discover_ import Discover
 from discover.utils.Timer import Timer
+import pickle
 
 dummy_run = False
 disc = Discover(dummy_run=dummy_run)
@@ -75,7 +76,10 @@ if dummy_run:
     val_df = grp_df.iloc[n : n + n2, :]
 else:
     # REVIEW: consider changing train_size to 0.2
-    train_df, val_df = train_test_split(grp_df, train_size=0.8)
+    test_size = 0.1
+    val_size = 0.2
+    tv_df, test_df = train_test_split(grp_df, test_size=test_size)
+    train_df, val_df = train_test_split(tv_df, test_size=val_size / (1 - test_size))
 # %% fit
 # slower if umap_random_state is not None
 with Timer("DISCOVER-fit"):
@@ -92,6 +96,12 @@ with Timer("DISCOVER-plot"):
 # with Timer("DISCOVER-group-cross-val"):
 #     disc.group_cross_val(cat_df)
 # print("scaled test error = ", disc.scaled_error)
+
+print(disc.score_df)
+
+# %% save
+with open("disc.pkl", "wb") as f:
+    pickle.dump(disc, f)
 # %% CODE GRAVEYARD
 # from os.path import join, expanduser
 # "~",
