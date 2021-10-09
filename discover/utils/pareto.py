@@ -53,6 +53,7 @@ def pareto_plot(
     pareto_front=True,
     color_continuous_scale=None,
     color_discrete_map=None,
+    xrange=None,
 ):
     """Generate and save pareto plot for two variables.
 
@@ -110,7 +111,7 @@ def pareto_plot(
     elif color_discrete_map is not None:
         scatter_color_kwargs = {"color_discrete_sequence": color_discrete_map}
 
-    # TODO: update trace order to count 0, 1, 2, ... instead of 0, 1, 10, 11
+    # trace order counts 0, 1, 2, ... instead of 0, 1, 10, 11
     df["color_num"] = df[color].astype(int)
     df = df.sort_values("color_num")
 
@@ -206,6 +207,9 @@ def pareto_plot(
         tickcolor="black",
     )
     fig.update(layout_coloraxis_showscale=False)
+
+    if xrange is not None:
+        fig.update_xaxes(range=xrange)
 
     # saving
     if fpath is not None:
