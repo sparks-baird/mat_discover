@@ -19,7 +19,6 @@ from warnings import warn
 from operator import attrgetter
 from ElM2D.utils.Timer import Timer, NoTimer
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 import numpy as np
 import pandas as pd
@@ -37,6 +36,13 @@ from ElM2D.ElM2D_ import ElM2D
 
 from discover.utils.nearest_neigh import nearest_neigh_props
 from discover.utils.pareto import pareto_plot, get_pareto_ind
+from discover.utils.plotting import (
+    umap_cluster_scatter,
+    cluster_count_hist,
+    target_scatter,
+    dens_scatter,
+    dens_targ_scatter,
+)
 
 import torch
 
@@ -136,8 +142,9 @@ class Discover:
         # CrabNet
         # TODO: parity plot
         # (act, pred, formulae, uncert)
-        _, train_pred, _, train_sigma = self.crabnet_model.predict(self.train_df)
-        _, self.val_pred, _, val_sigma = self.crabnet_model.predict(self.val_df)
+        crabnet_model = self.crabnet_model
+        _, train_pred, _, train_sigma = crabnet_model.predict(self.train_df)
+        _, self.val_pred, _, val_sigma = crabnet_model.predict(self.val_df)
         pred = np.concatenate((train_pred, self.val_pred), axis=0)
 
         train_formula = self.train_df["formula"]
@@ -244,10 +251,10 @@ class Discover:
         log_dens_scaler = Scaler().fit(self.val_log_dens)
         log_dens_scaled = log_dens_scaler.transform(self.val_log_dens)
 
-        # combined compound data
+        # combined compound validation data
         comb_data2 = pred_scaled2 + log_dens_scaled
         comb_scaler2 = Scaler().fit(comb_data2)
-        self.score = comb_scaler2.transform(comb_data2)
+        self.score = comb_scaler2.transform(comb_data2).ravel()
 
         # TODO: Nearest Neighbor properties (for plotting only), incorporate as separate "score" type
         rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(self.dm, pred)
@@ -256,10 +263,25 @@ class Discover:
         if (self.plotting and plotting is None) or plotting:
             self.plot()
 
+        self.sort()
+
         return self.score
 
+    def sort(self):
+        score_df = pd.DataFrame(
+            {
+                "formula": self.val_formula,
+                "target prediction": self.val_pred,
+                "density": self.val_dens,
+                "score": self.score,
+            }
+        )
+        score_df.sort_values("score", ascending=False, inplace=True)
+        self.score_df = score_df
+        return score_df
+
     def group_cross_val(self, df, umap_random_state=None, dummy_run=None):
-        # TODO: remind people in documentation to use a separate Discover() instance if they wish to access fit and gcv attributes
+        # TODO: remind people in documentation to use a separate Discover() instance if they wish to access fit *and* gcv attributes
         self.all_formula = df["formula"]
         self.all_target = df["target"]
 
@@ -586,6 +608,7 @@ class Discover:
             pareto_front=True,
             reverse_x=False,
             parity_type=None,
+            xrange=[0, 1],
         )
 
         x = "validation log-density"
@@ -611,19 +634,19 @@ class Discover:
         )
 
         # Scatter plot colored by clusters
-        fig = self.umap_cluster_scatter(self.std_emb, self.labels)
+        fig = umap_cluster_scatter(self.std_emb, self.labels)
 
         # Histogram of cluster counts
-        fig = self.cluster_count_hist(self.labels)
+        fig = cluster_count_hist(self.labels)
 
         # Scatter plot colored by target values
-        fig = self.target_scatter(self.std_emb, self.all_target)
+        fig = target_scatter(self.std_emb, self.all_target)
 
         # PDF evaluated on grid of points
         if self.pdf:
-            fig = self.dens_scatter(self.pdf_x, self.pdf_y, self.pdf_sum)
+            fig = dens_scatter(self.pdf_x, self.pdf_y, self.pdf_sum)
 
-            fig = self.dens_targ_scatter(
+            fig = dens_targ_scatter(
                 self.std_emb, self.all_target, self.pdf_x, self.pdf_y, self.pdf_sum
             )
 
@@ -654,104 +677,6 @@ class Discover:
 
         if return_pareto_ind:
             return pk_pareto_ind, dens_pareto_ind
-
-    def umap_cluster_scatter(self, std_emb, labels):
-        # TODO: update plotting commands to have optional arguments (e.g. std_emb and labels)
-        cmap = plt.cm.nipy_spectral
-        mx = np.max(labels)
-        # cmap = sns.color_palette("Spectral", mx + 1, as_cmap=True)
-        class_ids = labels != -1
-        fig = plt.Figure()
-        ax = plt.scatter(
-            std_emb[:, 0],
-            std_emb[:, 1],
-            c=labels,
-            s=5,
-            cmap=cmap,
-            label=labels,
-        )
-        unclass_ids = np.invert(class_ids)
-        unclass_frac = np.sum(unclass_ids) / len(labels)
-        plt.axis("off")
-
-        # if unclass_frac != 0.0:
-        #     ax2 = plt.scatter(
-        #         std_emb[unclass_ids, 0],
-        #         std_emb[unclass_ids, 1],
-        #         c=labels[unclass_ids],
-        #         s=5,
-        #         cmap=plt.cm.nipy_spectral,
-        #         label=labels[unclass_ids],
-        #     )
-        #     plt.legend([ax2], ["Unclassified: " + "{:.1%}".format(unclass_frac)])
-        plt.tight_layout()
-        plt.savefig("umap-cluster-scatter")
-        plt.show()
-        return fig
-
-        # TODO: update label ints so they don't overlap so much (skip some based on length of labels)
-        lbl_ints = np.arange(np.amax(labels) + 1)
-        if unclass_frac != 1.0:
-            plt.colorbar(ax, boundaries=lbl_ints - 0.5, label="Cluster ID").set_ticks(
-                lbl_ints
-            )
-        plt.show()
-
-    def cluster_count_hist(self, labels):
-        col_scl = MinMaxScaler()
-        self.unique_labels = np.unique(labels)
-        col_trans = col_scl.fit(self.unique_labels.reshape(-1, 1))
-        scl_vals = col_trans.transform(self.unique_labels.reshape(-1, 1))
-        color = plt.cm.nipy_spectral(scl_vals)
-        # mx = np.max(labels)
-        # cmap = sns.color_palette("Spectral", mx + 1, as_cmap=True)
-        # color = cmap(scl_vals)
-
-        fig = plt.bar(*np.unique(labels, return_counts=True), color=color)
-        plt.xlabel("cluster ID")
-        plt.ylabel("number of compounds")
-        plt.tight_layout()
-        plt.savefig("cluster-count-hist")
-        plt.show()
-        return fig
-
-    def target_scatter(self, std_emb, target):
-        # TODO: change to log colorscale or a higher-contrast
-        fig = plt.scatter(std_emb[:, 0], std_emb[:, 1], c=target, s=15, cmap="Spectral")
-        plt.axis("off")
-        plt.colorbar(label="Bulk Modulus (GPa)")
-        plt.tight_layout()
-        plt.savefig("target-scatter")
-        plt.show()
-        return fig
-
-    def dens_scatter(self, x, y, pdf_sum):
-        # TODO: add callouts to specific locations (high-scoring compounds)
-        fig = plt.scatter(x, y, c=pdf_sum)
-        plt.axis("off")
-        plt.tight_layout()
-        # plt.colorbar(label="Density")
-        plt.savefig("dens-scatter")
-        plt.show()
-        return fig
-
-    def dens_targ_scatter(self, std_emb, target, x, y, pdf_sum):
-        fig = plt.Figure()
-        plt.scatter(x, y, c=pdf_sum)
-        plt.scatter(
-            std_emb[:, 0],
-            std_emb[:, 1],
-            c=target,
-            s=15,
-            cmap="Spectral",
-            edgecolors="none",
-            alpha=0.15,
-        )
-        plt.axis("off")
-        plt.tight_layout()
-        plt.savefig("dens-targ-scatter")
-        plt.show()
-        return fig
 
     # TODO: write function to visualize Wasserstein metric (barchart with height = color)
 
