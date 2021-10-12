@@ -77,7 +77,7 @@ def target_scatter(std_emb, target):
         std_emb[:, 1],
         c=target,
         s=15,
-        cmap="Spectral",
+        cmap="Spectral_r",
         norm=mpl.colors.LogNorm(),
     )
     plt.axis("off")
