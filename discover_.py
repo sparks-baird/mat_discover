@@ -81,6 +81,7 @@ class Discover:
         verbose: bool = True,
         mat_prop_name="test-property",
         dummy_run=False,
+        Scaler=MinMaxScaler,
     ):
         if timed:
             self.Timer = Timer
@@ -94,6 +95,7 @@ class Discover:
         self.verbose = verbose
         self.mat_prop_name = mat_prop_name
         self.dummy_run = dummy_run
+        self.Scaler = Scaler
 
         self.mapper = ElM2D(target="cuda")  # type: ignore
         self.dm = None
@@ -133,7 +135,6 @@ class Discover:
         plotting=None,
         umap_random_state=None,
         pred_weight=2,  # pred_weight - how much to weight the prediction values relative to val_ratio
-        Scaler=MinMaxScaler,
         # score_method="train-density",  # "validation-fraction", "train-density"
         dummy_run=None,
     ):
@@ -210,7 +211,7 @@ class Discover:
             )
             pdf_list = [mvn.pdf(val_emb) for mvn in mvn_list]
             self.val_dens = np.sum(pdf_list, axis=0)
-            self.val_log_dens = np.log(self.val_dens).reshape(-1, 1)
+            self.val_log_dens = np.log(self.val_dens)
 
         # cluster-wise predicted average
         cluster_pred = np.array(
@@ -231,53 +232,77 @@ class Discover:
         )
         self.val_frac = (val_ct / (train_ct + val_ct)).reshape(-1, 1)
 
-        # Scale and weight the cluster data
-        # REVIEW: Which Scaler to use? RobustScaler means no set limits on "score"
-        pred_scaler = Scaler().fit(self.cluster_avg)
-        pred_scaled = pred_weight * pred_scaler.transform(self.cluster_avg)
-        frac_scaled = self.val_frac  # already between 0 and 1
+        # # Scale and weight the cluster data
+        # # REVIEW: Which Scaler to use? RobustScaler means no set limits on "score"
+        # pred_scaler = self.Scaler().fit(self.cluster_avg)
+        # pred_scaled = pred_weight * pred_scaler.transform(self.cluster_avg)
+        # frac_scaled = self.val_frac  # already between 0 and 1
 
-        # combined cluster data
-        comb_data = pred_scaled + frac_scaled
-        comb_scaler = Scaler().fit(comb_data)
+        # # combined cluster data
+        # comb_data = pred_scaled + frac_scaled
+        # comb_scaler = self.Scaler().fit(comb_data)
 
-        # cluster scores range between 0 and 1
-        self.cluster_score = comb_scaler.transform(comb_data)
+        # # cluster scores range between 0 and 1
+        # self.cluster_score = comb_scaler.transform(comb_data)
+
+        self.cluster_score = self.weighted_score(self.cluster_avg, self.val_frac)
 
         # compound-wise score (i.e. individual compounds)
-        y = self.val_pred.reshape(-1, 1)
-        pred_scaler2 = Scaler().fit(y)
-        pred_scaled2 = pred_weight * pred_scaler2.transform(y)
-        log_dens_scaler = Scaler().fit(self.val_log_dens)
-        log_dens_scaled = log_dens_scaler.transform(self.val_log_dens)
 
-        # combined compound validation data
-        comb_data2 = pred_scaled2 + log_dens_scaled
-        comb_scaler2 = Scaler().fit(comb_data2)
-        self.score = comb_scaler2.transform(comb_data2).ravel()
+        # y = self.val_pred.reshape(-1, 1)
+        # pred_scaler2 = self.Scaler().fit(y)
+        # pred_scaled2 = pred_weight * pred_scaler2.transform(y)
+        # dens_scaler = self.Scaler().fit(-1 * self.val_dens.reshape(-1, 1))
+        # dens_scaled = dens_scaler.transform(-1 * self.val_dens.reshape(-1, 1))
+
+        # # combined compound validation data
+        # comb_data2 = pred_scaled2 + dens_scaled
+        # comb_scaler2 = self.Scaler().fit(comb_data2)
+        # self.score = comb_scaler2.transform(comb_data2).ravel()
 
         # TODO: Nearest Neighbor properties (for plotting only), incorporate as separate "score" type
         rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(self.dm, pred)
+        self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
+
+        self.dens_score = self.weighted_score(self.val_pred, self.val_dens)
+        self.peak_score = self.weighted_score(self.val_pred, self.val_k_neigh_avg)
 
         # Plotting
         if (self.plotting and plotting is None) or plotting:
             self.plot()
 
-        self.sort()
+        self.dens_score_df = self.sort(self.dens_score)
+        self.peak_score_df = self.sort(self.peak_score)
 
-        return self.score
+        return self.dens_score, self.peak_score
 
-    def sort(self):
+    def weighted_score(self, pred, proxy, pred_weight=2):
+        pred = pred.ravel().reshape(-1, 1)
+        proxy = proxy.ravel().reshape(-1, 1)
+        # Scale and weight the cluster data
+        pred_scaler = self.Scaler().fit(pred)
+        pred_scaled = pred_weight * pred_scaler.transform(pred)
+        proxy_scaler = self.Scaler().fit(-1 * proxy)
+        proxy_scaled = proxy_scaler.transform(-1 * proxy)
+
+        # combined cluster data
+        comb_data = pred_scaled + proxy_scaled
+        comb_scaler = self.Scaler().fit(comb_data)
+
+        # cluster scores range between 0 and 1
+        score = comb_scaler.transform(comb_data).ravel()
+        return score
+
+    def sort(self, score):
         score_df = pd.DataFrame(
             {
                 "formula": self.val_formula,
-                "target prediction": self.val_pred,
+                "prediction": self.val_pred,
                 "density": self.val_dens,
-                "score": self.score,
+                "score": score,
             }
         )
         score_df.sort_values("score", ascending=False, inplace=True)
-        self.score_df = score_df
         return score_df
 
     def group_cross_val(self, df, umap_random_state=None, dummy_run=None):
@@ -567,14 +592,14 @@ class Discover:
         # peak pareto plot setup
         x = str(self.n_neighbors) + "_neigh_avg_targ (GPa)"
         y = "target (GPa)"
-        # TODO: plot for val data only (?)
+        # TODO: plot for val data only (fixed?)
         peak_df = pd.DataFrame(
             {
-                x: self.k_neigh_avg_targ,
-                y: self.all_target,
-                "formula": self.all_formula,
-                "Peak height (GPa)": self.all_target - self.k_neigh_avg_targ,
-                "cluster ID": self.labels,
+                x: self.val_k_neigh_avg,
+                y: self.val_pred,
+                "formula": self.val_formula,
+                "Peak height (GPa)": self.val_pred - self.val_k_neigh_avg,
+                "cluster ID": self.val_labels,
             }
         )
         # peak pareto plot
