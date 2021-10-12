@@ -44,6 +44,7 @@ from discover.utils.Timer import Timer
 import pickle
 
 dummy_run = False
+# dummy_run = True
 disc = Discover(dummy_run=dummy_run)
 
 # load validation data
@@ -97,7 +98,25 @@ with Timer("DISCOVER-plot"):
 #     disc.group_cross_val(cat_df)
 # print("scaled test error = ", disc.scaled_error)
 
-print(disc.score_df)
+print(disc.dens_score_df)
+print(disc.peak_score_df)
+
+disc.dens_score_df.rename(columns={"score": "Density Score"}, inplace=True)
+disc.peak_score_df.rename(columns={"score": "Peak Score"}, inplace=True)
+
+comb_score_df = disc.dens_score_df[["formula", "Density Score"]].merge(
+    disc.peak_score_df[["formula", "Peak Score"]], how="outer"
+)
+
+comb_formula = disc.dens_score_df.head(10)[["formula"]].merge(
+    disc.peak_score_df.head(10)[["formula"]], how="outer"
+)
+
+comb_out_df = comb_score_df[np.isin(comb_score_df.formula, comb_formula)]
+
+disc.dens_score_df.head(10).to_csv("dens-score.csv", index=False, float_format="%.3f")
+disc.peak_score_df.head(10).to_csv("peak-score.csv", index=False, float_format="%.3f")
+comb_out_df.to_csv("comb-score.csv", index=False, float_format="%.3f")
 
 # %% save
 with open("disc.pkl", "wb") as f:
@@ -109,3 +128,4 @@ with open("disc.pkl", "wb") as f:
 # "GitHub",
 # "sparks-baird",
 # "ElM2D",
+1 + 1
