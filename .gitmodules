@@ -1,0 +1,3 @@
+[submodule "CrabNet"]
+	path = CrabNet
+	url = https://github.com/anthony-wang/CrabNet.git
