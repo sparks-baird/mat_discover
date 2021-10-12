@@ -5,5 +5,3 @@ ElM2D/.ipynb_checkpoints/**
 ElM2D/__pycache__/**
 ElM2D/utils/__pycache__/**
 .vscode/launch.json
-*.png
-*.html
