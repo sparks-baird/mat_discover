@@ -20,9 +20,11 @@ from pymatgen.core.structure import Structure
 from pymatgen.core.composition import Composition
 
 
-def generate_elasticity_data(download_data=False):
+def generate_elasticity_data(download_data=True):
     """Download (or reload) elasticity data using MPRester."""
     # download and save Materials Project dataset
+    elast_path = join("data", "elast_results.pkl")
+    all_path = join("data", "all_results.pkl")
     if download_data:
         # download
         props = ["task_id", "pretty_formula", "elasticity", "cif"]
@@ -40,17 +42,17 @@ def generate_elasticity_data(download_data=False):
             )
 
         # save
-        with open("data/elast_results.pkl", "wb") as f:
+        with open(elast_path, "wb") as f:
             pickle.dump(elast_results, f)
 
-        with open("data/all_results.pkl", "wb") as f:
+        with open(all_path, "wb") as f:
             pickle.dump(all_results, f)
     else:
         # load the data
-        with open("data/elast_results.pkl", "rb") as f:
+        with open(elast_path, "rb") as f:
             elast_results = pickle.load(f)
 
-        with open("data/all_results.pkl", "rb") as f:
+        with open(all_path, "rb") as f:
             all_results = pickle.load(f)
 
     crabnet_folder = join("CrabNet", "data", "materials_data", "elasticity")
