@@ -18,7 +18,10 @@ import os
 from warnings import warn
 from operator import attrgetter
 from ElM2D.utils.Timer import Timer, NoTimer
+
 import matplotlib.pyplot as plt
+
+# from ml_matrics import density_scatter
 
 import numpy as np
 import pandas as pd
@@ -26,6 +29,7 @@ from scipy.stats import multivariate_normal, wasserstein_distance
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.manifold import MDS
+from sklearn.metrics import mean_squared_error
 
 # from sklearn.decomposition import PCA
 
@@ -42,6 +46,7 @@ from discover.utils.plotting import (
     target_scatter,
     dens_scatter,
     dens_targ_scatter,
+    group_cv_parity,
 )
 
 import torch
@@ -105,15 +110,25 @@ class Discover:
         self.train_target = None
         self.train_df = None
         self.val_df = None
+        self.true_avg_targ = None
+        self.pred_avg_targ = None
+        self.train_avg_targ = None
 
     def fit(self, train_df):
+        """Fit CrabNet model to training data.
+
+        Parameters
+        ----------
+        train_df : DataFrame
+            Should contain "formula" and "target" columns.
+        """
         # unpack
         self.train_df = train_df
         self.train_formula = train_df["formula"]
         self.train_target = train_df["target"]
 
         # HACK: remove directory structure dependence
-        os.chdir("CrabNet")
+        # os.chdir("CrabNet")
         # TODO: remove the "val MAE", which is wrong (should be NaN or just not displayed)
         # turns out this is a bit more difficult because of use of self.data_loader
         # dummy_df = train_df.iloc[:1, :]
@@ -125,7 +140,7 @@ class Discover:
                 learningcurve=False,
             )
         # crabnet_main(mat_prop="elasticity", train_df=df)
-        os.chdir("..")
+        # os.chdir("..")
 
         # TODO: UMAP on new data (i.e. add metric != "precomputed" functionality)
 
@@ -138,15 +153,41 @@ class Discover:
         # score_method="train-density",  # "validation-fraction", "train-density"
         dummy_run=None,
     ):
+        """Predict target and proxy for validation dataset.
+
+        Parameters
+        ----------
+        val_df : DataFrame
+            Validation dataset containing "formula" and "target" (populate with 0's if not available).
+        plotting : bool, optional
+            Whether to plot, by default None
+        umap_random_state : int or None, optional
+            The random seed to use for UMAP, by default None
+        pred_weight : int, optional
+            The weight to assign to the predictions (proxy_weight is 1 by default), by default 2
+
+        Returns
+        -------
+        dens_score, peak_score
+            Scaled discovery scores for density and peak proxies.
+        """
         self.val_df = val_df
 
         # CrabNet
         # TODO: parity plot
         # (act, pred, formulae, uncert)
         crabnet_model = self.crabnet_model
-        _, train_pred, _, train_sigma = crabnet_model.predict(self.train_df)
-        _, self.val_pred, _, val_sigma = crabnet_model.predict(self.val_df)
+        self.train_true, train_pred, _, self.train_sigma = crabnet_model.predict(
+            self.train_df
+        )
+        self.val_true, self.val_pred, _, self.val_sigma = crabnet_model.predict(
+            self.val_df
+        )
         pred = np.concatenate((train_pred, self.val_pred), axis=0)
+
+        self.val_rmse = mean_squared_error(self.val_true, self.val_pred, squared=False)
+        if self.verbose:
+            print("val RMSE: ", self.val_rmse)
 
         train_formula = self.train_df["formula"]
         train_target = self.train_df["target"]
@@ -277,6 +318,22 @@ class Discover:
         return self.dens_score, self.peak_score
 
     def weighted_score(self, pred, proxy, pred_weight=2):
+        """Calculate weighted discovery score using the predicted target and proxy.
+
+        Parameters
+        ----------
+        pred : 1D Array
+            Predicted target property values.
+        proxy : 1D Array
+            Predicted proxy values (e.g. density or peak proxies).
+        pred_weight : int, optional
+            The weight to assign to the predictions (proxy_weight is 1 by default), by default 2
+
+        Returns
+        -------
+        1D array
+            Discovery scores.
+        """
         pred = pred.ravel().reshape(-1, 1)
         proxy = proxy.ravel().reshape(-1, 1)
         # Scale and weight the cluster data
@@ -294,6 +351,18 @@ class Discover:
         return score
 
     def sort(self, score):
+        """Sort (rank) compounds by their proxy score.
+
+        Parameters
+        ----------
+        score : 1D Array
+            Discovery scores.
+
+        Returns
+        -------
+        DataFrame
+            Contains "formula", "prediction", "density", and "score".
+        """
         score_df = pd.DataFrame(
             {
                 "formula": self.val_formula,
@@ -306,6 +375,29 @@ class Discover:
         return score_df
 
     def group_cross_val(self, df, umap_random_state=None, dummy_run=None):
+        """Perform leave-one-cluster-out cross-validation (LOCO-CV)
+
+        Parameters
+        ----------
+        df : DataFrame
+            Contains "formula" and "target" (all the data)
+        umap_random_state : int, optional
+            Random state to use for DensMAP embedding, by default None
+        dummy_run : bool, optional
+            Whether to perform a "dummy run" (i.e. use multi-dimensional scaling which is faster), by default None
+
+        Returns
+        -------
+        float
+            Scaled, weighted error based on Wasserstein distance (i.e. a sorting distance).
+
+        Raises
+        ------
+        ValueError
+            Needs to have at least one cluster. It is assumed that there will always be a non-cluster
+            (i.e. unclassified points) if there is only 1 cluster.
+        """ """"""
+
         # TODO: remind people in documentation to use a separate Discover() instance if they wish to access fit *and* gcv attributes
         self.all_formula = df["formula"]
         self.all_target = df["target"]
@@ -333,8 +425,8 @@ class Discover:
         logo = LeaveOneGroupOut()
 
         self.n_clusters = np.max(self.labels)
-        if self.n_clusters == -1:
-            raise ValueError("no clusters")
+        if self.n_clusters <= 0:
+            raise ValueError("no clusters or only one cluster")
         n_test_clusters = np.max([1, int(self.n_clusters * 0.1)])
 
         """Difficult to repeatably set aside a test set for a given clustering result;
@@ -343,32 +435,34 @@ class Discover:
         Note that "unclustered" is never assigned as a test_cluster, and so is always
         included in tv_cluster_ids (tv===train_validation)."""
         np.random.default_rng(seed=10)
-        test_cluster_ids = np.random.choice(self.n_clusters + 1, n_test_clusters)
+        # test_cluster_ids = np.random.choice(self.n_clusters + 1, n_test_clusters)
         np.random.default_rng()
 
-        test_ids = np.isin(self.labels, test_cluster_ids)
-        tv_cluster_ids = np.setdiff1d(
-            np.arange(-1, self.n_clusters + 1), test_cluster_ids
-        )
-        tv_ids = np.isin(self.labels, tv_cluster_ids)
+        # test_ids = np.isin(self.labels, test_cluster_ids)
+        # tv_cluster_ids = np.setdiff1d(
+        #     np.arange(-1, self.n_clusters + 1), test_cluster_ids
+        # )
+        # tv_ids = np.isin(self.labels, tv_cluster_ids)
 
         X, y = self.all_formula, self.all_target
-        X_test, y_test = X[test_ids], y[test_ids]  # noqa
-        X_tv, y_tv, labels_tv = X[tv_ids], y[tv_ids], self.labels[tv_ids]
+        # X_test, y_test = X[test_ids], y[test_ids]  # noqa
+        # X_tv, y_tv, labels_tv = X[tv_ids], y[tv_ids], self.labels[tv_ids]
 
         # Group Cross Validation
         # HACK: remove directory structure dependence
-        os.chdir("CrabNet")
+        # os.chdir("CrabNet")
         # for train_index, val_index in logo.split(X_tv, y_tv, self.labels):
         # TODO: group cross-val parity plot
         avg_targ = [
-            self.single_group_cross_val(X_tv, y_tv, train_index, val_index, i)
-            for i, (train_index, val_index) in enumerate(
-                logo.split(X_tv, y_tv, labels_tv)
-            )
+            self.single_group_cross_val(X, y, train_index, val_index, i)
+            for i, (train_index, val_index) in enumerate(logo.split(X, y, self.labels))
         ]
         out = np.array(avg_targ).T
         self.true_avg_targ, self.pred_avg_targ, self.train_avg_targ = out
+
+        # np.unique while preserving order https://stackoverflow.com/a/12926989/13697228
+        lbl_ids = np.unique(self.labels, return_index=True)[1]
+        self.avg_labels = [self.labels[lbl_id] for lbl_id in sorted(lbl_ids)]
 
         # Sorting "Error" Setup
         u = np.flip(np.cumsum(np.linspace(0, 1, len(self.true_avg_targ))))
@@ -396,7 +490,7 @@ class Discover:
             v_weights=dummy_v_weights,
         )
         # HACK: remove directory structure dependence
-        os.chdir("..")
+        # os.chdir("..")
 
         # Similar to MatBench "scaled_error"
         self.scaled_error = self.error / self.dummy_error
@@ -700,6 +794,34 @@ class Discover:
             color="cluster ID",
             pareto_front=True,
         )
+
+        # Group cross-validation parity plot
+        if self.true_avg_targ is not None:
+            x = "$E_\\mathrm{avg,true}$ (GPa)"
+            y = "$E_\\mathrm{avg,pred}$ (GPa)"
+            gcv_df = pd.DataFrame(
+                {
+                    x: self.true_avg_targ,
+                    y: self.pred_avg_targ,
+                    "formula": None,
+                    "cluster ID": np.array(self.avg_labels) + 1,
+                }
+            )
+            fig, dens_pareto_ind = pareto_plot(
+                gcv_df,
+                x=x,
+                y=y,
+                fpath="gcv-pareto",
+                parity_type="max-of-both",
+                color="cluster ID",
+                pareto_front=False,
+                reverse_x=False,
+            )
+            # fig = group_cv_parity(
+            #     self.true_avg_targ, self.pred_avg_targ, self.avg_labels
+            # )
+        else:
+            warn("Skipping group cross-validation plot")
 
         if return_pareto_ind:
             return pk_pareto_ind, dens_pareto_ind
