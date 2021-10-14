@@ -66,9 +66,9 @@ grp_df = (
 
 # REVIEW: drop pure elements here?
 
-# REVIEW: drop noble gases
-noble_ids = np.nonzero(np.isin(grp_df.formula, ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]))[0]
-grp_df.drop(noble_ids, inplace=True)
+# drop noble gases
+# noble_ids = np.nonzero(np.isin(grp_df.formula, ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]))[0]
+# grp_df.drop(noble_ids, inplace=True)
 # take small subset
 if dummy_run:
     n = 100
@@ -76,28 +76,33 @@ if dummy_run:
     train_df = grp_df.iloc[:n, :]
     val_df = grp_df.iloc[n : n + n2, :]
 else:
-    # REVIEW: consider changing train_size to 0.2
+    # REVIEW: consider changing train_size to 0.2 for cluster pareto plot
     test_size = 0.1
     val_size = 0.2
     tv_df, test_df = train_test_split(grp_df, test_size=test_size)
     train_df, val_df = train_test_split(tv_df, test_size=val_size / (1 - test_size))
+
 # %% fit
 # slower if umap_random_state is not None
 with Timer("DISCOVER-fit"):
     disc.fit(train_df)
+
 # %% predict
 with Timer("DISCOVER-predict"):
-    score = disc.predict(val_df)
+    score = disc.predict(val_df, umap_random_state=42)
+
 # %% plot
 with Timer("DISCOVER-plot"):
     disc.plot()
 1 + 1
+
 # %% group-cv
 # cat_df = pd.concat((train_df, val_df), axis=0)
 # with Timer("DISCOVER-group-cross-val"):
 #     disc.group_cross_val(cat_df)
 # print("scaled test error = ", disc.scaled_error)
 
+# %% compound rankings
 print(disc.dens_score_df)
 print(disc.peak_score_df)
 
@@ -121,6 +126,7 @@ comb_out_df.to_csv("comb-score.csv", index=False, float_format="%.3f")
 # %% save
 with open("disc.pkl", "wb") as f:
     pickle.dump(disc, f)
+
 # %% CODE GRAVEYARD
 # from os.path import join, expanduser
 # "~",
