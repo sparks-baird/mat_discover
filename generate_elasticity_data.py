@@ -8,7 +8,10 @@ Created on Sat Sep 11 17:02:10 2021
 @author: sterg
 """
 from os.path import join
+from pathlib import Path
 import pickle
+# from tqdm import tqdm
+from pqdm.processes import pqdm as tqdm
 from ElM2D.utils.Timer import Timer
 
 import numpy as np
@@ -29,8 +32,14 @@ def generate_elasticity_data(download_data=True):
         # download
         props = ["task_id", "pretty_formula", "elasticity", "cif"]
         with MPRester() as m:
+            # TODO: don't download noble gases
             elast_results = m.query(
-                {"e_above_hull": {"$lt": 0.5}, "elasticity": {"$exists": True}},
+                {
+                    "e_above_hull": {"$lt": 0.5},
+                    "elasticity": {"$exists": True},
+                    "elements": {"$nin": ["Tc"]},
+                    "pretty_formula": {"$nin": ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
+                },
                 properties=props,
                 chunk_size=2000,
             )
@@ -38,7 +47,13 @@ def generate_elasticity_data(download_data=True):
         props = ["task_id", "pretty_formula", "cif"]
         with MPRester() as m:
             all_results = m.query(
-                {"e_above_hull": {"$lt": 0.5}}, properties=props, chunk_size=2000
+                {
+                    "e_above_hull": {"$lt": 0.5},
+                    "elements": {"$nin": ["Tc"]},
+                    "pretty_formula": {"$nin": ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
+                },
+                properties=props,
+                chunk_size=2000,
             )
 
         # save
@@ -56,6 +71,7 @@ def generate_elasticity_data(download_data=True):
             all_results = pickle.load(f)
 
     crabnet_folder = join("CrabNet", "data", "materials_data", "elasticity")
+    Path(crabnet_folder).mkdir(parents=True, exist_ok=True)
 
     def crabnet_path(name):
         """Return a relative path to a CrabNet data file."""
@@ -72,14 +88,15 @@ def generate_elasticity_data(download_data=True):
 
     elast_comp = [Composition(formula) for formula in elast_formulas]
 
+    elast_struct_path = join("data", "elast_struct_dicts.pkl")
     if download_data:
         elast_structures = [Structure.from_str(cif, fmt="cif") for cif in elast_cifs]
         elast_struct_dicts = [structure.as_dict() for structure in elast_structures]
-        with open("data/elast_struct_dicts.pkl", "wb") as f:
+        with open(elast_struct_path, "wb") as f:
             pickle.dump(elast_struct_dicts, f)
     else:
         with Timer("elast structures loaded"):
-            with open("data/elast_struct_dicts.pkl", "rb") as f:
+            with open(elast_struct_path, "rb") as f:
                 elast_struct_dicts = pickle.load(f)
             elast_structures = [Structure.from_dict(s) for s in elast_struct_dicts]
             del elast_struct_dicts
@@ -109,14 +126,16 @@ def generate_elasticity_data(download_data=True):
 
     all_comp = [Composition(formula) for formula in all_formulas]
 
+    all_struct_path = join("data", "all_struct_dicts.pkl")
     if download_data:
-        all_structures = [Structure.from_str(cif, fmt="cif") for cif in all_cifs]
+        # TODO: add waitbar for list comp
+        all_structures = [Structure.from_str(cif, fmt="cif") for cif in tqdm(all_cifs)]
         all_struct_dicts = [structure.as_dict() for structure in all_structures]
-        with open("data/all_struct_dicts.pkl", "wb") as f:
+        with open(all_struct_path, "wb") as f:
             pickle.dump(all_struct_dicts, f)
     else:
         with Timer("all-structures-loaded"):
-            with open("data/all_struct_dicts.pkl", "rb") as f:
+            with open(all_struct_path, "rb") as f:
                 all_struct_dicts = pickle.load(f)
                 all_structures = [Structure.from_dict(s) for s in all_struct_dicts]
                 del all_struct_dicts
