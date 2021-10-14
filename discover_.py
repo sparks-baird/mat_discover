@@ -46,7 +46,7 @@ from discover.utils.plotting import (
 
 import torch
 
-from CrabNet.train_crabnet import main as crabnet_main  # noqa
+from CrabNet.train_crabnet import main as crabnet_main
 from CrabNet.train_crabnet import get_model
 
 plt.rcParams.update(
@@ -515,6 +515,7 @@ class Discover:
                 min_samples=1,
                 cluster_selection_epsilon=0.63,
                 min_cluster_size=min_cluster_size,
+                core_dist_n_jobs=1,
                 # allow_single_cluster=True,
             ).fit(umap_emb)
         return clusterer
