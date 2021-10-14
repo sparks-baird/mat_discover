@@ -797,8 +797,10 @@ class Discover:
 
         # Group cross-validation parity plot
         if self.true_avg_targ is not None:
-            x = "$E_\\mathrm{avg,true}$ (GPa)"
-            y = "$E_\\mathrm{avg,pred}$ (GPa)"
+            # x = "$E_\\mathrm{avg,true}$ (GPa)"
+            # y = "$E_\\mathrm{avg,pred}$ (GPa)"
+            x = "true cluster avg target (GPa)"
+            y = "pred cluster avg target (GPa)"
             gcv_df = pd.DataFrame(
                 {
                     x: self.true_avg_targ,
