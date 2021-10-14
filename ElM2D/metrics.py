@@ -7,7 +7,7 @@ Created on Wed Sep  8 14:47:43 2021
 """
 import os
 import numpy as np
-import ElM2D.helper as hp
+from . import helper as hp
 from math import sqrt
 from numba import cuda, jit  # noqa
 from numba.types import int32, float32, int64, float64  # noqa
