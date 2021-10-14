@@ -39,7 +39,7 @@ from os.path import join
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from discover_ import Discover
+from discover.discover_ import Discover
 from discover.utils.Timer import Timer
 import pickle
 
