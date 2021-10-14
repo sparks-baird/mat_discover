@@ -54,8 +54,6 @@ from tqdm import tqdm
 
 from ElMD import ElMD, EMD
 
-from ElM2D.njit_dist_matrix import dist_matrix as njit_dist_matrix
-
 # number of columns of U and V must be set as env var before import
 n_elements = len(ElMD().periodic_tab["mod_petti"])
 os.environ["COLUMNS"] = str(n_elements)
@@ -66,11 +64,17 @@ os.environ["INLINE"] = "never"
 os.environ["FASTMATH"] = "1"
 # os.environ["TARGET"] = "cuda"
 
-import ElM2D.cuda_dist_matrix  # noqa
+from . import njit_dist_matrix  # noqa
 
-# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228) # noqa
-reload(ElM2D.cuda_dist_matrix)
-cuda_dist_matrix = ElM2D.cuda_dist_matrix.dist_matrix
+reload(njit_dist_matrix)
+# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+njit_dist_matrix = njit_dist_matrix.dist_matrix
+
+from . import cuda_dist_matrix  # noqa
+
+# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+reload(cuda_dist_matrix)
+cuda_dist_matrix = cuda_dist_matrix.dist_matrix
 
 
 def main():
