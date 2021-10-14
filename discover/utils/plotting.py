@@ -38,6 +38,7 @@ def umap_cluster_scatter(std_emb, labels):
         )
         plt.legend([ax2], ["Unclassified: " + "{:.1%}".format(unclass_frac)])
     plt.tight_layout()
+    plt.gca().set_aspect("equal", "box")
     plt.savefig("umap-cluster-scatter")
     plt.show()
     return fig
@@ -81,8 +82,9 @@ def target_scatter(std_emb, target):
         norm=mpl.colors.LogNorm(),
     )
     plt.axis("off")
-    plt.colorbar(label="Bulk Modulus (GPa)")
+    plt.colorbar(label="Bulk Modulus (GPa)", orientation="horizontal")
     plt.tight_layout()
+    plt.gca().set_aspect("equal", "box")
     plt.savefig("target-scatter")
     plt.show()
     return fig
@@ -93,7 +95,8 @@ def dens_scatter(x, y, pdf_sum):
     fig = plt.scatter(x, y, c=pdf_sum)
     plt.axis("off")
     plt.tight_layout()
-    plt.colorbar(label="Density")
+    plt.colorbar(label="Density", orientation="horizontal")
+    plt.gca().set_aspect("equal", "box")
     plt.savefig("dens-scatter")
     plt.show()
     return fig
@@ -113,6 +116,27 @@ def dens_targ_scatter(std_emb, target, x, y, pdf_sum):
     )
     plt.axis("off")
     plt.tight_layout()
+    plt.gca().set_aspect("equal", "box")
     plt.savefig("dens-targ-scatter")
+    plt.show()
+    return fig
+
+
+def group_cv_parity(ytrue, ypred, labels):
+    labels = np.array(labels)
+    col_scl = MinMaxScaler()
+    col_trans = col_scl.fit(labels.reshape(-1, 1))
+    scl_vals = col_trans.transform(labels.reshape(-1, 1))
+    color = plt.cm.nipy_spectral(scl_vals)
+
+    mx = np.nanmax([ytrue, ypred])
+
+    fig = plt.scatter(ytrue, ypred, c=color)
+    plt.plot([0, 0], [mx, mx], "--", linewidth=1)
+
+    plt.xlabel(r"$E_\mathregular{avg,true}$ (GPa)")
+    plt.ylabel(r"$E_\mathregular{avg,pred}$ (GPa)")
+    plt.tight_layout()
+    plt.savefig("group-cv-parity")
     plt.show()
     return fig
