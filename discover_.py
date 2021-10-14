@@ -149,7 +149,7 @@ class Discover:
         val_df,
         plotting=None,
         umap_random_state=None,
-        pred_weight=2,  # pred_weight - how much to weight the prediction values relative to val_ratio
+        pred_weight=1,  # pred_weight - how much to weight the prediction values relative to val_ratio
         # score_method="train-density",  # "validation-fraction", "train-density"
         dummy_run=None,
     ):
@@ -164,7 +164,7 @@ class Discover:
         umap_random_state : int or None, optional
             The random seed to use for UMAP, by default None
         pred_weight : int, optional
-            The weight to assign to the predictions (proxy_weight is 1 by default), by default 2
+            The weight to assign to the predictions (proxy_weight is 1 by default), by default 1
 
         Returns
         -------
@@ -310,7 +310,7 @@ class Discover:
         rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(self.dm, pred)
         self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
 
-        self.dens_score = self.weighted_score(self.val_pred, self.val_dens)
+        self.dens_score = self.weighted_score(self.val_pred, self.val_log_dens)
         self.peak_score = self.weighted_score(self.val_pred, self.val_k_neigh_avg)
 
         # Plotting
@@ -322,7 +322,7 @@ class Discover:
 
         return self.dens_score, self.peak_score
 
-    def weighted_score(self, pred, proxy, pred_weight=2):
+    def weighted_score(self, pred, proxy, pred_weight=1):
         """Calculate weighted discovery score using the predicted target and proxy.
 
         Parameters

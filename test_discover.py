@@ -93,10 +93,10 @@ with Timer("DISCOVER-predict"):
     score = disc.predict(val_df, umap_random_state=42)
 
 # %% group-cv
-cat_df = pd.concat((train_df, val_df), axis=0)
-with Timer("DISCOVER-group-cross-val"):
-    disc.group_cross_val(cat_df, umap_random_state=42)
-print("scaled test error = ", disc.scaled_error)
+# cat_df = pd.concat((train_df, val_df), axis=0)
+# with Timer("DISCOVER-group-cross-val"):
+#     disc.group_cross_val(cat_df, umap_random_state=42)
+# print("scaled test error = ", disc.scaled_error)
 
 # %% compound rankings
 print(disc.dens_score_df)
