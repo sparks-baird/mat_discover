@@ -10,3 +10,5 @@ data/all_results.pkl
 data/all_struct_dicts.pkl
 data/elast_results.pkl
 data/elast_struct_dicts.pkl
+*.pyc
+*.json
