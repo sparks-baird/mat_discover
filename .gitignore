@@ -7,3 +7,4 @@ data/elast_results.pkl
 data/elast_struct_dicts.pkl
 *.pyc
 *.json
+models/trained_models/test-property.pth
