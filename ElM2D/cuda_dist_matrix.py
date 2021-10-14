@@ -12,7 +12,7 @@ Various distance metrics are available.
 import os
 import numpy as np
 from math import ceil
-from ElM2D.metrics import wasserstein_distance, euclidean_distance
+from .metrics import wasserstein_distance, euclidean_distance
 
 # CUDA Simulator not working..
 # os.environ["NUMBA_ENABLE_CUDASIM"] = "1"
