@@ -232,7 +232,12 @@ class Discover:
             min_cluster_size = 50
         clusterer = self.cluster(self.umap_emb, min_cluster_size=min_cluster_size)
         self.labels = self.extract_labels_probs(clusterer)[0]
-        self.unique_labels = np.unique(self.labels)
+        # self.unique_labels = np.unique(self.labels)
+
+        # np.unique while preserving order https://stackoverflow.com/a/12926989/13697228
+        lbl_ids = np.unique(self.labels, return_index=True)[1]
+        self.unique_labels = [self.labels[lbl_id] for lbl_id in sorted(lbl_ids)]
+
         self.val_labels = self.labels[val_ids]
 
         # Probability Density Function Summation
@@ -708,29 +713,6 @@ class Discover:
             pareto_front=True,
         )
 
-        x = "cluster-wise validation fraction"
-        y = "cluster-wise average target (GPa)"
-        # cluster-wise average vs. cluster-wise validation fraction
-        frac_df = pd.DataFrame(
-            {
-                x: self.val_frac.ravel(),
-                y: self.cluster_avg.ravel(),
-                "cluster ID": self.unique_labels,
-            }
-        )
-        fig, frac_pareto_ind = pareto_plot(
-            frac_df,
-            x=x,
-            y=y,
-            hover_data=None,
-            color="cluster ID",
-            fpath="pf-frac-proxy",
-            pareto_front=True,
-            reverse_x=False,
-            parity_type=None,
-            xrange=[0, 1],
-        )
-
         x = "validation log-density"
         y = "validation predictions (GPa)"
         # cluster-wise average vs. cluster-wise validation log-density
@@ -779,7 +761,7 @@ class Discover:
                 x: log_dens,
                 y: self.all_target,
                 "formula": self.all_formula,
-                "cluster ID": self.labels + 1,
+                "cluster ID": self.labels,
             }
         )
         # dens pareto plot
@@ -795,6 +777,29 @@ class Discover:
             pareto_front=True,
         )
 
+        x = "cluster-wise validation fraction"
+        y = "cluster-wise average target (GPa)"
+        # cluster-wise average vs. cluster-wise validation fraction
+        frac_df = pd.DataFrame(
+            {
+                x: self.val_frac.ravel(),
+                y: self.cluster_avg.ravel(),
+                "cluster ID": self.unique_labels,
+            }
+        )
+        fig, frac_pareto_ind = pareto_plot(
+            frac_df,
+            x=x,
+            y=y,
+            hover_data=None,
+            color="cluster ID",
+            fpath="pf-frac-proxy",
+            pareto_front=True,
+            reverse_x=False,
+            parity_type=None,
+            xrange=[0, 1],
+        )
+
         # Group cross-validation parity plot
         if self.true_avg_targ is not None:
             # x = "$E_\\mathrm{avg,true}$ (GPa)"
@@ -806,7 +811,7 @@ class Discover:
                     x: self.true_avg_targ,
                     y: self.pred_avg_targ,
                     "formula": None,
-                    "cluster ID": np.array(self.avg_labels) + 1,
+                    "cluster ID": np.array(self.avg_labels),
                 }
             )
             fig, dens_pareto_ind = pareto_plot(
