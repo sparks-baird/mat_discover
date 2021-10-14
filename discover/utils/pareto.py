@@ -145,6 +145,8 @@ def pareto_plot(
             hoverinfo="skip",
             name="pareto front",
         )
+    else:
+        pareto_ind = None
 
     # parity line
     if parity_type == "max-of-both":
@@ -169,7 +171,7 @@ def pareto_plot(
 
     # make it look more like matplotlib
     # modified from: https://medium.com/swlh/formatting-a-plotly-figure-with-matplotlib-style-fa56ddd97539)
-    font_dict = dict(family="Arial", size=26, color="black")
+    font_dict = dict(family="Arial", size=24, color="black")
 
     app = QApplication(sys.argv)
     screen = app.screens()[0]
