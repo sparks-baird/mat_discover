@@ -7,6 +7,8 @@ from numba import prange, njit
 from numba.types import float32, int32
 import numpy as np
 
+from .metrics import wasserstein_distance, euclidean_distance
+
 np_int = np.int32
 np_float = np.float32
 
@@ -17,127 +19,131 @@ fastmath = True
 parallel = True
 debug = False
 
+wasserstein_distance = njit(
+    wasserstein_distance.py_func, fastmath=fastmath, debug=debug
+)
 
-@njit(fastmath=fastmath, debug=debug)
-def wasserstein_distance(
-    u_values, v_values, u_weights=None, v_weights=None, p=1, presorted=False
-):
-    r"""
-    Compute first Wasserstein distance.
+# TODO: switch to the more hard-coded version (faster than the NumPy functions)
+# @njit(fastmath=fastmath, debug=debug)
+# def wasserstein_distance(
+#     u_values, v_values, u_weights=None, v_weights=None, p=1, presorted=False
+# ):
+#     r"""
+#     Compute first Wasserstein distance.
 
-    Compute, between two one-dimensional distributions :math:`u` and
-    :math:`v`, whose respective CDFs are :math:`U` and :math:`V`, the
-    statistical distance that is defined as:
-    .. math::
-        l_p(u, v) = \left( \int_{-\infty}^{+\infty} |U-V|^p \right)^{1/p}
-    p is a positive parameter; p = 1 gives the Wasserstein distance, p = 2
-    gives the energy distance.
+#     Compute, between two one-dimensional distributions :math:`u` and
+#     :math:`v`, whose respective CDFs are :math:`U` and :math:`V`, the
+#     statistical distance that is defined as:
+#     .. math::
+#         l_p(u, v) = \left( \int_{-\infty}^{+\infty} |U-V|^p \right)^{1/p}
+#     p is a positive parameter; p = 1 gives the Wasserstein distance, p = 2
+#     gives the energy distance.
 
-    Source:
-        https://github.com/scipy/scipy/blob/47bb6febaa10658c72962b9615d5d5aa2513fa3a/scipy/stats/stats.py#L8404
+#     Source:
+#         https://github.com/scipy/scipy/blob/47bb6febaa10658c72962b9615d5d5aa2513fa3a/scipy/stats/stats.py#L8404
 
-    Parameters
-    ----------
-    u_values, v_values : array_like
-        Values observed in the (empirical) distribution.
-    u_weights, v_weights : array_like, optional
-        Weight for each value. If unspecified, each value is assigned the same
-        weight.
-        `u_weights` (resp. `v_weights`) must have the same length as
-        `u_values` (resp. `v_values`). If the weight sum differs from 1, it
-        must still be positive and finite so that the weights can be normalized
-        to sum to 1.
+#     Parameters
+#     ----------
+#     u_values, v_values : array_like
+#         Values observed in the (empirical) distribution.
+#     u_weights, v_weights : array_like, optional
+#         Weight for each value. If unspecified, each value is assigned the same
+#         weight.
+#         `u_weights` (resp. `v_weights`) must have the same length as
+#         `u_values` (resp. `v_values`). If the weight sum differs from 1, it
+#         must still be positive and finite so that the weights can be normalized
+#         to sum to 1.
 
-    Returns
-    -------
-    distance : float
-        The computed distance between the distributions.
+#     Returns
+#     -------
+#     distance : float
+#         The computed distance between the distributions.
 
-    Notes
-    -----
-    The input distributions can be empirical, therefore coming from samples
-    whose values are effectively inputs of the function, or they can be seen as
-    generalized functions, in which case they are weighted sums of Dirac delta
-    functions located at the specified values.
+#     Notes
+#     -----
+#     The input distributions can be empirical, therefore coming from samples
+#     whose values are effectively inputs of the function, or they can be seen as
+#     generalized functions, in which case they are weighted sums of Dirac delta
+#     functions located at the specified values.
 
-    References
-    ----------
-    .. [1] Bellemare, Danihelka, Dabney, Mohamed, Lakshminarayanan, Hoyer,
-            Munos "The Cramer Distance as a Solution to Biased Wasserstein
-            Gradients" (2017). :arXiv:`1705.10743`.
-    """
-    if not presorted:
-        u_sorter = np.argsort(u_values)
-        v_sorter = np.argsort(v_values)
+#     References
+#     ----------
+#     .. [1] Bellemare, Danihelka, Dabney, Mohamed, Lakshminarayanan, Hoyer,
+#             Munos "The Cramer Distance as a Solution to Biased Wasserstein
+#             Gradients" (2017). :arXiv:`1705.10743`.
+#     """
+#     if not presorted:
+#         u_sorter = np.argsort(u_values)
+#         v_sorter = np.argsort(v_values)
 
-        u_values = u_values[u_sorter]
-        v_values = v_values[v_sorter]
+#         u_values = u_values[u_sorter]
+#         v_values = v_values[v_sorter]
 
-        u_weights = u_weights[u_sorter]
-        v_weights = v_weights[v_sorter]
+#         u_weights = u_weights[u_sorter]
+#         v_weights = v_weights[v_sorter]
 
-    all_values = np.concatenate((u_values, v_values))
-    # all_values.sort(kind='mergesort')
-    all_values.sort()
+#     all_values = np.concatenate((u_values, v_values))
+#     # all_values.sort(kind='mergesort')
+#     all_values.sort()
 
-    # Compute the differences between pairs of successive values of u and v.
-    deltas = np.diff(all_values)
+#     # Compute the differences between pairs of successive values of u and v.
+#     deltas = np.diff(all_values)
 
-    # Get the respective positions of the values of u and v among the values of
-    # both distributions.
-    u_cdf_indices = np.searchsorted(u_values, all_values[:-1], side="right")
-    v_cdf_indices = np.searchsorted(v_values, all_values[:-1], side="right")
+#     # Get the respective positions of the values of u and v among the values of
+#     # both distributions.
+#     u_cdf_indices = np.searchsorted(u_values, all_values[:-1], side="right")
+#     v_cdf_indices = np.searchsorted(v_values, all_values[:-1], side="right")
 
-    zero = np.array([0])
-    # Calculate the CDFs of u and v using their weights, if specified.
-    if u_weights is None:
-        u_cdf = u_cdf_indices / u_values.size
-    else:
-        uw_cumsum = np.cumsum(u_weights)
-        u_sorted_cumweights = np.concatenate((zero, uw_cumsum))
-        u_cdf = u_sorted_cumweights[u_cdf_indices] / u_sorted_cumweights[-1]
+#     zero = np.array([0])
+#     # Calculate the CDFs of u and v using their weights, if specified.
+#     if u_weights is None:
+#         u_cdf = u_cdf_indices / u_values.size
+#     else:
+#         uw_cumsum = np.cumsum(u_weights)
+#         u_sorted_cumweights = np.concatenate((zero, uw_cumsum))
+#         u_cdf = u_sorted_cumweights[u_cdf_indices] / u_sorted_cumweights[-1]
 
-    if v_weights is None:
-        v_cdf = v_cdf_indices / v_values.size
-    else:
-        vw_cumsum = np.cumsum(v_weights)
-        v_sorted_cumweights = np.concatenate((zero, vw_cumsum))
-        v_cdf = v_sorted_cumweights[v_cdf_indices] / v_sorted_cumweights[-1]
+#     if v_weights is None:
+#         v_cdf = v_cdf_indices / v_values.size
+#     else:
+#         vw_cumsum = np.cumsum(v_weights)
+#         v_sorted_cumweights = np.concatenate((zero, vw_cumsum))
+#         v_cdf = v_sorted_cumweights[v_cdf_indices] / v_sorted_cumweights[-1]
 
-    # Compute the value of the integral based on the CDFs.
-    # If p = 1 or p = 2, we avoid using np.power, which introduces an overhead
-    # of about 15%.
-    if p == 1:
-        return np.sum(np.multiply(np.abs(u_cdf - v_cdf), deltas))
-    if p == 2:
-        return np.sqrt(np.sum(np.multiply(np.power(u_cdf - v_cdf, 2), deltas)))
-    return np.power(
-        np.sum(np.multiply(np.power(np.abs(u_cdf - v_cdf), p), deltas)), 1 / p
-    )
+#     # Compute the value of the integral based on the CDFs.
+#     # If p = 1 or p = 2, we avoid using np.power, which introduces an overhead
+#     # of about 15%.
+#     if p == 1:
+#         return np.sum(np.multiply(np.abs(u_cdf - v_cdf), deltas))
+#     if p == 2:
+#         return np.sqrt(np.sum(np.multiply(np.power(u_cdf - v_cdf, 2), deltas)))
+#     return np.power(
+#         np.sum(np.multiply(np.power(np.abs(u_cdf - v_cdf), p), deltas)), 1 / p
+#     )
 
 
-@njit(fastmath=fastmath, debug=debug)
-def euclidean_distance(a, b):
-    """
-    Calculate Euclidean distance between vectors a and b.
+# @njit(fastmath=fastmath, debug=debug)
+# def euclidean_distance(a, b):
+#     """
+#     Calculate Euclidean distance between vectors a and b.
 
-    Parameters
-    ----------
-    a : 1D array
-        First vector.
-    b : 1D array
-        Second vector.
+#     Parameters
+#     ----------
+#     a : 1D array
+#         First vector.
+#     b : 1D array
+#         Second vector.
 
-    Returns
-    -------
-    d : numeric scalar
-        Euclidean distance between vectors a and b.
-    """
-    d = 0
-    for i in range(len(a)):
-        d += (b[i] - a[i]) ** 2
-    d = np.sqrt(d)
-    return d
+#     Returns
+#     -------
+#     d : numeric scalar
+#         Euclidean distance between vectors a and b.
+#     """
+#     d = 0
+#     for i in range(len(a)):
+#         d += (b[i] - a[i]) ** 2
+#     d = np.sqrt(d)
+#     return d
 
 
 @njit(fastmath=fastmath, debug=debug)
@@ -175,9 +181,10 @@ def compute_distance(u, v, u_weights, v_weights, metric_num):
         d = euclidean_distance(u, v)
     elif metric_num == 1:
         # d = my_wasserstein_distance(vec, vec2)
-        d = wasserstein_distance(
-            u, v, u_weights=u_weights, v_weights=v_weights, p=1, presorted=True
-        )
+        # d = wasserstein_distance(
+        #     u, v, u_weights=u_weights, v_weights=v_weights, p=1, presorted=True
+        # )
+        d = wasserstein_distance(u, v, u_weights, v_weights, True, True, True)
     else:
         raise NotImplementedError(
             "Specified metric is mispelled or has not been implemented yet. \
@@ -338,15 +345,27 @@ def dist_matrix(
     else:
         shape = (m, m2)
 
+    # sorting and cumulative weights
     if metric == "wasserstein":
+        # presort values (and weights by sorted value indices)
         U_sorter = np.argsort(U)
         U = np.take_along_axis(U, U_sorter, axis=-1)
         U_weights = np.take_along_axis(U_weights, U_sorter, axis=-1)
 
+        # calculate cumulative weights
+        U_weights = np.cumsum(U_weights, axis=1)
+
+        # prepend a column of zeros
+        zero = np.zeros((U_weights.shape[0], 1))
+        U_weights = np.column_stack((zero, U_weights))
+
+        # do the same for V and V_weights
         if isXY:
             V_sorter = np.argsort(V)
             V = np.take_along_axis(V, V_sorter, axis=-1)
             V_weights = np.take_along_axis(V_weights, V_sorter, axis=-1)
+            V_weights = np.cumsum(V_weights, axis=1)
+            V_weights = np.column_stack((zero, V_weights))
 
     out = np.zeros(shape, dtype=np_float)
 
