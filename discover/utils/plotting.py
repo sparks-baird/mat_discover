@@ -19,7 +19,7 @@ def umap_cluster_scatter(std_emb, labels):
         std_emb[:, 0],
         std_emb[:, 1],
         c=labels,
-        s=5,
+        s=2,
         cmap=cmap,
         label=labels,
     )
@@ -32,7 +32,7 @@ def umap_cluster_scatter(std_emb, labels):
             std_emb[unclass_ids, 0],
             std_emb[unclass_ids, 1],
             c=labels[unclass_ids],
-            s=5,
+            s=2,
             cmap=plt.cm.nipy_spectral,
             label=labels[unclass_ids],
         )
@@ -76,7 +76,7 @@ def target_scatter(std_emb, target):
         std_emb[:, 0],
         std_emb[:, 1],
         c=target,
-        s=15,
+        s=2,
         cmap="Spectral_r",
         norm=mpl.colors.LogNorm(),
     )
@@ -106,7 +106,7 @@ def dens_targ_scatter(std_emb, target, x, y, pdf_sum):
         std_emb[:, 0],
         std_emb[:, 1],
         c=target,
-        s=15,
+        s=2,
         cmap="Spectral",
         edgecolors="none",
         alpha=0.15,
