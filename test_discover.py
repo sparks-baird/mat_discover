@@ -43,12 +43,12 @@ from discover_ import Discover
 from discover.utils.Timer import Timer
 import pickle
 
-dummy_run = False
-# dummy_run = True
+# dummy_run = False
+dummy_run = True
 disc = Discover(dummy_run=dummy_run)
 
 # load validation data
-# HACK: absolute path while still working out dependency structure
+# HACK: relative path while still working out dependency structure
 data_dir = join("CrabNet", "data", "materials_data", "elasticity")
 name = "train.csv"  # "example_materials_property_val_output.csv", #elasticity_val_output.csv"
 fpath = join(data_dir, name)
@@ -64,12 +64,6 @@ grp_df = (
     .reset_index()
 )
 
-# REVIEW: drop pure elements here?
-
-# drop noble gases
-# noble_ids = np.nonzero(np.isin(grp_df.formula, ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]))[0]
-# grp_df.drop(noble_ids, inplace=True)
-# take small subset
 if dummy_run:
     n = 100
     n2 = 10
@@ -136,3 +130,10 @@ with open("disc.pkl", "wb") as f:
 # "sparks-baird",
 # "ElM2D",
 1 + 1
+
+# drop pure elements?
+
+# drop noble gases
+# noble_ids = np.nonzero(np.isin(grp_df.formula, ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]))[0]
+# grp_df.drop(noble_ids, inplace=True)
+# take small subset
