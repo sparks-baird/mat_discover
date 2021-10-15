@@ -35,34 +35,34 @@ Created on Mon Sep 6 23:15:27 2021.
 """
 # %% Setup
 # imports
-from os.path import join
-import numpy as np
+import faulthandler
+
+# retrieve static file from package: https://stackoverflow.com/a/20885799/13697228
+from importlib.resources import open_text
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from mat_discover.mat_discover_ import Discover
+
+from mat_discover.CrabNet.data.materials_data import elasticity
+from mat_discover.mat_discover_ import Discover, groupby_formula
 from mat_discover.utils.Timer import Timer
-import pickle
+
+# Due to some issues with Plotly and Pytest (https://stackoverflow.com/a/65826036/13697228)
+faulthandler.disable()
 
 # dummy_run = False
 dummy_run = True
 disc = Discover(dummy_run=dummy_run)
 
-# load validation data
-# HACK: relative path while still working out dependency structure
-data_dir = join("mat_discover", "CrabNet", "data", "materials_data", "elasticity")
-name = "train.csv"  # "example_materials_property_val_output.csv", #elasticity_val_output.csv"
-fpath = join(data_dir, name)
-df = pd.read_csv(fpath)
+# load data
 
-# df = df.groupby(by="formula", as_index=False).mean()
-# if there are two compounds with the same formula, we're more interested in the higher GPa
-group_filter = "max"  # "mean"
-grp_df = (
-    df.reset_index()
-    .groupby(by="formula")
-    .agg({"index": lambda x: tuple(x), "target": "max"})
-    .reset_index()
-)
+# this is "training data", but only in the context of a real study predicting on many new materials
+# As a validation study, this is further split into train/val sets.
+train_csv = open_text(elasticity, "train.csv")
+df = pd.read_csv(train_csv)
+
+# group identical compositions
+grp_df = groupby_formula(df, how="max")
 
 if dummy_run:
     n = 100
@@ -77,50 +77,58 @@ else:
     # train_df, val_df = train_test_split(tv_df, test_size=val_size / (1 - test_size))
     train_df, val_df = train_test_split(grp_df, test_size=val_size)
 
-# %% fit
-# slower if umap_random_state is not None
-with Timer("DISCOVER-fit"):
-    disc.fit(train_df)
 
-# %% predict
-with Timer("DISCOVER-predict"):
-    score = disc.predict(val_df, umap_random_state=42)
+def test_fit():
+    """Test fit method."""
+    with Timer("DISCOVER-fit"):
+        # supposedely slower if umap_random_state is not None
+        disc.fit(train_df)
 
-# %% group-cv
-# cat_df = pd.concat((train_df, val_df), axis=0)
-# with Timer("DISCOVER-group-cross-val"):
-#     disc.group_cross_val(cat_df, umap_random_state=42)
-# print("scaled test error = ", disc.scaled_error)
 
-# %% compound rankings
-print(disc.dens_score_df)
-print(disc.peak_score_df)
+def test_predict():
+    """Test predict method."""
+    with Timer("DISCOVER-predict"):
+        score = disc.predict(val_df, umap_random_state=42)
 
-disc.dens_score_df.rename(columns={"score": "Density Score"}, inplace=True)
-disc.peak_score_df.rename(columns={"score": "Peak Score"}, inplace=True)
 
-comb_score_df = disc.dens_score_df[["formula", "Density Score"]].merge(
-    disc.peak_score_df[["formula", "Peak Score"]], how="outer"
-)
+def test_group_cross_val():
+    """Test leave-one-cluster-out cross-validation."""
+    cat_df = pd.concat((train_df, val_df), axis=0)
+    with Timer("DISCOVER-group-cross-val"):
+        disc.group_cross_val(cat_df, umap_random_state=42)
+    print("scaled test error = ", disc.scaled_error)
 
-comb_formula = disc.dens_score_df.head(10)[["formula"]].merge(
-    disc.peak_score_df.head(10)[["formula"]], how="outer"
-)
 
-comb_out_df = comb_score_df[np.isin(comb_score_df.formula, comb_formula)]
+def test_plot():
+    """Test plotting functions."""
+    with Timer("DISCOVER-plot"):
+        disc.plot()
 
-disc.dens_score_df.head(10).to_csv("dens-score.csv", index=False, float_format="%.3f")
-disc.peak_score_df.head(10).to_csv("peak-score.csv", index=False, float_format="%.3f")
-comb_out_df.to_csv("comb-score.csv", index=False, float_format="%.3f")
 
-# %% plot
-with Timer("DISCOVER-plot"):
-    disc.plot()
-1 + 1
+def test_save():
+    """Test saving the model to disc.pkl."""
+    disc.save()
 
-# %% save
-with open("disc.pkl", "wb") as f:
-    pickle.dump(disc, f)
+
+def test_load():
+    """Test loading the model from disc.pkl."""
+    disc.load()
+
+
+def main():
+    """Running through all the tests."""
+    test_fit()
+    test_predict()
+    test_group_cross_val()
+    test_plot()
+    test_save()
+    test_load()
+
+
+faulthandler.enable()
+
+if __name__ == "__main__":
+    main()
 
 # %% CODE GRAVEYARD
 # from os.path import join, expanduser
@@ -137,3 +145,7 @@ with open("disc.pkl", "wb") as f:
 # noble_ids = np.nonzero(np.isin(grp_df.formula, ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]))[0]
 # grp_df.drop(noble_ids, inplace=True)
 # take small subset
+
+# data_dir = join("mat_discover", "CrabNet", "data", "materials_data", "elasticity")
+# name = "train.csv"  # "example_materials_property_val_output.csv", #elasticity_val_output.csv"
+# fpath = join(data_dir, name)
