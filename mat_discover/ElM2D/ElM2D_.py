@@ -33,6 +33,9 @@ Requires umap which may be installed via:
 import os
 from operator import attrgetter
 from importlib import reload
+from typing import Optional
+from types import ModuleType
+
 from numba import cuda
 
 from multiprocessing import cpu_count, freeze_support
@@ -64,17 +67,25 @@ os.environ["INLINE"] = "never"
 os.environ["FASTMATH"] = "1"
 # os.environ["TARGET"] = "cuda"
 
-from . import njit_dist_matrix  # noqa
+import mat_discover.ElM2D.njit_dist_matrix  # noqa
 
-reload(njit_dist_matrix)
+# from mat_discover.ElM2D import njit_dist_matrix  # noqa
+
+reload(mat_discover.ElM2D.njit_dist_matrix)
 # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
-njit_dist_matrix = njit_dist_matrix.dist_matrix
+njit_dist_matrix = mat_discover.ElM2D.njit_dist_matrix.dist_matrix
 
-from . import cuda_dist_matrix  # noqa
+# REVIEW: why is it slower now?
+# cuda_dist_matrix: Optional[ModuleType]
+if cuda.is_available():
+    # from . import cuda_dist_matrix  # noqa
+    import mat_discover.ElM2D.cuda_dist_matrix  # noqa
 
-# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
-reload(cuda_dist_matrix)
-cuda_dist_matrix = cuda_dist_matrix.dist_matrix
+    # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+    reload(mat_discover.ElM2D.cuda_dist_matrix)
+    cuda_dist_matrix = mat_discover.ElM2D.cuda_dist_matrix.dist_matrix
+else:
+    cuda_dist_matrix = None
 
 
 def main():
