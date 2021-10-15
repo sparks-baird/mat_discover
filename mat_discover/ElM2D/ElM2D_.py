@@ -55,7 +55,7 @@ from tqdm import tqdm
 from ElMD import ElMD, EMD
 
 # number of columns of U and V must be set as env var before import
-n_elements = len(ElMD().periodic_tab["mod_petti"])
+n_elements = len(ElMD().periodic_tab)
 os.environ["COLUMNS"] = str(n_elements)
 
 # other environment variables (set before importing cuda_dist_matrix)
@@ -579,7 +579,7 @@ class ElM2D:
         """
         pool_list = []
 
-        n_elements = len(ElMD().periodic_tab[self.metric])
+        n_elements = len(ElMD().periodic_tab)
         self.input_mat = np.ndarray(
             shape=(len(formula_list), n_elements), dtype=np.float64
         )
@@ -661,7 +661,7 @@ class ElM2D:
             indices = np.array(comp_labels, dtype=np.int64)
             ratios = np.array(comp_ratios, dtype=np.float64)
 
-            numeric = np.zeros(shape=len(E.periodic_tab[E.metric]), dtype=np.float64)
+            numeric = np.zeros(shape=len(E.periodic_tab), dtype=np.float64)
             numeric[indices] = ratios
 
             return numeric
@@ -674,10 +674,9 @@ class ElM2D:
             V_weights = gen_ratio_vectors(formulas2)
 
         lookup, periodic_tab, metric = attrgetter("lookup", "periodic_tab", "metric")(E)
-        ptab_metric = periodic_tab[metric]
 
         def get_mod_petti(x):
-            return [ptab_metric[lookup[a]] if b > 0 else 0 for a, b in enumerate(x)]
+            return [periodic_tab[lookup[a]] if b > 0 else 0 for a, b in enumerate(x)]
 
         def get_mod_pettis(X):
             return np.array([get_mod_petti(x) for x in X])
