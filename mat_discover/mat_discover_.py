@@ -15,6 +15,8 @@ Created on Mon Sep  6 23:15:27 2021.
 @author: sterg
 """
 import os
+from os import makedirs
+import pickle
 from warnings import warn
 from operator import attrgetter
 from mat_discover.ElM2D.utils.Timer import Timer, NoTimer
@@ -46,12 +48,10 @@ from mat_discover.utils.plotting import (
     target_scatter,
     dens_scatter,
     dens_targ_scatter,
-    group_cv_parity,
 )
 
 import torch
 
-# from CrabNet.train_crabnet import main as crabnet_main
 from mat_discover.CrabNet.train_crabnet import get_model
 
 plt.rcParams.update(
@@ -73,6 +73,32 @@ def my_mvn(mu_x, mu_y, r):
     return multivariate_normal([mu_x, mu_y], [[r, 0], [0, r]])
 
 
+def groupby_formula(df, how="max"):
+    """Group identical compositions together and preserve original indices.
+
+    See https://stackoverflow.com/a/49216427/13697228
+
+    Parameters
+    ----------
+    df : DataFrame
+        At minimum should contain "formula" and "target" columns.
+    how : str, optional
+        How to perform the "groupby", either "mean" or "max", by default "max"
+
+    Returns
+    -------
+    DataFrame
+        The grouped DataFrame such that the original indices are preserved.
+    """
+    grp_df = (
+        df.reset_index()
+        .groupby(by="formula")
+        .agg({"index": lambda x: tuple(x), "target": "max"})
+        .reset_index()
+    )
+    return grp_df
+
+
 class Discover:
     """Class for ElM2D, dimensionality reduction, clustering, and plotting."""
 
@@ -87,6 +113,8 @@ class Discover:
         mat_prop_name="test-property",
         dummy_run=False,
         Scaler=MinMaxScaler,
+        figure_path="figures",
+        groupby_filter="max",
     ):
         if timed:
             self.Timer = Timer
@@ -101,6 +129,7 @@ class Discover:
         self.mat_prop_name = mat_prop_name
         self.dummy_run = dummy_run
         self.Scaler = Scaler
+        self.groupby_filter = groupby_filter
 
         self.mapper = ElM2D(target="cuda")  # type: ignore
         self.dm = None
@@ -114,6 +143,8 @@ class Discover:
         self.pred_avg_targ = None
         self.train_avg_targ = None
 
+        makedirs(figure_path, exist_ok=True)
+
     def fit(self, train_df):
         """Fit CrabNet model to training data.
 
@@ -122,25 +153,22 @@ class Discover:
         train_df : DataFrame
             Should contain "formula" and "target" columns.
         """
+        # collapse identical compositions
+        train_df = groupby_formula(train_df, how=self.groupby_filter)
+
         # unpack
         self.train_df = train_df
         self.train_formula = train_df["formula"]
         self.train_target = train_df["target"]
 
-        # HACK: remove directory structure dependence
-        # os.chdir("CrabNet")
         # TODO: remove the "val MAE", which is wrong (should be NaN or just not displayed)
         # turns out this is a bit more difficult because of use of self.data_loader
-        # dummy_df = train_df.iloc[:1, :]
-        # dummy_df["target"] = np.mean(train_df["target"])
         with Timer("train-CrabNet"):
             self.crabnet_model = get_model(
                 mat_prop=self.mat_prop_name,
                 train_df=train_df,
                 learningcurve=False,
             )
-        # crabnet_main(mat_prop="elasticity", train_df=df)
-        # os.chdir("..")
 
         # TODO: UMAP on new data (i.e. add metric != "precomputed" functionality)
 
@@ -149,8 +177,7 @@ class Discover:
         val_df,
         plotting=None,
         umap_random_state=None,
-        pred_weight=1,  # pred_weight - how much to weight the prediction values relative to val_ratio
-        # score_method="train-density",  # "validation-fraction", "train-density"
+        pred_weight=1,
         dummy_run=None,
     ):
         """Predict target and proxy for validation dataset.
@@ -171,12 +198,13 @@ class Discover:
         dens_score, peak_score
             Scaled discovery scores for density and peak proxies.
         """
+        val_df = groupby_formula(val_df, how=self.groupby_filter)
         self.val_df = val_df
 
         # CrabNet
         # TODO: parity plot
-        # (act, pred, formulae, uncert)
         crabnet_model = self.crabnet_model
+        # CrabNet predict output format: (act, pred, formulae, uncert)
         self.train_true, train_pred, _, self.train_sigma = crabnet_model.predict(
             self.train_df
         )
@@ -210,7 +238,8 @@ class Discover:
             self.dm = self.mapper.dm
 
         # TODO: look into UMAP via GPU
-        # TODO: use fast, built-in Wasserstein UMAP method
+        # TODO: create and use fast, built-in Wasserstein UMAP method
+
         # UMAP (clustering and visualization) (or MDS for a quick run)
         if (dummy_run is None and self.dummy_run) or dummy_run:
             umap_trans = MDS(n_components=2, dissimilarity="precomputed").fit(self.dm)
@@ -232,7 +261,6 @@ class Discover:
             min_cluster_size = 50
         clusterer = self.cluster(self.umap_emb, min_cluster_size=min_cluster_size)
         self.labels = self.extract_labels_probs(clusterer)[0]
-        # self.unique_labels = np.unique(self.labels)
 
         # np.unique while preserving order https://stackoverflow.com/a/12926989/13697228
         lbl_ids = np.unique(self.labels, return_index=True)[1]
@@ -280,45 +308,28 @@ class Discover:
 
         # # Scale and weight the cluster data
         # # REVIEW: Which Scaler to use? RobustScaler means no set limits on "score"
-        # pred_scaler = self.Scaler().fit(self.cluster_avg)
-        # pred_scaled = pred_weight * pred_scaler.transform(self.cluster_avg)
-        # frac_scaled = self.val_frac  # already between 0 and 1
-
-        # # combined cluster data
-        # comb_data = pred_scaled + frac_scaled
-        # comb_scaler = self.Scaler().fit(comb_data)
-
-        # # cluster scores range between 0 and 1
-        # self.cluster_score = comb_scaler.transform(comb_data)
-
         self.cluster_score = self.weighted_score(self.cluster_avg, self.val_frac)
 
-        # compound-wise score (i.e. individual compounds)
-
-        # y = self.val_pred.reshape(-1, 1)
-        # pred_scaler2 = self.Scaler().fit(y)
-        # pred_scaled2 = pred_weight * pred_scaler2.transform(y)
-        # dens_scaler = self.Scaler().fit(-1 * self.val_dens.reshape(-1, 1))
-        # dens_scaled = dens_scaler.transform(-1 * self.val_dens.reshape(-1, 1))
-
-        # # combined compound validation data
-        # comb_data2 = pred_scaled2 + dens_scaled
-        # comb_scaler2 = self.Scaler().fit(comb_data2)
-        # self.score = comb_scaler2.transform(comb_data2).ravel()
-
-        # TODO: Nearest Neighbor properties (for plotting only), incorporate as separate "score" type
-        rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(self.dm, pred)
+        # compound-wise scores (i.e. individual compounds)
+        self.rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
+            self.dm, pred
+        )
+        self.val_rad_neigh_avg = self.rad_neigh_avg_targ[val_ids]
         self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
 
-        self.dens_score = self.weighted_score(self.val_pred, self.val_log_dens)
+        self.rad_score = self.weighted_score(self.val_pred, self.val_rad_neigh_avg)
         self.peak_score = self.weighted_score(self.val_pred, self.val_k_neigh_avg)
+        self.dens_score = self.weighted_score(self.val_pred, self.val_log_dens)
 
         # Plotting
         if (self.plotting and plotting is None) or plotting:
             self.plot()
 
-        self.dens_score_df = self.sort(self.dens_score)
+        self.rad_score_df = self.sort(self.rad_score)
         self.peak_score_df = self.sort(self.peak_score)
+        self.dens_score_df = self.sort(self.dens_score)
+
+        self.merge()
 
         return self.dens_score, self.peak_score
 
@@ -378,6 +389,37 @@ class Discover:
         )
         score_df.sort_values("score", ascending=False, inplace=True)
         return score_df
+
+    def merge(self):
+        """Perform an outer merge of the density and peak proxy rankings.
+
+        Returns
+        -------
+        DataFrame
+            Outer merge of the two proxy rankings.
+        """
+        self.dens_score_df.rename(columns={"score": "Density Score"}, inplace=True)
+        self.peak_score_df.rename(columns={"score": "Peak Score"}, inplace=True)
+
+        comb_score_df = self.dens_score_df[["formula", "Density Score"]].merge(
+            self.peak_score_df[["formula", "Peak Score"]], how="outer"
+        )
+
+        comb_formula = self.dens_score_df.head(10)[["formula"]].merge(
+            self.peak_score_df.head(10)[["formula"]], how="outer"
+        )
+
+        self.comb_out_df = comb_score_df[np.isin(comb_score_df.formula, comb_formula)]
+
+        self.dens_score_df.head(10).to_csv(
+            "dens-score.csv", index=False, float_format="%.3f"
+        )
+        self.peak_score_df.head(10).to_csv(
+            "peak-score.csv", index=False, float_format="%.3f"
+        )
+        self.comb_out_df.to_csv("comb-score.csv", index=False, float_format="%.3f")
+
+        return self.comb_out_df
 
     def group_cross_val(self, df, umap_random_state=None, dummy_run=None):
         """Perform leave-one-cluster-out cross-validation (LOCO-CV)
@@ -454,8 +496,6 @@ class Discover:
         # X_tv, y_tv, labels_tv = X[tv_ids], y[tv_ids], self.labels[tv_ids]
 
         # Group Cross Validation
-        # HACK: remove directory structure dependence
-        # os.chdir("CrabNet")
         # for train_index, val_index in logo.split(X_tv, y_tv, self.labels):
         # TODO: group cross-val parity plot
         avg_targ = [
@@ -494,10 +534,8 @@ class Discover:
             u_weights=u_weights,
             v_weights=dummy_v_weights,
         )
-        # HACK: remove directory structure dependence
-        # os.chdir("..")
 
-        # Similar to MatBench "scaled_error"
+        # Similar to Matbench "scaled_error"
         self.scaled_error = self.error / self.dummy_error
         if self.verbose:
             print("Weighted group cross validation scaled error =", self.scaled_error)
@@ -544,16 +582,6 @@ class Discover:
         # REVIEW: uncomment when ready for publication
         # test_df = pd.DataFrame({"formula": X_test, "property": y_test})
 
-        # train CrabNet
-        # train_pred_df, val_pred_df, test_pred_df = crabnet_main(
-        #     mat_prop="elasticity",
-        #     train_df=train_df,
-        #     val_df=val_df,
-        #     test_df=test_df,
-        #     learningcurve=False,
-        #     verbose=False,
-        # )
-
         self.crabnet_model = get_model(
             mat_prop=self.mat_prop_name,
             train_df=train_df,
@@ -562,13 +590,11 @@ class Discover:
             verbose=False,
         )
 
-        # (act, pred, formulae, uncert)
+        # CrabNet predict output format: (act, pred, formulae, uncert)
         train_true, train_pred, _, train_sigma = self.crabnet_model.predict(train_df)
         val_true, val_pred, _, val_sigma = self.crabnet_model.predict(val_df)
         if test_df is not None:
             _, test_pred, _, test_sigma = self.crabnet_model.predict(test_df)
-        # true_targ = np.concatenate((train_true, val_true), axis=0)
-        # pred_targ = np.concatenate((train_pred, val_pred), axis=0)
 
         true_avg_targ = np.mean(val_true)
         pred_avg_targ = np.mean(val_pred)
@@ -835,6 +861,15 @@ class Discover:
 
     # TODO: write function to visualize Wasserstein metric (barchart with height = color)
 
+    def save(self, fpath="disc.pkl"):
+        with open(fpath, "wb") as f:
+            pickle.dump(self, f)
+
+    def load(self, fpath="disc.pkl"):
+        with open(fpath, "rb") as f:
+            disc = pickle.load(f)
+            return disc
+
 
 # %% CODE GRAVEYARD
 # remove dependence on paths
@@ -899,3 +934,43 @@ class Discover:
 
 # frac_scaler = Scaler().fit(self.val_frac)
 # frac_scaled = frac_scaler.transform(self.val_frac)
+
+
+# y = self.val_pred.reshape(-1, 1)
+# pred_scaler2 = self.Scaler().fit(y)
+# pred_scaled2 = pred_weight * pred_scaler2.transform(y)
+# dens_scaler = self.Scaler().fit(-1 * self.val_dens.reshape(-1, 1))
+# dens_scaled = dens_scaler.transform(-1 * self.val_dens.reshape(-1, 1))
+
+# # combined compound validation data
+# comb_data2 = pred_scaled2 + dens_scaled
+# comb_scaler2 = self.Scaler().fit(comb_data2)
+# self.score = comb_scaler2.transform(comb_data2).ravel()
+
+# pred_scaler = self.Scaler().fit(self.cluster_avg)
+# pred_scaled = pred_weight * pred_scaler.transform(self.cluster_avg)
+# frac_scaled = self.val_frac  # already between 0 and 1
+
+# # combined cluster data
+# comb_data = pred_scaled + frac_scaled
+# comb_scaler = self.Scaler().fit(comb_data)
+
+# # cluster scores range between 0 and 1
+# self.cluster_score = comb_scaler.transform(comb_data)
+
+# self.unique_labels = np.unique(self.labels)
+
+# train CrabNet
+# train_pred_df, val_pred_df, test_pred_df = crabnet_main(
+#     mat_prop="elasticity",
+#     train_df=train_df,
+#     val_df=val_df,
+#     test_df=test_df,
+#     learningcurve=False,
+#     verbose=False,
+# )
+
+# true_targ = np.concatenate((train_true, val_true), axis=0)
+# pred_targ = np.concatenate((train_pred, val_pred), axis=0)
+
+# from CrabNet.train_crabnet import main as crabnet_main
