@@ -19,9 +19,9 @@ os.environ["INLINE"] = "never"
 os.environ["FASTMATH"] = "1"
 os.environ["TARGET"] = "cuda"
 
-from helper import Timer  # noqa
+from mat_discover.utils import Timer  # noqa
 from numba.cuda.testing import unittest, CUDATestCase  # noqa
-import cuda_dist_matrix  # noqa
+from mat_discover.ElM2D import cuda_dist_matrix  # noqa
 
 # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
 reload(cuda_dist_matrix)
