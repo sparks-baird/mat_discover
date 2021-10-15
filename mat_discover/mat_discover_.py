@@ -862,10 +862,29 @@ class Discover:
     # TODO: write function to visualize Wasserstein metric (barchart with height = color)
 
     def save(self, fpath="disc.pkl"):
+        """Save Discover() model.
+
+        Parameters
+        ----------
+        fpath : str, optional
+            Filepath to which to save, by default "disc.pkl"
+        """
         with open(fpath, "wb") as f:
             pickle.dump(self, f)
 
     def load(self, fpath="disc.pkl"):
+        """Load Discover() model.
+
+        Parameters
+        ----------
+        fpath : str, optional
+            Filepath from which to load, by default "disc.pkl"
+
+        Returns
+        -------
+        Class
+            Loaded Discover() model.
+        """
         with open(fpath, "rb") as f:
             disc = pickle.load(f)
             return disc
