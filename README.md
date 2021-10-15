@@ -1,5 +1,8 @@
 # DiSCoVeR
-A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces.
+A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
+
+See the preprint at:
+
 
 <!---
 Recommended installation through `pip` with python 3.7.
