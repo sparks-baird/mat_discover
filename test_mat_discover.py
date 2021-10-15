@@ -9,7 +9,7 @@ Test DISCOVER algorithm.
      - materials with high-target surrounded by materials with low targets
      - high mean cluster target/high fraction of validation points within cluster
 
-Run using discover environment.
+Run using mat_discover environment.
 
 # Stick with ~10k elasticity datapoints
 # Perform UMAP and HDBSCAN
@@ -35,7 +35,7 @@ Created on Mon Sep 6 23:15:27 2021.
 """
 # %% Setup
 # imports
-import faulthandler
+# import faulthandler
 
 # retrieve static file from package: https://stackoverflow.com/a/20885799/13697228
 from importlib.resources import open_text
@@ -48,7 +48,7 @@ from mat_discover.mat_discover_ import Discover, groupby_formula
 from mat_discover.utils.Timer import Timer
 
 # Due to some issues with Plotly and Pytest (https://stackoverflow.com/a/65826036/13697228)
-faulthandler.disable()
+# faulthandler.disable()
 
 # dummy_run = False
 dummy_run = True
@@ -76,6 +76,8 @@ else:
     # tv_df, test_df = train_test_split(grp_df, test_size=test_size)
     # train_df, val_df = train_test_split(tv_df, test_size=val_size / (1 - test_size))
     train_df, val_df = train_test_split(grp_df, test_size=val_size)
+
+# %% Test Functions
 
 
 def test_fit():
@@ -107,25 +109,29 @@ def test_plot():
 
 def test_save():
     """Test saving the model to disc.pkl."""
-    disc.save()
+    with Timer("DISCOVER-save"):
+        disc.save()
 
 
 def test_load():
     """Test loading the model from disc.pkl."""
-    disc.load()
+    with Timer("DISCOVER-load"):
+        disc.load()
 
 
-def main():
-    """Running through all the tests."""
+def main(dummy_run=True, gcv=False):
+    """Run through most, if not all the tests."""
+    disc.dummy_run = dummy_run
     test_fit()
     test_predict()
-    test_group_cross_val()
+    if gcv:
+        test_group_cross_val()
     test_plot()
     test_save()
     test_load()
 
 
-faulthandler.enable()
+# faulthandler.enable()
 
 if __name__ == "__main__":
     main()
