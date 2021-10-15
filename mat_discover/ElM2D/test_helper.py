@@ -4,7 +4,10 @@ Test helper functions for distance matrix calculations.
 import os
 import numpy as np
 from numba.cuda.testing import unittest, CUDATestCase
-import numba.cuda.kernels.device.helper as hp
+
+# import numba.cuda.kernels.device.helper as hp
+import mat_discover.ElM2D.helper as hp
+
 from numpy.testing import assert_allclose, assert_equal
 
 bits = int(os.environ.get("MACHINE_BITS", "32"))
@@ -79,5 +82,5 @@ class TestHelperFunctions(CUDATestCase):
         assert_allclose(out, check)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
