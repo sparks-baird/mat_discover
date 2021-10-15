@@ -10,8 +10,9 @@ Created on Sat Sep 11 17:02:10 2021
 from os.path import join
 from pathlib import Path
 import pickle
+
 # from tqdm import tqdm
-from pqdm.processes import pqdm as tqdm
+from pqdm.processes import pqdm
 from ElM2D.utils.Timer import Timer
 
 import numpy as np
@@ -129,7 +130,7 @@ def generate_elasticity_data(download_data=True):
     all_struct_path = join("data", "all_struct_dicts.pkl")
     if download_data:
         # TODO: add waitbar for list comp
-        all_structures = [Structure.from_str(cif, fmt="cif") for cif in tqdm(all_cifs)]
+        all_structures = [Structure.from_str(cif, fmt="cif") for cif in pqdm(all_cifs)]
         all_struct_dicts = [structure.as_dict() for structure in all_structures]
         with open(all_struct_path, "wb") as f:
             pickle.dump(all_struct_dicts, f)
