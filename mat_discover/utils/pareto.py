@@ -1,4 +1,5 @@
 """Helper functions for finding and plotting a pareto front."""
+from os.path import join
 import sys
 from PyQt5.QtWidgets import QApplication
 
@@ -47,7 +48,7 @@ def pareto_plot(
     y="target (GPa)",
     color="Peak height (GPa)",
     hover_data=["formula"],
-    fpath="pareto-front",
+    fpath=join("figures", "pareto-front"),
     reverse_x=True,
     parity_type="max-of-both",
     pareto_front=True,
