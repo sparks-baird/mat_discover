@@ -429,7 +429,7 @@ class Discover:
         return self.comb_out_df
 
     def group_cross_val(self, df, umap_random_state=None, dummy_run=None):
-        """Perform leave-one-cluster-out cross-validation (LOCO-CV)
+        """Perform leave-one-cluster-out cross-validation (LOCO-CV).
 
         Parameters
         ----------
@@ -488,9 +488,9 @@ class Discover:
         seed=42 for UMAP random_state, then seed=10 for setting aside clusters.
         Note that "unclustered" is never assigned as a test_cluster, and so is always
         included in tv_cluster_ids (tv===train_validation)."""
-        np.random.default_rng(seed=10)
+        # np.random.default_rng(seed=10)
         # test_cluster_ids = np.random.choice(self.n_clusters + 1, n_test_clusters)
-        np.random.default_rng()
+        # np.random.default_rng()
 
         # test_ids = np.isin(self.labels, test_cluster_ids)
         # tv_cluster_ids = np.setdiff1d(
