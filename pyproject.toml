@@ -9,5 +9,25 @@ readme = "README.md"
 classifiers = ["License :: OSI Approved :: MIT License"]
 dynamic = ["version", "description"]
 
+dependencies = [
+    "umap-learn",
+    "tqdm",
+    "seaborn",
+    "scipy",
+    "hdbscan",
+    "numba==0.53.1",
+    "plotly",
+    "kaleido",
+    "pandas",
+    "matplotlib",
+    "joblib",
+    "pqdm",
+    "ElMD==0.4.3",
+    "psutil",
+    "PyQt5",
+    "scikit_learn",
+    "torch==1.7.*",
+    ]
+
 [project.urls]
 Home = "https://github.com/sparks-baird/mat_discover"
