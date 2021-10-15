@@ -14,7 +14,7 @@ Created on Mon Sep  6 23:15:27 2021.
 
 @author: sterg
 """
-from os import makedirs
+from pathlib import Path
 from os.path import join
 import pickle
 from warnings import warn
@@ -113,7 +113,8 @@ class Discover:
         mat_prop_name="test-property",
         dummy_run=False,
         Scaler=MinMaxScaler,
-        figure_path="figures",
+        figure_path=self.figure_path,
+        table_path="tables",
         groupby_filter="max",
     ):
         if timed:
@@ -130,6 +131,8 @@ class Discover:
         self.dummy_run = dummy_run
         self.Scaler = Scaler
         self.groupby_filter = groupby_filter
+        self.figure_path = figure_path
+        self.table_path = table_path
 
         self.mapper = ElM2D(target="cuda")  # type: ignore
         self.dm = None
@@ -143,7 +146,9 @@ class Discover:
         self.pred_avg_targ = None
         self.train_avg_targ = None
 
-        makedirs(figure_path, exist_ok=True)
+        # create dirs https://stackoverflow.com/a/273227/13697228
+        Path(figure_path).mkdir(parents=True, exist_ok=True)
+        Path(table_path).mkdir(parents=True, exist_ok=True)
 
     def fit(self, train_df):
         """Fit CrabNet model to training data.
@@ -412,12 +417,14 @@ class Discover:
         self.comb_out_df = comb_score_df[np.isin(comb_score_df.formula, comb_formula)]
 
         self.dens_score_df.head(10).to_csv(
-            "dens-score.csv", index=False, float_format="%.3f"
+            join(self.table_path, "dens-score.csv"), index=False, float_format="%.3f"
         )
         self.peak_score_df.head(10).to_csv(
-            "peak-score.csv", index=False, float_format="%.3f"
+            join(self.table_path, "peak-score.csv"), index=False, float_format="%.3f"
         )
-        self.comb_out_df.to_csv("comb-score.csv", index=False, float_format="%.3f")
+        self.comb_out_df.to_csv(
+            join(self.table_path, "comb-score.csv"), index=False, float_format="%.3f"
+        )
 
         return self.comb_out_df
 
@@ -735,7 +742,7 @@ class Discover:
             x=x,
             y=y,
             color="cluster ID",
-            fpath=join("figures", "pf-peak-proxy"),
+            fpath=join(self.figure_path, "pf-peak-proxy"),
             pareto_front=True,
         )
 
@@ -756,7 +763,7 @@ class Discover:
             x=x,
             y=y,
             color="cluster ID",
-            fpath=join("figures", "pf-train-contrib-proxy"),
+            fpath=join(self.figure_path, "pf-train-contrib-proxy"),
             pareto_front=True,
             parity_type=None,
         )
@@ -797,7 +804,7 @@ class Discover:
             dens_df,
             x=x,
             y=y,
-            fpath=join("figures", "pf-dens-proxy"),
+            fpath=join(self.figure_path, "pf-dens-proxy"),
             parity_type=None,
             color="cluster ID",
             pareto_front=True,
@@ -819,7 +826,7 @@ class Discover:
             y=y,
             hover_data=None,
             color="cluster ID",
-            fpath=join("figures", "pf-frac-proxy"),
+            fpath=join(self.figure_path, "pf-frac-proxy"),
             pareto_front=True,
             reverse_x=False,
             parity_type=None,
@@ -844,7 +851,7 @@ class Discover:
                 gcv_df,
                 x=x,
                 y=y,
-                fpath=join("figures", "gcv-pareto"),
+                fpath=join(self.figure_path, "gcv-pareto"),
                 parity_type="max-of-both",
                 color="cluster ID",
                 pareto_front=False,
