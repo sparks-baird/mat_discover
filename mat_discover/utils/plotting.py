@@ -1,3 +1,4 @@
+from os.path import join
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -6,8 +7,6 @@ from sklearn.preprocessing import MinMaxScaler
 # import seaborn as sns
 
 # TODO: change to square plots
-
-
 def umap_cluster_scatter(std_emb, labels):
     # TODO: update plotting commands to have optional arguments (e.g. std_emb and labels)
     cmap = plt.cm.nipy_spectral
@@ -39,7 +38,7 @@ def umap_cluster_scatter(std_emb, labels):
         plt.legend([ax2], ["Unclassified: " + "{:.1%}".format(unclass_frac)])
     plt.tight_layout()
     plt.gca().set_aspect("equal", "box")
-    plt.savefig("umap-cluster-scatter")
+    plt.savefig(join("figures", "umap-cluster-scatter"))
     plt.show()
     return fig
 
@@ -66,7 +65,7 @@ def cluster_count_hist(labels):
     plt.xlabel("cluster ID")
     plt.ylabel("number of compounds")
     plt.tight_layout()
-    plt.savefig("cluster-count-hist")
+    plt.savefig(join("figures", "cluster-count-hist"))
     plt.show()
     return fig
 
@@ -85,7 +84,7 @@ def target_scatter(std_emb, target):
     plt.colorbar(label="Bulk Modulus (GPa)", orientation="horizontal")
     plt.tight_layout()
     plt.gca().set_aspect("equal", "box")
-    plt.savefig("target-scatter")
+    plt.savefig(join("figures", "target-scatter"))
     plt.show()
     return fig
 
@@ -97,7 +96,7 @@ def dens_scatter(x, y, pdf_sum):
     plt.tight_layout()
     plt.colorbar(label="Density", orientation="horizontal")
     plt.gca().set_aspect("equal", "box")
-    plt.savefig("dens-scatter")
+    plt.savefig(join("figures", "dens-scatter"))
     plt.show()
     return fig
 
@@ -117,7 +116,7 @@ def dens_targ_scatter(std_emb, target, x, y, pdf_sum):
     plt.axis("off")
     plt.tight_layout()
     plt.gca().set_aspect("equal", "box")
-    plt.savefig("dens-targ-scatter")
+    plt.savefig(join("figures", "dens-targ-scatter"))
     plt.show()
     return fig
 
@@ -137,6 +136,6 @@ def group_cv_parity(ytrue, ypred, labels):
     plt.xlabel(r"$E_\mathregular{avg,true}$ (GPa)")
     plt.ylabel(r"$E_\mathregular{avg,pred}$ (GPa)")
     plt.tight_layout()
-    plt.savefig("group-cv-parity")
+    plt.savefig(join("figures", "group-cv-parity"))
     plt.show()
     return fig
