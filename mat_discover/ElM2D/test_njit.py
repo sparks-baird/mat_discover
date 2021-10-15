@@ -4,14 +4,39 @@ Created on Wed Sep  8 01:36:51 2021
 
 @author: sterg
 """
+import os
 
+# from importlib import reload
+
+import numpy as np
 from scipy.stats import wasserstein_distance as scipy_wasserstein_distance
-from scipy.spatial.distance import cdist
+
+# from scipy.spatial.distance import cdist
+
+from numba import njit
+
+fastmath = bool(os.environ.get("FASTMATH", "1"))
+debug = False
 
 # generate test data
 np.random.seed(42)
 rows = 200
 cols = 100
+
+os.environ["COLUMNS"] = str(cols)
+# os.environ["USE_64"] = "0"
+
+from mat_discover.ElM2D.metrics import (  # noqa
+    njit_wasserstein_distance as wasserstein_distance,
+)
+
+
+# from mat_discover.ElM2D import njit_dist_matrix  # noqa
+
+# reload(njit_dist_matrix)
+# # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+# wasserstein_distance = njit_dist_matrix.wasserstein_distance
+
 [U, V, U_weights, V_weights] = [np.random.rand(rows, cols) for i in range(4)]
 
 testpairs = np.array([(1, 2), (2, 3), (3, 4)])
@@ -23,7 +48,7 @@ one_set_check = scipy_wasserstein_distance(
 two_set_check = scipy_wasserstein_distance(
     U[0], V[0], u_weights=U_weights[0], v_weights=V_weights[0]
 )
-i, j = pairs[0]
+i, j = testpairs[0]
 one_sparse_check = scipy_wasserstein_distance(
     U[i], U[j], u_weights=U_weights[i], v_weights=U_weights[j]
 )
@@ -31,13 +56,38 @@ two_sparse_check = scipy_wasserstein_distance(
     U[i], V[j], u_weights=U_weights[i], v_weights=V_weights[j]
 )
 
-tol = 1e-6
-print(
-    abs(one_set[0, 1] - one_set_check) < tol,
-    abs(two_set[0, 0] - two_set_check) < tol,
-    abs(one_set_sparse[0, 0] - one_sparse_check) < tol,
-    abs(two_set_sparse[0, 0] - two_sparse_check) < tol,
+# calculations
+one_set = wasserstein_distance(
+    U[0], U[1], U_weights[0], U_weights[1], False, False, False
 )
+two_set = wasserstein_distance(
+    U[0], V[0], U_weights[0], V_weights[0], False, False, False
+)
+i, j = testpairs[0]
+one_set_sparse = wasserstein_distance(
+    U[i], U[j], U_weights[i], U_weights[j], False, False, False
+)
+two_set_sparse = wasserstein_distance(
+    U[i], V[j], U_weights[i], V_weights[j], False, False, False
+)
+
+tol = 1e-4
+
+
+def test_one_set():
+    assert abs(one_set - one_set_check) < tol
+
+
+def test_two_set():
+    assert abs(two_set - two_set_check) < tol
+
+
+def test_one_set_sparse():
+    assert abs(one_set_sparse - one_sparse_check) < tol
+
+
+def test_two_set_sparse():
+    assert abs(two_set_sparse - two_sparse_check) < tol
 
 
 # %% wasserstein helper functions
