@@ -35,8 +35,6 @@ Created on Mon Sep 6 23:15:27 2021.
 """
 # %% Setup
 # imports
-# import faulthandler
-
 # retrieve static file from package: https://stackoverflow.com/a/20885799/13697228
 from importlib.resources import open_text
 
@@ -46,9 +44,6 @@ from sklearn.model_selection import train_test_split
 from mat_discover.CrabNet.data.materials_data import elasticity
 from mat_discover.mat_discover_ import Discover, groupby_formula
 from mat_discover.utils.Timer import Timer
-
-# Due to some issues with Plotly and Pytest (https://stackoverflow.com/a/65826036/13697228)
-# faulthandler.disable()
 
 # dummy_run = False
 dummy_run = True
@@ -131,8 +126,6 @@ def main(dummy_run=True, gcv=False):
     test_load()
 
 
-# faulthandler.enable()
-
 if __name__ == "__main__":
     main()
 
@@ -155,3 +148,8 @@ if __name__ == "__main__":
 # data_dir = join("mat_discover", "CrabNet", "data", "materials_data", "elasticity")
 # name = "train.csv"  # "example_materials_property_val_output.csv", #elasticity_val_output.csv"
 # fpath = join(data_dir, name)
+
+# import faulthandler
+# Due to some issues with Plotly and Pytest (https://stackoverflow.com/a/65826036/13697228)
+# faulthandler.disable()
+# faulthandler.enable()
