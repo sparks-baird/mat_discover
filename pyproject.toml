@@ -13,6 +13,7 @@ dependencies = [
     "umap-learn",
     "tqdm",
     "seaborn",
+    "pymatgen",
     "scipy",
     "hdbscan",
     "numba==0.53.1",
