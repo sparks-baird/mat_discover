@@ -113,7 +113,7 @@ class Discover:
         mat_prop_name="test-property",
         dummy_run=False,
         Scaler=MinMaxScaler,
-        figure_path=self.figure_path,
+        figure_path="figures",
         table_path="tables",
         groupby_filter="max",
     ):
