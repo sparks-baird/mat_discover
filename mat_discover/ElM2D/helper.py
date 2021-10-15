@@ -152,6 +152,7 @@ def diff(vec, out):
     for i in range(n):
         out[i] = vec[i + 1] - vec[i]
 
+
 # maybe there's a faster implementation somewhere
 
 
