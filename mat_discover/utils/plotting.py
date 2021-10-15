@@ -36,7 +36,7 @@ def umap_cluster_scatter(std_emb, labels):
             label=labels[unclass_ids],
         )
         plt.legend([ax2], ["Unclassified: " + "{:.1%}".format(unclass_frac)])
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.gca().set_aspect("equal", "box")
     plt.savefig(join("figures", "umap-cluster-scatter"))
     plt.show()
@@ -64,7 +64,7 @@ def cluster_count_hist(labels):
     fig = plt.bar(*np.unique(labels, return_counts=True), color=color)
     plt.xlabel("cluster ID")
     plt.ylabel("number of compounds")
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.savefig(join("figures", "cluster-count-hist"))
     plt.show()
     return fig
@@ -82,7 +82,7 @@ def target_scatter(std_emb, target):
     )
     plt.axis("off")
     plt.colorbar(label="Bulk Modulus (GPa)", orientation="horizontal")
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.gca().set_aspect("equal", "box")
     plt.savefig(join("figures", "target-scatter"))
     plt.show()
@@ -93,7 +93,7 @@ def dens_scatter(x, y, pdf_sum):
     # TODO: add callouts to specific locations (high-scoring compounds)
     fig = plt.scatter(x, y, c=pdf_sum)
     plt.axis("off")
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.colorbar(label="Density", orientation="horizontal")
     plt.gca().set_aspect("equal", "box")
     plt.savefig(join("figures", "dens-scatter"))
@@ -114,7 +114,7 @@ def dens_targ_scatter(std_emb, target, x, y, pdf_sum):
         alpha=0.15,
     )
     plt.axis("off")
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.gca().set_aspect("equal", "box")
     plt.savefig(join("figures", "dens-targ-scatter"))
     plt.show()
@@ -135,7 +135,7 @@ def group_cv_parity(ytrue, ypred, labels):
 
     plt.xlabel(r"$E_\mathregular{avg,true}$ (GPa)")
     plt.ylabel(r"$E_\mathregular{avg,pred}$ (GPa)")
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.savefig(join("figures", "group-cv-parity"))
     plt.show()
     return fig
