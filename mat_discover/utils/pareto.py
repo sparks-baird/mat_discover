@@ -174,10 +174,11 @@ def pareto_plot(
     # modified from: https://medium.com/swlh/formatting-a-plotly-figure-with-matplotlib-style-fa56ddd97539)
     font_dict = dict(family="Arial", size=24, color="black")
 
-    app = QApplication(sys.argv)
-    screen = app.screens()[0]
-    dpi = screen.physicalDotsPerInch()
-    app.quit()
+    # app = QApplication(sys.argv)
+    # screen = app.screens()[0]
+    # dpi = screen.physicalDotsPerInch()
+    # app.quit()
+    dpi = 142
 
     fig.update_layout(
         font=font_dict,
