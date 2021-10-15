@@ -3,11 +3,13 @@ Nopython version of dist_matrix.
 
 Author: Sterling Baird
 """
-from numba import prange, njit
+from Lib import inspect
+
+from numba import prange, njit, jit, cuda
 from numba.types import float32, int32
 import numpy as np
 
-from .metrics import wasserstein_distance, euclidean_distance
+from mat_discover.ElM2D.metrics import njit_wasserstein_distance, euclidean_distance
 
 np_int = np.int32
 np_float = np.float32
@@ -19,11 +21,40 @@ fastmath = True
 parallel = True
 debug = False
 
-wasserstein_distance = njit(
-    wasserstein_distance.py_func, fastmath=fastmath, debug=debug
-)
+# target = "cpu"
 
-# TODO: switch to the more hard-coded version (faster than the NumPy functions)
+
+# def myjit(f):
+#     """
+#     f : function
+#     Decorator to assign the right jit for different targets
+#     In case of non-cuda targets, all instances of `cuda.local.array`
+#     are replaced by `np.empty`. This is a dirty fix, hopefully in the
+#     near future numba will support numpy array allocation and this will
+#     not be necessary anymore
+#     Source: https://stackoverflow.com/a/47039836/13697228
+#     """
+#     if target == "cuda":
+#         return cuda.jit(f, device=True)
+#     elif target == "cpu":
+#         source = inspect.getsource(f).splitlines()
+#         source = "\n".join(source[1:]) + "\n"
+#         source = source.replace("cuda.local.array", "np.empty")
+#         exec(source)
+#         fun = eval(f.__name__)
+#         newfun = jit(fun, nopython=True)
+#         # needs to be exported to globals
+#         globals()[f.__name__] = newfun
+#         return newfun
+
+
+# wasserstein_distance = myjit(njit_wasserstein_distance.py_func)
+
+# wasserstein_distance = njit(
+#     wasserstein_distance.py_func, fastmath=fastmath, debug=debug
+# )
+
+# # TODO: switch to the more hard-coded version (faster than the NumPy functions)
 # @njit(fastmath=fastmath, debug=debug)
 # def wasserstein_distance(
 #     u_values, v_values, u_weights=None, v_weights=None, p=1, presorted=False
