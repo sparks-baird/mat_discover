@@ -38,9 +38,9 @@ import hdbscan
 
 from ElM2D.ElM2D_ import ElM2D
 
-from discover.utils.nearest_neigh import nearest_neigh_props
-from discover.utils.pareto import pareto_plot, get_pareto_ind
-from discover.utils.plotting import (
+from mat_discover.utils.nearest_neigh import nearest_neigh_props
+from mat_discover.utils.pareto import pareto_plot, get_pareto_ind
+from mat_discover.utils.plotting import (
     umap_cluster_scatter,
     cluster_count_hist,
     target_scatter,
