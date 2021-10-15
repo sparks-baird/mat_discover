@@ -240,7 +240,7 @@ def two_set_distance_matrix(U, V, U_weights, V_weights, out, metric_num):
 
 def dist_matrix(
     U, V=None, U_weights=None, V_weights=None, pairs=None, metric="euclidean"
-):  # noqa
+): # noqa
     """
     Compute distance matrices using Numba/CUDA.
 
