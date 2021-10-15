@@ -14,13 +14,13 @@ Created on Mon Sep  6 22:02:36 2021
 """
 import unittest
 from numpy.testing import assert_allclose
-from helper import Timer
+from mat_discover.utils import Timer
 import pandas as pd
 
 
 class Testing(unittest.TestCase):
     def test_dm_close(self):
-        from ElM2D import ElM2D
+        from mat_discover.ElM2D import ElM2D
 
         mapper = ElM2D()
 
