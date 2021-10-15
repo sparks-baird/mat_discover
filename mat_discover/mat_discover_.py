@@ -14,8 +14,8 @@ Created on Mon Sep  6 23:15:27 2021.
 
 @author: sterg
 """
-import os
 from os import makedirs
+from os.path import join
 import pickle
 from warnings import warn
 from operator import attrgetter
@@ -735,7 +735,7 @@ class Discover:
             x=x,
             y=y,
             color="cluster ID",
-            fpath="pf-peak-proxy",
+            fpath=join("figures", "pf-peak-proxy"),
             pareto_front=True,
         )
 
@@ -756,7 +756,7 @@ class Discover:
             x=x,
             y=y,
             color="cluster ID",
-            fpath="pf-train-contrib-proxy",
+            fpath=join("figures", "pf-train-contrib-proxy"),
             pareto_front=True,
             parity_type=None,
         )
@@ -797,7 +797,7 @@ class Discover:
             dens_df,
             x=x,
             y=y,
-            fpath="pf-dens-proxy",
+            fpath=join("figures", "pf-dens-proxy"),
             parity_type=None,
             color="cluster ID",
             pareto_front=True,
@@ -819,7 +819,7 @@ class Discover:
             y=y,
             hover_data=None,
             color="cluster ID",
-            fpath="pf-frac-proxy",
+            fpath=join("figures", "pf-frac-proxy"),
             pareto_front=True,
             reverse_x=False,
             parity_type=None,
@@ -844,7 +844,7 @@ class Discover:
                 gcv_df,
                 x=x,
                 y=y,
-                fpath="gcv-pareto",
+                fpath=join("figures", "gcv-pareto"),
                 parity_type="max-of-both",
                 color="cluster ID",
                 pareto_front=False,
