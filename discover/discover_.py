@@ -51,7 +51,7 @@ from discover.utils.plotting import (
 
 import torch
 
-from CrabNet.train_crabnet import main as crabnet_main
+# from CrabNet.train_crabnet import main as crabnet_main
 from CrabNet.train_crabnet import get_model
 
 plt.rcParams.update(
