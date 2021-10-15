@@ -1,7 +1,8 @@
 """Helper functions for finding and plotting a pareto front."""
 from os.path import join
-import sys
-from PyQt5.QtWidgets import QApplication
+
+# import sys
+# from PyQt5.QtWidgets import QApplication
 
 import numpy as np
 import plotly.express as px
