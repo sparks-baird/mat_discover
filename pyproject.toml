@@ -10,24 +10,25 @@ classifiers = ["License :: OSI Approved :: MIT License"]
 dynamic = ["version", "description"]
 
 dependencies = [
-    "umap-learn",
     "tqdm",
     "seaborn",
     "pymatgen",
     "scipy",
     "hdbscan",
-    "numba==0.53.1",
+    "numba>=0.53.1",
     "plotly",
     "kaleido",
     "pandas",
-    "matplotlib",
+    "matplotlib>=3.4.3",
     "joblib",
     "pqdm",
     "ElMD==0.4.3",
     "psutil",
-    "PyQt5",
     "scikit_learn",
-    "torch==1.7.*",
+    "umap-learn",
+    # for torch, run "set PIP_FIND_LINKS=https://download.pytorch.org/whl/torch_stable.html" before "flit install" or "flit publish"
+    # see also: https://github.com/takluyver/flit/issues/369
+    "torch==1.9.1+cu111", # or "1.7.1+cu110"
     ]
 
 [project.optional-dependencies]
