@@ -17,7 +17,7 @@ Created on Mon Sep  6 23:15:27 2021.
 import os
 from warnings import warn
 from operator import attrgetter
-from ElM2D.utils.Timer import Timer, NoTimer
+from ..ElM2D.utils.Timer import Timer, NoTimer
 
 import matplotlib.pyplot as plt
 
