@@ -1,0 +1,16 @@
+tqdm
+seaborn
+scipy
+hdbscan
+numba==0.53.1
+plotly
+umap_learn
+pandas
+matplotlib
+joblib
+pqdm
+ElMD==0.4.3
+psutil
+PyQt5
+scikit_learn
+umap
