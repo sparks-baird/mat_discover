@@ -1,0 +1,43 @@
+name: mat_discover
+channels:
+  - conda-forge
+  - pytorch
+  - numba/label/ci_llvmlite_0.38
+  - numba
+  - defaults
+dependencies:
+  # core:
+  - matplotlib
+  - pandas
+  - pytorch=1.7
+  - plotly
+  - python=3.8
+  - scipy
+  - cudatoolkit=11
+  - numba
+  - seaborn
+  - tqdm
+  - umap-learn
+  - numpy
+  - scikit-learn
+  - hdbscan
+  - pymatgen
+  # optional:
+  - python-kaleido
+  - ipykernel
+  - nbformat
+  - notebook
+  - graphviz
+  - python-graphviz
+  - flit
+  - pipreqs
+  - black
+  - flake8
+  - mypy
+  - mypy_extensions
+  - pydocstyle
+- pip:
+  # core:
+  - elmd==0.*
+  - pqdm==0.*
+prefix: C:\Users\sterg\anaconda3\envs\mat_discover
