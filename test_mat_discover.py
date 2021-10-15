@@ -49,7 +49,7 @@ disc = Discover(dummy_run=dummy_run)
 
 # load validation data
 # HACK: relative path while still working out dependency structure
-data_dir = join("CrabNet", "data", "materials_data", "elasticity")
+data_dir = join("mat_discover", "CrabNet", "data", "materials_data", "elasticity")
 name = "train.csv"  # "example_materials_property_val_output.csv", #elasticity_val_output.csv"
 fpath = join(data_dir, name)
 df = pd.read_csv(fpath)

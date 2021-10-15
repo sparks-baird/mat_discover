@@ -17,7 +17,7 @@ Created on Mon Sep  6 23:15:27 2021.
 import os
 from warnings import warn
 from operator import attrgetter
-from ..ElM2D.utils.Timer import Timer, NoTimer
+from mat_discover.ElM2D.utils.Timer import Timer, NoTimer
 
 import matplotlib.pyplot as plt
 
@@ -36,7 +36,7 @@ from sklearn.metrics import mean_squared_error
 import umap
 import hdbscan
 
-from ..ElM2D.ElM2D_ import ElM2D
+from mat_discover.ElM2D.ElM2D_ import ElM2D
 
 from mat_discover.utils.nearest_neigh import nearest_neigh_props
 from mat_discover.utils.pareto import pareto_plot, get_pareto_ind
@@ -52,7 +52,7 @@ from mat_discover.utils.plotting import (
 import torch
 
 # from CrabNet.train_crabnet import main as crabnet_main
-from CrabNet.train_crabnet import get_model
+from mat_discover.CrabNet.train_crabnet import get_model
 
 plt.rcParams.update(
     {
