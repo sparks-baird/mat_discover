@@ -29,5 +29,11 @@ dependencies = [
     "torch==1.7.*",
     ]
 
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+]
+
 [project.urls]
-Home = "https://github.com/sparks-baird/mat_discover"
+Source = "https://github.com/sparks-baird/mat_discover"
