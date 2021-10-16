@@ -3,13 +3,14 @@ Nopython version of dist_matrix.
 
 Author: Sterling Baird
 """
-from Lib import inspect
+# from Lib import inspect
 
-from numba import prange, njit, jit, cuda
+from numba import prange, njit
 from numba.types import float32, int32
 import numpy as np
 
-from mat_discover.ElM2D.metrics import njit_wasserstein_distance, euclidean_distance
+from mat_discover.ElM2D.metrics import njit_wasserstein_distance as wasserstein_distance
+from mat_discover.ElM2D.metrics import euclidean_distance
 
 np_int = np.int32
 np_float = np.float32
