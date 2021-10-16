@@ -58,7 +58,8 @@ from tqdm import tqdm
 from ElMD import ElMD, EMD
 
 # number of columns of U and V must be set as env var before import
-n_elements = len(ElMD().periodic_tab)
+# HACK: define a wrapper to ElMD() so that you can use a different scale than mod_petti with cuda_dist_matrix
+n_elements = len(ElMD(metric="mod_petti").periodic_tab["mod_petti"])
 os.environ["COLUMNS"] = str(n_elements)
 
 # other environment variables (set before importing cuda_dist_matrix)
@@ -588,7 +589,7 @@ class ElM2D:
         """
         pool_list = []
 
-        n_elements = len(ElMD().periodic_tab)
+        n_elements = len(ElMD(metric=self.metric).periodic_tab)
         self.input_mat = np.ndarray(
             shape=(len(formula_list), n_elements), dtype=np.float64
         )
@@ -655,7 +656,7 @@ class ElM2D:
 
         """
         isXY = formulas2 is None
-        E = ElMD()
+        E = ElMD(metric=self.metric)
 
         def gen_ratio_vector(comp):
             """Create a numpy array from a composition dictionary."""
@@ -670,7 +671,7 @@ class ElM2D:
             indices = np.array(comp_labels, dtype=np.int64)
             ratios = np.array(comp_ratios, dtype=np.float64)
 
-            numeric = np.zeros(shape=len(E.periodic_tab), dtype=np.float64)
+            numeric = np.zeros(shape=len(E.periodic_tab[self.metric]), dtype=np.float64)
             numeric[indices] = ratios
 
             return numeric
@@ -682,10 +683,13 @@ class ElM2D:
         if isXY:
             V_weights = gen_ratio_vectors(formulas2)
 
-        lookup, periodic_tab, metric = attrgetter("lookup", "periodic_tab", "metric")(E)
+        lookup, periodic_tab = attrgetter("lookup", "periodic_tab")(E)
 
         def get_mod_petti(x):
-            return [periodic_tab[lookup[a]] if b > 0 else 0 for a, b in enumerate(x)]
+            return [
+                periodic_tab[self.metric][lookup[a]] if b > 0 else 0
+                for a, b in enumerate(x)
+            ]
 
         def get_mod_pettis(X):
             return np.array([get_mod_petti(x) for x in X])
@@ -909,7 +913,7 @@ class ElM2D:
         """Compute the intersection of two lists of compositions."""
         pool_list = []
 
-        n_elements = len(ElMD().periodic_tab[self.metric])
+        n_elements = len(ElMD(metric=self.metric).periodic_tab)
         X_mat = np.ndarray(shape=(len(X), n_elements), dtype=np.float64)
         y_mat = np.ndarray(shape=(len(y), n_elements), dtype=np.float64)
 
