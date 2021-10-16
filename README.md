@@ -23,14 +23,21 @@ print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
 
 See [mat_discover_example.py](mat_discover_example.py).
 
-The preprint at:
+The preprint is hosted on ChemRxiv:
 
 > Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8). This content is a preprint and has not been peer-reviewed.
 
-Soon to be submitted to Digital Discovery.
-
+The BibTeX citation is as follows:
 ```bib
-@article{baird_diep_sparks_2021, place={Cambridge}, title={DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions}, DOI={10.33774/chemrxiv-2021-5l2f8}, journal={ChemRxiv}, publisher={Cambridge Open Engage}, author={Baird, Sterling and Diep, Tran and Sparks, Taylor}, year={2021}} This content is a preprint and has not been peer-reviewed.
+@article{baird_diep_sparks_2021,
+place={Cambridge},
+title={DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions},
+DOI={10.33774/chemrxiv-2021-5l2f8},
+journal={ChemRxiv},
+publisher={Cambridge Open Engage},
+author={Baird, Sterling and Diep, Tran and Sparks, Taylor},
+year={2021}
+}
 ```
 
 <!---
