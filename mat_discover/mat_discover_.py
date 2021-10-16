@@ -976,7 +976,7 @@ class Discover:
             df = groupby_formula(df, how="max")
 
         if dummy:
-            ntot = max(100, len(df))
+            ntot = min(100, len(df))
             df = df.head(ntot)
 
         if split:
