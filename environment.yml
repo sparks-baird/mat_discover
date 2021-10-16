@@ -25,7 +25,7 @@ dependencies:
   # optional:
   - python-kaleido
   - ipykernel
-  - nbformat
+  - nbformat>=4.2.0
   - notebook
   - graphviz
   - python-graphviz
