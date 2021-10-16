@@ -50,7 +50,7 @@ else:
 fastmath = True
 debug = False
 
-
+# TODO: explicit signature?
 @jit(inline=inline)
 def cdf_distance(
     u, v, u_weights, v_weights, p, presorted, cumweighted, prepended
@@ -219,6 +219,7 @@ def cdf_distance(
     return out
 
 
+# TODO: explicit signature?
 @jit(inline=inline)
 def wasserstein_distance(
     u, v, u_weights, v_weights, presorted, cumweighted, prepended
@@ -270,6 +271,7 @@ def wasserstein_distance(
     )  # noqa
 
 
+# TODO: explicit signature?
 @jit(inline=inline)
 def euclidean_distance(a, b):
     """
