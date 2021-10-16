@@ -116,6 +116,7 @@ class Discover:
         figure_path="figures",
         table_path="tables",
         groupby_filter="max",
+        pred_weight=1,
     ):
         if timed:
             self.Timer = Timer
@@ -133,6 +134,7 @@ class Discover:
         self.groupby_filter = groupby_filter
         self.figure_path = figure_path
         self.table_path = table_path
+        self.pred_weight = pred_weight
 
         self.mapper = ElM2D(target="cuda")  # type: ignore
         self.dm = None
@@ -159,7 +161,7 @@ class Discover:
             Should contain "formula" and "target" columns.
         """
         # collapse identical compositions
-        train_df = groupby_formula(train_df, how=self.groupby_filter)
+        # train_df = groupby_formula(train_df, how=self.groupby_filter)
 
         # unpack
         self.train_df = train_df
@@ -182,7 +184,7 @@ class Discover:
         val_df,
         plotting=None,
         umap_random_state=None,
-        pred_weight=1,
+        pred_weight=None,
         dummy_run=None,
     ):
         """Predict target and proxy for validation dataset.
@@ -196,14 +198,20 @@ class Discover:
         umap_random_state : int or None, optional
             The random seed to use for UMAP, by default None
         pred_weight : int, optional
-            The weight to assign to the predictions (proxy_weight is 1 by default), by default 1
+            The weight to assign to the predictions (proxy_weight is 1 by default), by default None.
+            If neither pred_weight nor self.pred_weight is specified, it defaults to 1.
+            When specified, pred_weight takes precedence over self.pred_weight.
+        dummy_run : bool, optional
+            Whether to use MDS in place of the (typically more expensive) DensMAP, by default None.
+            If neither dummy_run nor self.dummy_run is specified, it defaults to (effectively) being False.
+            When specified, dummy_run takes precedence over self.dummy_run.
 
         Returns
         -------
         dens_score, peak_score
             Scaled discovery scores for density and peak proxies.
         """
-        val_df = groupby_formula(val_df, how=self.groupby_filter)
+        # val_df = groupby_formula(val_df, how=self.groupby_filter)
         self.val_df = val_df
 
         # CrabNet
@@ -322,9 +330,15 @@ class Discover:
         self.val_rad_neigh_avg = self.rad_neigh_avg_targ[val_ids]
         self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
 
-        self.rad_score = self.weighted_score(self.val_pred, self.val_rad_neigh_avg)
-        self.peak_score = self.weighted_score(self.val_pred, self.val_k_neigh_avg)
-        self.dens_score = self.weighted_score(self.val_pred, self.val_log_dens)
+        self.rad_score = self.weighted_score(
+            self.val_pred, self.val_rad_neigh_avg, pred_weight=pred_weight
+        )
+        self.peak_score = self.weighted_score(
+            self.val_pred, self.val_k_neigh_avg, pred_weight=pred_weight
+        )
+        self.dens_score = self.weighted_score(
+            self.val_pred, self.val_log_dens, pred_weight=pred_weight
+        )
 
         # Plotting
         if (self.plotting and plotting is None) or plotting:
@@ -338,7 +352,7 @@ class Discover:
 
         return self.dens_score, self.peak_score
 
-    def weighted_score(self, pred, proxy, pred_weight=1):
+    def weighted_score(self, pred, proxy, pred_weight=None):
         """Calculate weighted discovery score using the predicted target and proxy.
 
         Parameters
@@ -355,6 +369,11 @@ class Discover:
         1D array
             Discovery scores.
         """
+        if self.pred_weight is not None and pred_weight is None:
+            pred_weight = self.pred_weight
+        elif self.pred_weight is None and pred_weight is None:
+            pred_weight = 1
+
         pred = pred.ravel().reshape(-1, 1)
         proxy = proxy.ravel().reshape(-1, 1)
         # Scale and weight the cluster data
@@ -488,9 +507,9 @@ class Discover:
         seed=42 for UMAP random_state, then seed=10 for setting aside clusters.
         Note that "unclustered" is never assigned as a test_cluster, and so is always
         included in tv_cluster_ids (tv===train_validation)."""
-        # np.random.default_rng(seed=10)
+        np.random.default_rng(seed=10)
         # test_cluster_ids = np.random.choice(self.n_clusters + 1, n_test_clusters)
-        # np.random.default_rng()
+        np.random.default_rng()
 
         # test_ids = np.isin(self.labels, test_cluster_ids)
         # tv_cluster_ids = np.setdiff1d(
@@ -647,7 +666,6 @@ class Discover:
                 min_samples=1,
                 cluster_selection_epsilon=0.63,
                 min_cluster_size=min_cluster_size,
-                core_dist_n_jobs=1,
                 # allow_single_cluster=True,
             ).fit(umap_emb)
         return clusterer
