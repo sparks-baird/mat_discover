@@ -685,7 +685,7 @@ class Discover:
                 output_dens=True,
                 dens_lambda=self.dens_lambda,
                 n_neighbors=30,
-                min_dist=2,
+                min_dist=0,
                 n_components=2,
                 metric="precomputed",
                 random_state=random_state,
@@ -697,7 +697,6 @@ class Discover:
             std_trans = umap.UMAP(
                 densmap=True,
                 output_dens=True,
-                min_dist=2,
                 dens_lambda=self.dens_lambda,
                 metric="precomputed",
                 random_state=random_state,
