@@ -276,8 +276,8 @@ class Discover:
             min_cluster_size = 5
             min_samples = 1
         else:
-            min_cluster_size = 100
-            min_samples = 10
+            min_cluster_size = 50
+            min_samples = 1
         clusterer = self.cluster(
             self.umap_emb, min_cluster_size=min_cluster_size, min_samples=min_samples
         )
