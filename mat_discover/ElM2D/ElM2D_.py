@@ -67,25 +67,23 @@ os.environ["INLINE"] = "never"
 os.environ["FASTMATH"] = "1"
 # os.environ["TARGET"] = "cuda"
 
-import mat_discover.ElM2D.njit_dist_matrix  # noqa
+from mat_discover.ElM2D import njit_dist_matrix  # noqa
 
-# from mat_discover.ElM2D import njit_dist_matrix  # noqa
-
-reload(mat_discover.ElM2D.njit_dist_matrix)
+reload(njit_dist_matrix)
 # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
-njit_dist_matrix = mat_discover.ElM2D.njit_dist_matrix.dist_matrix
+cpu_dist_matrix = njit_dist_matrix.dist_matrix
 
 # REVIEW: why is it slower now?
 # cuda_dist_matrix: Optional[ModuleType]
-if cuda.is_available():
-    # from . import cuda_dist_matrix  # noqa
-    import mat_discover.ElM2D.cuda_dist_matrix  # noqa
+# if cuda.is_available():
+# from . import cuda_dist_matrix  # noqa
+from mat_discover.ElM2D import cuda_dist_matrix  # noqa
 
-    # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
-    reload(mat_discover.ElM2D.cuda_dist_matrix)
-    cuda_dist_matrix = mat_discover.ElM2D.cuda_dist_matrix.dist_matrix
-else:
-    cuda_dist_matrix = None
+# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+reload(cuda_dist_matrix)
+gpu_dist_matrix = cuda_dist_matrix.dist_matrix
+# else:
+#     gpu_dist_matrix = None
 
 
 def main():
@@ -710,7 +708,7 @@ class ElM2D:
 
         if isXY:
             if target == "cpu":
-                distances = njit_dist_matrix(
+                distances = cpu_dist_matrix(
                     U,
                     V=V,
                     U_weights=U_weights,
@@ -718,7 +716,7 @@ class ElM2D:
                     metric="wasserstein",
                 )
             elif target == "cuda":
-                distances = cuda_dist_matrix(
+                distances = gpu_dist_matrix(
                     U,
                     V=V,
                     U_weights=U_weights,
@@ -727,11 +725,11 @@ class ElM2D:
                 )
         else:
             if target == "cpu":
-                distances = njit_dist_matrix(
+                distances = cpu_dist_matrix(
                     U, U_weights=U_weights, metric="wasserstein"
                 )
             elif target == "cuda":
-                distances = cuda_dist_matrix(
+                distances = gpu_dist_matrix(
                     U, U_weights=U_weights, metric="wasserstein"
                 )
 
