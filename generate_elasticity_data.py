@@ -7,6 +7,7 @@ Created on Sat Sep 11 17:02:10 2021
 
 @author: sterg
 """
+from os import cpu_count
 from os.path import join
 from pathlib import Path
 import pickle
@@ -27,8 +28,12 @@ from pymatgen.core.composition import Composition
 def generate_elasticity_data(download_data=True):
     """Download (or reload) elasticity data using MPRester."""
     # download and save Materials Project dataset
-    elast_path = join("data", "elast_results.pkl")
-    all_path = join("data", "all_results.pkl")
+    data_dir = "data"
+    elast_path = join(data_dir, "elast_results.pkl")
+    all_path = join(data_dir, "all_results.pkl")
+
+    Path(data_dir).mkdir(parents=True, exist_ok=True)
+
     if download_data:
         # download
         props = ["task_id", "pretty_formula", "elasticity", "cif"]
@@ -71,8 +76,10 @@ def generate_elasticity_data(download_data=True):
         with open(all_path, "rb") as f:
             all_results = pickle.load(f)
 
-    crabnet_folder = join("CrabNet", "data", "materials_data", "elasticity")
-    Path(crabnet_folder).mkdir(parents=True, exist_ok=True)
+    crabnet_folder = join(
+        "mat_discover", "CrabNet", "data", "materials_data", "elasticity"
+    )
+    Path(crabnet_folder).mkdir(parents=False, exist_ok=True)
 
     def crabnet_path(name):
         """Return a relative path to a CrabNet data file."""
@@ -130,7 +137,10 @@ def generate_elasticity_data(download_data=True):
     all_struct_path = join("data", "all_struct_dicts.pkl")
     if download_data:
         # TODO: add waitbar for list comp
-        all_structures = [Structure.from_str(cif, fmt="cif") for cif in pqdm(all_cifs)]
+        def structure_from_cif(cif):
+            return Structure.from_str(cif, fmt="cif")
+
+        all_structures = pqdm(all_cifs, structure_from_cif, n_jobs=cpu_count())
         all_struct_dicts = [structure.as_dict() for structure in all_structures]
         with open(all_struct_path, "wb") as f:
             pickle.dump(all_struct_dicts, f)
