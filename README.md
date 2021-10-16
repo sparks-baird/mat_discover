@@ -2,7 +2,9 @@
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
 ## Installation
-Updates coming soon, including a PyPI distribution. Anaconda distribution to follow. However, the current instructions are:
+Updates coming soon, including a PyPI distribution. Anaconda distribution to follow.
+
+The current instructions are:
 ```bash
 conda install flit # or `pip install flit`
 git clone --recurse-submodules https://github.com/sparks-baird/mat_discover.git
