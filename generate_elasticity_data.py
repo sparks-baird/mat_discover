@@ -25,6 +25,10 @@ from pymatgen.core.structure import Structure
 from pymatgen.core.composition import Composition
 
 
+def structure_from_cif(cif):
+    return Structure.from_str(cif, fmt="cif")
+
+
 def generate_elasticity_data(download_data=True):
     """Download (or reload) elasticity data using MPRester."""
     # download and save Materials Project dataset
@@ -43,8 +47,8 @@ def generate_elasticity_data(download_data=True):
                 {
                     "e_above_hull": {"$lt": 0.5},
                     "elasticity": {"$exists": True},
-                    "elements": {"$nin": ["Tc"]},
-                    "pretty_formula": {"$nin": ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
+                    "elements": {"$nin": ["Tc", "He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
+                    # "pretty_formula": {"$nin": ["Tc","He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
                 },
                 properties=props,
                 chunk_size=2000,
@@ -55,8 +59,8 @@ def generate_elasticity_data(download_data=True):
             all_results = m.query(
                 {
                     "e_above_hull": {"$lt": 0.5},
-                    "elements": {"$nin": ["Tc"]},
-                    "pretty_formula": {"$nin": ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
+                    "elements": {"$nin": ["Tc", "He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
+                    # "pretty_formula": {"$nin": ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
                 },
                 properties=props,
                 chunk_size=2000,
@@ -137,8 +141,6 @@ def generate_elasticity_data(download_data=True):
     all_struct_path = join("data", "all_struct_dicts.pkl")
     if download_data:
         # TODO: add waitbar for list comp
-        def structure_from_cif(cif):
-            return Structure.from_str(cif, fmt="cif")
 
         all_structures = pqdm(all_cifs, structure_from_cif, n_jobs=cpu_count())
         all_struct_dicts = [structure.as_dict() for structure in all_structures]
