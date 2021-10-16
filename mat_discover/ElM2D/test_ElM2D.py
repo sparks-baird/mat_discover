@@ -13,28 +13,34 @@ Created on Mon Sep  6 22:02:36 2021
 @author: sterg
 """
 import unittest
+from importlib import reload
+
+from os.path import join, dirname, relpath
+
 from numpy.testing import assert_allclose
-from mat_discover.utils import Timer
+from mat_discover.utils.Timer import Timer
+from mat_discover.ElM2D import ElM2D_
 import pandas as pd
+
+reload(ElM2D_)
+
+ElM2D = ElM2D_.ElM2D
 
 
 class Testing(unittest.TestCase):
     def test_dm_close(self):
-        from mat_discover.ElM2D import ElM2D
-
         mapper = ElM2D()
-
         # df = pd.read_csv("train-debug.csv")
-        df = pd.read_csv("stable-mp.csv")
+        df = pd.read_csv(join(dirname(relpath(__file__)), "stable-mp.csv"))
         formulas = df["formula"]
         sub_formulas = formulas[0:500]
         with Timer("fit-cuda-wasserstein"):
             mapper.fit(sub_formulas, target="cuda")
             dm_wasserstein = mapper.dm
 
-        with Timer("fit-cpu-wasserstein"):
-            mapper.fit(sub_formulas)
-            dm_wasserstein = mapper.dm
+        # with Timer("fit-cpu-wasserstein"):
+        mapper.fit(sub_formulas)
+        dm_wasserstein = mapper.dm
 
         mapper2 = ElM2D(emd_algorithm="network_simplex")
 
