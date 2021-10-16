@@ -36,8 +36,8 @@ dependencies:
   - mypy
   - mypy_extensions
   - pydocstyle
-- pip:
-  # core:
-  - elmd==0.*
-  - pqdm==0.*
+  - pip:
+    # core:
+    - elmd==0.*
+    - pqdm==0.*
 prefix: C:\Users\sterg\anaconda3\envs\mat_discover
