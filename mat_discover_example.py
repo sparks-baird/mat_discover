@@ -4,8 +4,9 @@ from mat_discover.CrabNet.data.materials_data import elasticity
 from mat_discover.mat_discover_ import Discover
 
 # %% setup
-disc = Discover(dummy_run=True)
-train_df, val_df = disc.data(elasticity, "train.csv", dummy=True)
+dummy = False  # set to True for a quicker run --> small dataset, MDS instead of UMAP
+disc = Discover(dummy_run=dummy)
+train_df, val_df = disc.data(elasticity, "train.csv", dummy=dummy)
 cat_df = pd.concat((train_df, val_df), axis=0)
 
 # %% fit
