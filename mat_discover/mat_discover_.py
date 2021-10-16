@@ -14,9 +14,13 @@ Created on Mon Sep  6 23:15:27 2021.
 
 @author: sterg
 """
+import pickle
 from pathlib import Path
 from os.path import join
-import pickle
+
+# retrieve static file from package: https://stackoverflow.com/a/20885799/13697228
+from importlib.resources import open_text
+
 from warnings import warn
 from operator import attrgetter
 from mat_discover.ElM2D.utils.Timer import Timer, NoTimer
@@ -29,7 +33,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import multivariate_normal, wasserstein_distance
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
-from sklearn.model_selection import LeaveOneGroupOut
+from sklearn.model_selection import LeaveOneGroupOut, train_test_split
 from sklearn.manifold import MDS
 from sklearn.metrics import mean_squared_error
 
@@ -112,7 +116,7 @@ class Discover:
         verbose: bool = True,
         mat_prop_name="test-property",
         dummy_run=False,
-        Scaler=MinMaxScaler,
+        Scaler=RobustScaler,  # MinMaxScaler, Standard Scaler
         figure_path="figures",
         table_path="tables",
         groupby_filter="max",
@@ -270,9 +274,13 @@ class Discover:
         # HDBSCAN*
         if (dummy_run is None and self.dummy_run) or dummy_run:
             min_cluster_size = 5
+            min_samples = 1
         else:
-            min_cluster_size = 50
-        clusterer = self.cluster(self.umap_emb, min_cluster_size=min_cluster_size)
+            min_cluster_size = 100
+            min_samples = 10
+        clusterer = self.cluster(
+            self.umap_emb, min_cluster_size=min_cluster_size, min_samples=min_samples
+        )
         self.labels = self.extract_labels_probs(clusterer)[0]
 
         # np.unique while preserving order https://stackoverflow.com/a/12926989/13697228
@@ -293,9 +301,7 @@ class Discover:
         val_emb = self.umap_emb[ntrain:]
 
         with self.Timer("train-val-pdf-summation"):
-            mvn_list = list(
-                map(my_mvn, train_emb[:, 0], train_emb[:, 1], np.exp(train_r_orig))
-            )
+            mvn_list = list(map(my_mvn, train_emb[:, 0], train_emb[:, 1], train_r_orig))
             pdf_list = [mvn.pdf(val_emb) for mvn in mvn_list]
             self.val_dens = np.sum(pdf_list, axis=0)
             self.val_log_dens = np.log(self.val_dens)
@@ -337,7 +343,7 @@ class Discover:
             self.val_pred, self.val_k_neigh_avg, pred_weight=pred_weight
         )
         self.dens_score = self.weighted_score(
-            self.val_pred, self.val_log_dens, pred_weight=pred_weight
+            self.val_pred, self.val_dens, pred_weight=pred_weight
         )
 
         # Plotting
@@ -507,9 +513,9 @@ class Discover:
         seed=42 for UMAP random_state, then seed=10 for setting aside clusters.
         Note that "unclustered" is never assigned as a test_cluster, and so is always
         included in tv_cluster_ids (tv===train_validation)."""
-        np.random.default_rng(seed=10)
+        # np.random.default_rng(seed=10)
         # test_cluster_ids = np.random.choice(self.n_clusters + 1, n_test_clusters)
-        np.random.default_rng()
+        # np.random.default_rng()
 
         # test_ids = np.isin(self.labels, test_cluster_ids)
         # tv_cluster_ids = np.setdiff1d(
@@ -602,10 +608,8 @@ class Discover:
 
         train_df = pd.DataFrame({"formula": X_train, "target": y_train})
         val_df = pd.DataFrame({"formula": X_val, "target": y_val})
-        # REVIEW: comment when ready for publication
         test_df = None
 
-        # REVIEW: uncomment when ready for publication
         # test_df = pd.DataFrame({"formula": X_test, "property": y_test})
 
         self.crabnet_model = get_model(
@@ -660,10 +664,10 @@ class Discover:
 
         return true_avg_targ, pred_avg_targ, train_avg_targ
 
-    def cluster(self, umap_emb, min_cluster_size=50):
+    def cluster(self, umap_emb, min_cluster_size=50, min_samples=5):
         with self.Timer("HDBSCAN*"):
             clusterer = hdbscan.HDBSCAN(
-                min_samples=1,
+                min_samples=min_samples,
                 cluster_selection_epsilon=0.63,
                 min_cluster_size=min_cluster_size,
                 # allow_single_cluster=True,
@@ -681,7 +685,7 @@ class Discover:
                 output_dens=True,
                 dens_lambda=self.dens_lambda,
                 n_neighbors=30,
-                min_dist=0,
+                min_dist=2,
                 n_components=2,
                 metric="precomputed",
                 random_state=random_state,
@@ -693,6 +697,7 @@ class Discover:
             std_trans = umap.UMAP(
                 densmap=True,
                 output_dens=True,
+                min_dist=2,
                 dens_lambda=self.dens_lambda,
                 metric="precomputed",
                 random_state=random_state,
@@ -716,7 +721,11 @@ class Discover:
         r_emb
             embedded radii
         """
-        emb, r_orig, r_emb = attrgetter("embedding_", "rad_orig_", "rad_emb_")(trans)
+        emb, r_orig_log, r_emb_log = attrgetter("embedding_", "rad_orig_", "rad_emb_")(
+            trans
+        )
+        r_orig = np.exp(r_orig_log)
+        r_emb = np.exp(r_emb_log)
         return emb, r_orig, r_emb
 
     def mvn_prob_sum(self, std_emb, r_orig, n=100):
@@ -727,17 +736,17 @@ class Discover:
         pos = np.dstack((x, y))
 
         with self.Timer("pdf-summation"):
-            mvn_list = list(map(my_mvn, std_emb[:, 0], std_emb[:, 1], np.exp(r_orig)))
+            mvn_list = list(map(my_mvn, std_emb[:, 0], std_emb[:, 1], r_orig))
             pdf_list = [mvn.pdf(pos) for mvn in mvn_list]
             pdf_sum = np.sum(pdf_list, axis=0)
         return x, y, pdf_sum
 
-    def log_density(self, std_r_orig=None):
+    def compute_log_density(self, std_r_orig=None):
         if std_r_orig is None:
             std_r_orig = self.std_r_orig
-        dens = np.exp(std_r_orig)
-        self.log_dens = np.log(dens)
-        return self.log_dens
+        self.dens = 1 / std_r_orig
+        self.log_dens = np.log(self.dens)
+        return self.dens, self.log_dens
 
     def plot(self, return_pareto_ind=False):
         # peak pareto plot setup
@@ -764,7 +773,7 @@ class Discover:
             pareto_front=True,
         )
 
-        x = "validation log-density"
+        x = "log validation density"
         y = "validation predictions (GPa)"
         # cluster-wise average vs. cluster-wise validation log-density
         frac_df = pd.DataFrame(
@@ -804,8 +813,9 @@ class Discover:
             )
 
         # dens pareto plot setup
-        log_dens = self.log_density()
-        x = "log-density"
+        dens, log_dens = self.compute_log_density()
+
+        x = "log density"
         y = "target (GPa)"
         dens_df = pd.DataFrame(
             {
@@ -913,6 +923,78 @@ class Discover:
         with open(fpath, "rb") as f:
             disc = pickle.load(f)
             return disc
+
+    def data(
+        self,
+        module,
+        fname="train.csv",
+        groupby=True,
+        dummy=False,
+        split=True,
+        val_size=0.2,
+        test_size=0.0,
+        random_state=42,
+    ):
+        """Grab data from within the subdirectories (modules) of mat_discover.
+
+        Parameters
+        ----------
+        module : Module
+            The module within mat_discover that contains e.g. "train.csv". For example,
+            from mat_discover.CrabNet.data.materials_data import elasticity
+        fname : str, optional
+            Filename of text file to open.
+        dummy : bool, optional
+            Whether to pare down the data to a small test set, by default False
+        groupby : bool, optional
+            Whether to use groupby_formula to filter identical compositions
+        split : bool, optional
+            Whether to split the data into train, val, and (optionally) test sets, by default True
+        val_size : float, optional
+            Validation dataset fraction, by default 0.2
+        test_size : float, optional
+            Test dataset fraction, by default 0.0
+        random_state : int, optional
+            seed to use for the train/val/test split, by default 42
+
+        Returns
+        -------
+        DataFrame
+            If split==False, then the full DataFrame is returned directly
+
+        DataFrame, DataFrame
+            If test_size == 0 and split==True, then training and validation DataFrames are returned.
+
+        DataFrame, DataFrame, DataFrame
+            If test_size > 0 and split==True, then training, validation, and test DataFrames are returned.
+        """
+
+        train_csv = open_text(module, fname)
+        df = pd.read_csv(train_csv)
+
+        if groupby:
+            df = groupby_formula(df, how="max")
+
+        if dummy:
+            ntot = max(100, len(df))
+            df = df.head(ntot)
+
+        if split:
+            if test_size > 0:
+                df, test_df = train_test_split(
+                    df, test_size=test_size, random_state=random_state
+                )
+
+            train_df, val_df = train_test_split(
+                df, test_size=val_size / (1 - test_size), random_state=random_state
+            )
+
+            if test_size > 0:
+                return train_df, val_df, test_df
+            else:
+                return train_df, val_df
+        else:
+            return df
 
 
 # %% CODE GRAVEYARD
