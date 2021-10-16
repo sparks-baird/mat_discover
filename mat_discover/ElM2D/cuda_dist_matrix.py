@@ -63,7 +63,7 @@ if target == "cpu":
 # threads-per-block
 TPB = 16
 
-
+# TODO: explicit signature?
 @jit(inline=inline)
 def compute_distance(u, v, u_weights, v_weights, metric_num):
     """
@@ -240,7 +240,7 @@ def two_set_distance_matrix(U, V, U_weights, V_weights, out, metric_num):
 
 def dist_matrix(
     U, V=None, U_weights=None, V_weights=None, pairs=None, metric="euclidean"
-): # noqa
+):  # noqa
     """
     Compute distance matrices using Numba/CUDA.
 
