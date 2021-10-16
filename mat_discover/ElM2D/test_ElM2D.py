@@ -38,9 +38,9 @@ class Testing(unittest.TestCase):
             mapper.fit(sub_formulas, target="cuda")
             dm_wasserstein = mapper.dm
 
-        # with Timer("fit-cpu-wasserstein"):
-        mapper.fit(sub_formulas)
-        dm_wasserstein = mapper.dm
+        with Timer("fit-cpu-wasserstein"):
+            mapper.fit(sub_formulas)
+            dm_wasserstein = mapper.dm
 
         mapper2 = ElM2D(emd_algorithm="network_simplex")
 
