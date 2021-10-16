@@ -1,7 +1,7 @@
 # DiSCoVeR
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
-# Installation
+## Installation
 Updates coming soon, including a PyPI distribution. Anaconda distribution to follow. However, the current instructions are:
 ```bash
 conda install flit # or `pip install flit`
@@ -10,6 +10,7 @@ cd mat_discover
 flit install
 ```
 
+## Usage
 The basic usage is:
 ```python
 from mat_discover.discover_ import Discover
@@ -23,6 +24,7 @@ print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
 
 See [mat_discover_example.py](mat_discover_example.py).
 
+## Citing
 The preprint is hosted on ChemRxiv:
 
 > Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8). This content is a preprint and has not been peer-reviewed.
