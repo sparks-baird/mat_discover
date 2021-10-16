@@ -9,7 +9,7 @@ dependencies:
   # core:
   - matplotlib
   - pandas
-  - pytorch=1.7
+  - pytorch=1.9
   - plotly
   - python=3.8
   - scipy
