@@ -19,13 +19,13 @@ os.environ["INLINE"] = "never"
 os.environ["FASTMATH"] = "1"
 os.environ["TARGET"] = "cuda"
 
-from mat_discover.utils import Timer  # noqa
+from mat_discover.utils.Timer import Timer  # noqa
 from numba.cuda.testing import unittest, CUDATestCase  # noqa
 from mat_discover.ElM2D import cuda_dist_matrix  # noqa
 
 # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
 reload(cuda_dist_matrix)
-dist_matrix = cuda_dist_matrix.dist_matrix
+my_dist_matrix = cuda_dist_matrix.dist_matrix
 
 verbose_test = True
 
@@ -165,16 +165,16 @@ class TestDistMat(CUDATestCase):
 
                     if testQ:
                         # compile
-                        dist_matrix(Utest, U_weights=Uwtest, metric=metric)
+                        my_dist_matrix(Utest, U_weights=Uwtest, metric=metric)
                         with Timer("one set"):
-                            one_set = dist_matrix(
+                            one_set = my_dist_matrix(
                                 U, U_weights=U_weights, metric=metric
                             )  # noqa
                             if verbose_test:
                                 print(one_set, "\n")
 
                     # compile
-                    dist_matrix(
+                    my_dist_matrix(
                         Utest,
                         V=Vtest,
                         U_weights=Uwtest,
@@ -182,7 +182,7 @@ class TestDistMat(CUDATestCase):
                         metric=metric,
                     )
                     with Timer("two set"):
-                        two_set = dist_matrix(
+                        two_set = my_dist_matrix(
                             U,
                             V=V,
                             U_weights=U_weights,
@@ -192,13 +192,13 @@ class TestDistMat(CUDATestCase):
                         if testQ and verbose_test:
                             print(two_set, "\n")
 
-                        one_set_sparse = dist_matrix(
+                        one_set_sparse = my_dist_matrix(
                             U, U_weights=U_weights, pairs=pairs, metric=metric
                         )  # noqa
                         if testQ and verbose_test:
                             print(one_set_sparse, "\n")
 
-                    two_set_sparse = dist_matrix(
+                    two_set_sparse = my_dist_matrix(
                         U,
                         V=V,
                         U_weights=U_weights,
