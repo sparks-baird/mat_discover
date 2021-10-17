@@ -2,8 +2,8 @@ name: Python Package using Conda
 
 on:
   push:
-#     paths:
-#     - '**.py' # only run workflow when source files changed
+    paths:
+    - '**.py' # only run workflow when source files changed
 
 jobs:
   build-linux:
