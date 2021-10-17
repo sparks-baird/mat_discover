@@ -35,7 +35,6 @@ jobs:
         printenv | sort
     - shell: bash -l {0}
 #       run: mamba install jupyterlab
-    - name: Install dependencies
       run: mamba env create -f environment.yml
 #       with:
 #         python-version: 3.8
