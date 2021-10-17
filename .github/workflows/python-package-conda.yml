@@ -2,8 +2,8 @@ name: Python Package using Conda
 
 on:
   push:
-#     paths:
-#     - '**.py' # only run workflow when source files changed
+    paths:
+    - '**.py' # only run workflow when source files changed
 
 jobs:
   build-linux:
@@ -56,4 +56,4 @@ jobs:
       shell: bash -l {0}
       run: |
         mamba install pytest
-        python -m pytest test_mat_discover.py
+        pytest test_mat_discover.py
