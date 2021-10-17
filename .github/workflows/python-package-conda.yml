@@ -33,9 +33,9 @@ jobs:
         conda config --show-sources
         conda config --show
         printenv | sort
-    - shell: bash -l {0}
+#     - shell: bash -l {0}
 #       run: mamba install jupyterlab
-      run: mamba env create -f environment.yml
+#       run: mamba env create -f environment.yml # already taken care of above
 #       with:
 #         python-version: 3.8
 #     - name: Add conda to system path
@@ -53,6 +53,7 @@ jobs:
 #     #    # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
 #     #    flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
+    - shell: bash -l {0}
       run: |
-        conda install pytest
+        mamba install pytest
         python -m pytest test_mat_discover.py
