@@ -22,22 +22,23 @@ dependencies:
   - scikit-learn
   - hdbscan
   - pymatgen
+  - pip
   - pip:
     # core:
     - elmd==0.*
     - pqdm==0.*
-  # optional:
-  - python-kaleido
-  - ipykernel
-  - nbformat>=4.2.0
-  - notebook
-  - graphviz
-  - python-graphviz
-  - flit
-  - pipreqs
-  - black
-  - flake8
-  - mypy
-  - mypy_extensions
-  - pydocstyle
+  # optional: #TODO: flag/command to use optional or not?
+  # - python-kaleido
+  # - ipykernel
+  # - nbformat>=4.2.0
+  # - notebook
+  # - graphviz
+  # - python-graphviz
+  # - flit
+  # - pipreqs
+  # - black
+  # - flake8
+  # - mypy
+  # - mypy_extensions
+  # - pydocstyle
 prefix: C:\Users\sterg\anaconda3\envs\mat_discover
