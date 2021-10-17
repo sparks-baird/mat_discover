@@ -15,7 +15,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
-
+      
+    - uses: psf/black@stable #https://black.readthedocs.io/en/stable/integrations/github_actions.html
+    
     - uses: conda-incubator/setup-miniconda@v2
       with:
         python-version: 3.8
@@ -32,8 +34,9 @@ jobs:
         conda config --show
         printenv | sort
     - shell: bash -l {0}
-      run: mamba install jupyterlab
-#     - uses: psf/black@stable #https://black.readthedocs.io/en/stable/integrations/github_actions.html
+#       run: mamba install jupyterlab
+    - name: Install dependencies
+      run: mamba env create -f environment.yml
 #       with:
 #         python-version: 3.8
 #     - name: Add conda to system path
@@ -50,7 +53,7 @@ jobs:
 #     #    flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 #     #    # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
 #     #    flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-#     - name: Test with pytest
-#       run: |
-#         conda install pytest
-#         python -m pytest test_mat_discover.py
+    - name: Test with pytest
+      run: |
+        conda install pytest
+        python -m pytest test_mat_discover.py
