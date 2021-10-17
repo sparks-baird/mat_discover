@@ -1,10 +1,13 @@
 name: Python Package using Conda
 
-on: [push]
+on:
+  push:
+    paths:
+    - '**.py' # only run workflow when source files changed
 
 jobs:
   build-linux:
-    runs-on: ubuntu-latest, windows-latest, macos-latest
+    runs-on: ubuntu-latest
     strategy:
       max-parallel: 5
 
