@@ -1,6 +1,7 @@
 """Timer class."""
 from time import time
 
+
 class Timer(object):
     """
     Simple timer class.
@@ -22,12 +23,15 @@ class Timer(object):
     def __exit__(self, type, value, traceback):
         """Exit the timer."""
         if self.name:
-            print("[%s]" % self.name,)
+            print(
+                "[%s]" % self.name,
+            )
         print(("Elapsed: {}\n").format(round((time() - self.tstart), 5)))
-        
+
+
 class NoTimer(object):
     """Use in place of Timer without actually printing output."""
-    
+
     def __init__(self, name):
         """Take name as argument and do nothing."""
         pass
