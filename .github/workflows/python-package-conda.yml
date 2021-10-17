@@ -23,7 +23,7 @@ jobs:
         channels: conda-forge,defaults
         channel-priority: true
         activate-environment: mat_discover
-        environment-file: mat_discover.yml
+        environment-file: environment.yml
     - shell: bash -l {0}
       run: |
         conda info
