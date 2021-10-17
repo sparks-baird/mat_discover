@@ -15,7 +15,7 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 from scipy.spatial.distance import squareform
 
-from utils.Timer import Timer
+from mat_discover.utils.Timer import Timer
 from ElM2D import ElM2D as pip_ElM2D
 from EleMD import EleMD
 from mat_discover.ElM2D import ElM2D_
@@ -28,7 +28,7 @@ custom_ElM2D = ElM2D_.ElM2D
 
 class Testing(unittest.TestCase):
     def test_dm_close(self):
-        mapper = custom_ElM2D()
+        mapper = custom_ElM2D(metric="mod_petti")
         # df = pd.read_csv("train-debug.csv")
         df = pd.read_csv(join(dirname(relpath(__file__)), "stable-mp.csv"))
         formulas = df["formula"]
