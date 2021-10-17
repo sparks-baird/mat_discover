@@ -10,8 +10,14 @@ from importlib import reload
 from os.path import join, dirname, relpath
 
 from numpy.testing import assert_allclose
+import numpy as np
 
+from sklearn.metrics import mean_squared_error
+from scipy.spatial.distance import squareform
+
+from utils.Timer import Timer
 from ElM2D import ElM2D as pip_ElM2D
+from EleMD import EleMD
 from mat_discover.ElM2D import ElM2D_
 import pandas as pd
 
@@ -27,23 +33,69 @@ class Testing(unittest.TestCase):
         df = pd.read_csv(join(dirname(relpath(__file__)), "stable-mp.csv"))
         formulas = df["formula"]
         sub_formulas = formulas[0:500]
-        mapper.fit(sub_formulas, target="cuda")
-        dm_wasserstein = mapper.dm
+        with Timer("dm_wasserstein"):
+            mapper.fit(sub_formulas, target="cuda")
+            dm_wasserstein = mapper.dm
 
         # FIXME: njit_dist_matrix not inheriting env vars, are env vars even necessary for njit?
         # mapper.fit(sub_formulas)
         # dm_wasserstein = mapper.dm
 
-        mapper2 = pip_ElM2D(sub_formulas)
-        # mapper2 = ElM2D(emd_algorithm="network_simplex")
+        with Timer("dm_network"):
+            mapper2 = pip_ElM2D(sub_formulas)
+            # mapper2 = ElM2D(emd_algorithm="network_simplex")
+            mapper2.fit(sub_formulas)
+            dm_network = mapper2.dm
 
-        mapper2.fit(sub_formulas)
-        dm_network = mapper2.dm
+        with Timer("dm_elemd"):
+            mod_petti = EleMD(scale="mod_pettifor")
+            dm_elemd = np.zeros_like(dm_wasserstein)
+            for i, comp1 in enumerate(sub_formulas):
+                for j, comp2 in enumerate(sub_formulas):
+                    if j < i:
+                        dm_elemd[i, j] = mod_petti.elemd(comp1, comp2)
+                        dm_elemd[j, i] = dm_elemd[i, j]
+
+        print(
+            "dm_wasserstein vs. dm_elemd RMSE: ",
+            mean_squared_error(
+                squareform(dm_wasserstein), squareform(dm_elemd), squared=False
+            ),
+        )
+
+        print(
+            "dm_wasserstein vs. dm_network RMSE: ",
+            mean_squared_error(
+                squareform(dm_wasserstein), squareform(dm_network), squared=False
+            ),
+        )
+
+        print(
+            "dm_network vs. dm_elemed RMSE: ",
+            mean_squared_error(
+                squareform(dm_network), squareform(dm_elemd), squared=False
+            ),
+        )
+
         assert_allclose(
             dm_wasserstein,
             dm_network,
             atol=1e-3,
             err_msg="wasserstein did not match network simplex.",
+        )
+
+        assert_allclose(
+            dm_wasserstein,
+            dm_elemd,
+            atol=1e-3,
+            err_msg="wasserstein did not match EleMD simplex.",
+        )
+
+        assert_allclose(
+            dm_network,
+            dm_elemd,
+            atol=1e-3,
+            err_msg="network did not match EleMD.",
         )
 
 
