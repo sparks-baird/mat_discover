@@ -59,7 +59,7 @@ from ElMD import ElMD, EMD
 
 # number of columns of U and V must be set as env var before import
 # HACK: define a wrapper to ElMD() so that you can use a different scale than mod_petti with cuda_dist_matrix
-n_elements = len(ElMD(metric="mod_petti").periodic_tab["mod_petti"])
+n_elements = len(ElMD(metric="mod_petti").periodic_tab)
 os.environ["COLUMNS"] = str(n_elements)
 
 # other environment variables (set before importing cuda_dist_matrix)
@@ -671,7 +671,7 @@ class ElM2D:
             indices = np.array(comp_labels, dtype=np.int64)
             ratios = np.array(comp_ratios, dtype=np.float64)
 
-            numeric = np.zeros(shape=len(E.periodic_tab[self.metric]), dtype=np.float64)
+            numeric = np.zeros(shape=len(E.periodic_tab), dtype=np.float64)
             numeric[indices] = ratios
 
             return numeric
@@ -686,10 +686,7 @@ class ElM2D:
         lookup, periodic_tab = attrgetter("lookup", "periodic_tab")(E)
 
         def get_mod_petti(x):
-            return [
-                periodic_tab[self.metric][lookup[a]] if b > 0 else 0
-                for a, b in enumerate(x)
-            ]
+            return [periodic_tab[lookup[a]] if b > 0 else 0 for a, b in enumerate(x)]
 
         def get_mod_pettis(X):
             return np.array([get_mod_petti(x) for x in X])
@@ -796,7 +793,8 @@ class ElM2D:
                 self.input_mat[input_1],
                 self.input_mat[input_2],
                 elmd_obj.lookup,
-                elmd_obj.periodic_tab[self.metric],
+                elmd_obj.periodic_tab,
+                metric=self.metric,
             )
 
         return distances
@@ -843,13 +841,13 @@ class ElM2D:
 
         # elmd_obj = ElMD(metric=self.metric)
 
-        # if type(elmd_obj.periodic_tab[self.metric]["H"]) is int:
+        # if type(elmd_obj.periodic_tab["H"]) is int:
         #     vectors = np.ndarray(
-        #         (len(compositions), len(elmd_obj.periodic_tab[self.metric]))
+        #         (len(compositions), len(elmd_obj.periodic_tab))
         #     )
         # else:
         #     vectors = np.ndarray(
-        #         (len(compositions), len(elmd_obj.periodic_tab[self.metric]["H"]))
+        #         (len(compositions), len(elmd_obj.periodic_tab["H"]))
         #     )
 
         print(
