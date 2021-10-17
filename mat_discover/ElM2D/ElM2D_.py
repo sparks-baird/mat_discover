@@ -683,13 +683,18 @@ class ElM2D:
         if isXY:
             V_weights = gen_ratio_vectors(formulas2)
 
-        lookup, periodic_tab = attrgetter("lookup", "periodic_tab")(E)
+        self.lookup, self.periodic_tab = attrgetter("lookup", "periodic_tab")(E)
 
         def get_mod_petti(x):
-            return [periodic_tab[lookup[a]] if b > 0 else 0 for a, b in enumerate(x)]
+            mod_petti = [
+                self.periodic_tab[self.lookup[a]] if b > 0 else 0
+                for a, b in enumerate(x)
+            ]  # FIXME: apparently might output an array of strings
+            return mod_petti
 
         def get_mod_pettis(X):
-            return np.array([get_mod_petti(x) for x in X])
+            mod_pettis = np.array([get_mod_petti(x) for x in X]).astype(float)
+            return mod_pettis
 
         U = get_mod_pettis(U_weights)
         if isXY:
