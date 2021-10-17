@@ -56,4 +56,4 @@ jobs:
       shell: bash -l {0}
       run: |
         mamba install pytest
-        python -m pytest test_mat_discover.py
+        pytest test_mat_discover.py
