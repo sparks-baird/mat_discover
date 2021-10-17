@@ -481,7 +481,7 @@ class ElM2D:
             formula_list = self.formula_list
 
         elif self.formula_list is None:
-            E = ElMD
+            E = ElMD(metric=self.metric)
             formula_list = map(E, formula_list, chunksize=self.chunksize)
             self.formula_list = formula_list
 
