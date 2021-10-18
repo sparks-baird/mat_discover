@@ -19,7 +19,8 @@ from scipy.spatial.distance import squareform
 
 from mat_discover.utils.Timer import Timer
 from ElM2D import ElM2D as pip_ElM2D
-from EleMD import EleMD
+
+# from EleMD import EleMD
 import pandas as pd
 
 from ElMD import ElMD
@@ -65,21 +66,21 @@ class Testing(unittest.TestCase):
             mapper2.fit(sub_formulas)
             dm_network = mapper2.dm
 
-        with Timer("dm_elemd"):
-            mod_petti = EleMD(scale="mod_pettifor")
-            dm_elemd = np.zeros_like(dm_wasserstein)
-            for i, comp1 in enumerate(sub_formulas):
-                for j, comp2 in enumerate(sub_formulas):
-                    if j < i:
-                        dm_elemd[i, j] = mod_petti.elemd(comp1, comp2)
-                        dm_elemd[j, i] = dm_elemd[i, j]
+        # with Timer("dm_elemd"):
+        #     mod_petti = EleMD(scale="mod_pettifor")
+        #     dm_elemd = np.zeros_like(dm_wasserstein)
+        #     for i, comp1 in enumerate(sub_formulas):
+        #         for j, comp2 in enumerate(sub_formulas):
+        #             if j < i:
+        #                 dm_elemd[i, j] = mod_petti.elemd(comp1, comp2)
+        #                 dm_elemd[j, i] = dm_elemd[i, j]
 
-        print(
-            "dm_wasserstein vs. dm_elemd RMSE: ",
-            mean_squared_error(
-                squareform(dm_wasserstein), squareform(dm_elemd), squared=False
-            ),
-        )
+        # print(
+        #     "dm_wasserstein vs. dm_elemd RMSE: ",
+        #     mean_squared_error(
+        #         squareform(dm_wasserstein), squareform(dm_elemd), squared=False
+        #     ),
+        # )
 
         print(
             "dm_wasserstein vs. dm_network RMSE: ",
@@ -88,12 +89,12 @@ class Testing(unittest.TestCase):
             ),
         )
 
-        print(
-            "dm_network vs. dm_elemed RMSE: ",
-            mean_squared_error(
-                squareform(dm_network), squareform(dm_elemd), squared=False
-            ),
-        )
+        # print(
+        #     "dm_network vs. dm_elemed RMSE: ",
+        #     mean_squared_error(
+        #         squareform(dm_network), squareform(dm_elemd), squared=False
+        #     ),
+        # )
 
         assert_allclose(
             dm_wasserstein,
@@ -102,19 +103,19 @@ class Testing(unittest.TestCase):
             err_msg="wasserstein did not match network simplex.",
         )
 
-        assert_allclose(
-            dm_wasserstein,
-            dm_elemd,
-            atol=1e-3,
-            err_msg="wasserstein did not match EleMD simplex.",
-        )
+        # assert_allclose(
+        #     dm_wasserstein,
+        #     dm_elemd,
+        #     atol=1e-3,
+        #     err_msg="wasserstein did not match EleMD simplex.",
+        # )
 
-        assert_allclose(
-            dm_network,
-            dm_elemd,
-            atol=1e-3,
-            err_msg="network did not match EleMD.",
-        )
+        # assert_allclose(
+        #     dm_network,
+        #     dm_elemd,
+        #     atol=1e-3,
+        #     err_msg="network did not match EleMD.",
+        # )
 
 
 if __name__ == "__main__":
