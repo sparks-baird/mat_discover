@@ -1,72 +1,20 @@
-"""
-Numba/CUDA-compatible distance metrics.
-
-Created on Wed Sep  8 14:47:43 2021
-
-@author: sterg
-"""
-import os
-from unittest.mock import patch
-import json
-import numpy as np
-from . import helper as hp
+"""Metrics file specific to njit / CPU implementations."""
 from math import sqrt
-from numba.types import int32, float32, int64, float64  # noqa
+import numpy as np
 
-# inline = os.environ.get("INLINE", "never")
-# fastmath = bool(os.environ.get("FASTMATH", "1"))
-# cols = os.environ.get("COLUMNS")  # 121 for ElM2D repo
-# USE_64 = bool(os.environ.get("USE_64", "0"))
-# target = os.environ.get("TARGET", "cuda")
+from . import helper as hp
 
-with open("dist_matrix_settings.json", "r") as f:
-    settings = json.load(f)
-inline = settings.get("INLINE", "never")
-fastmath = settings.get("FASTMATH", True)
-cols = settings.get("COLUMNS")
-USE_64 = settings.get("USE_64", "0")
-target = settings.get("TARGET", "cuda")
+# from . import cpu_helper as hp
 
-if target == "cuda":
-    from numba import cuda, jit, njit  # noqa
-elif target == "cpu":
-    patch("cuda.local.array", np.zeros)
+from numba import njit
 
+fastmath = True
+debug = False
 
-if USE_64 is None:
-    USE_64 = False
-if USE_64:
-    bits = 64
-    nb_float = float64
-    nb_int = int64
-    np_float = np.float64
-    np_int = np.int64
-else:
-    bits = 32
-    nb_float = float32
-    nb_int = int32
-    np_float = np.float32
-    np_int = np.int32
+inline = "never"
 
-if target == "cpu":
-    nb_float = np_float
-    nb_int = np_int
-
-if cols is not None:
-    cols = int(cols)
-    cols_plus_1 = cols + 1
-    tot_cols = cols * 2
-    tot_cols_minus_1 = tot_cols - 1
-else:
-    raise KeyError(
-        "For performance reasons and architecture constraints "
-        "the number of columns of U (which is the same as V) "
-        "must be defined as the environment variable, COLUMNS, "
-        'via e.g. `os.environ["COLUMNS"] = "100"`.'
-    )
-
-# TODO: explicit signature?
-@jit(inline=inline)
+# FIXME: for some reason, not evaluating correctly. Maybe a copy issue?
+@njit(fastmath=fastmath, debug=debug)
 def cdf_distance(
     u, v, u_weights, v_weights, p, presorted, cumweighted, prepended
 ):  # noqa
@@ -126,22 +74,27 @@ def cdf_distance(
             Hoyer, Munos "The Cramer Distance as a Solution to Biased
             Wasserstein Gradients" (2017). :arXiv:`1705.10743`.
     """
+    cols = len(u)
+    tot_cols = len(u) * 2
+    tot_cols_minus_1 = tot_cols - 1
+    cols_plus_1 = cols + 1
+
     # allocate local float arrays
     # combined vector
-    uv = cuda.local.array(tot_cols, nb_float)
-    uv_deltas = cuda.local.array(tot_cols_minus_1, nb_float)
+    uv = np.zeros(tot_cols, "float")
+    uv_deltas = np.zeros(tot_cols_minus_1, "float")
 
     # CDFs
-    u_cdf = cuda.local.array(tot_cols_minus_1, nb_float)
-    v_cdf = cuda.local.array(tot_cols_minus_1, nb_float)
+    u_cdf = np.zeros(tot_cols_minus_1, "float")
+    v_cdf = np.zeros(tot_cols_minus_1, "float")
 
     # allocate local int arrays
     # CDF indices via binary search
-    u_cdf_indices = cuda.local.array(tot_cols_minus_1, nb_int)
-    v_cdf_indices = cuda.local.array(tot_cols_minus_1, nb_int)
+    u_cdf_indices = np.zeros(tot_cols_minus_1, "int")
+    v_cdf_indices = np.zeros(tot_cols_minus_1, "int")
 
-    u_cdf_sorted_cumweights = cuda.local.array(tot_cols_minus_1, nb_float)
-    v_cdf_sorted_cumweights = cuda.local.array(tot_cols_minus_1, nb_float)
+    u_cdf_sorted_cumweights = np.zeros(tot_cols_minus_1, "float")
+    v_cdf_sorted_cumweights = np.zeros(tot_cols_minus_1, "float")
 
     # short-circuit
     if presorted and cumweighted and prepended:
@@ -167,14 +120,14 @@ def cdf_distance(
         # sorting
         if not presorted:
             # local arrays
-            u_sorted = cuda.local.array(cols, nb_float)
-            v_sorted = cuda.local.array(cols, nb_float)
+            u_sorted = np.zeros(cols, "float")
+            v_sorted = np.zeros(cols, "float")
 
-            u_sorter = cuda.local.array(cols, nb_int)
-            v_sorter = cuda.local.array(cols, nb_int)
+            u_sorter = np.zeros(cols, "int")
+            v_sorter = np.zeros(cols, "int")
 
-            u_sorted_weights = cuda.local.array(cols, nb_float)
-            v_sorted_weights = cuda.local.array(cols, nb_float)
+            u_sorted_weights = np.zeros(cols, "float")
+            v_sorted_weights = np.zeros(cols, "float")
 
             # local copy since quickArgSortIterative sorts in-place
             hp.copy(u, u_sorted)
@@ -191,18 +144,18 @@ def cdf_distance(
         # cumulative weights
         if not cumweighted:
             # local arrays
-            u_cumweights = cuda.local.array(cols, nb_float)
-            v_cumweights = cuda.local.array(cols, nb_float)
+            u_cumweights = np.zeros(cols, "float")
+            v_cumweights = np.zeros(cols, "float")
             # accumulate
             hp.cumsum(u_sorted_weights, u_cumweights)
             hp.cumsum(v_sorted_weights, v_cumweights)
 
         # prepend weights with zero
         if not prepended:
-            zero = cuda.local.array(1, nb_float)
+            zero = np.zeros(1, "float")
 
-            u_0_cumweights = cuda.local.array(cols_plus_1, nb_float)
-            v_0_cumweights = cuda.local.array(cols_plus_1, nb_float)
+            u_0_cumweights = np.zeros(cols_plus_1, "float")
+            v_0_cumweights = np.zeros(cols_plus_1, "float")
 
             hp.concatenate(zero, u_cumweights, u_0_cumweights)
             hp.concatenate(zero, v_cumweights, v_0_cumweights)
@@ -234,8 +187,7 @@ def cdf_distance(
     return out
 
 
-# TODO: explicit signature?
-@jit(inline=inline)
+@njit(fastmath=fastmath, debug=debug)
 def wasserstein_distance(
     u, v, u_weights, v_weights, presorted, cumweighted, prepended
 ):  # noqa
@@ -282,12 +234,12 @@ def wasserstein_distance(
            Gradients" (2017). :arXiv:`1705.10743`.
     """
     return cdf_distance(
-        u, v, u_weights, v_weights, np_int(1), presorted, cumweighted, prepended
-    )
+        u, v, u_weights, v_weights, 1, presorted, cumweighted, prepended
+    )  # noqa
 
 
 # TODO: explicit signature?
-@jit(inline=inline)
+@njit(fastmath=fastmath, debug=debug)
 def euclidean_distance(a, b):
     """
     Calculate Euclidean distance between vectors a and b.

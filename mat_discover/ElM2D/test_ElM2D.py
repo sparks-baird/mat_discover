@@ -4,6 +4,8 @@ Test Element Mover's 2D Distance Matrix via network simplex and "wasserstein" me
 This test ensures that the fast implementation "wasserstein" produces "close" values
 to the original network simplex method.
 """
+import os
+import json
 import unittest
 from importlib import reload
 
@@ -18,8 +20,24 @@ from scipy.spatial.distance import squareform
 from mat_discover.utils.Timer import Timer
 from ElM2D import ElM2D as pip_ElM2D
 from EleMD import EleMD
-from mat_discover.ElM2D import ElM2D_
 import pandas as pd
+
+from ElMD import ElMD
+
+n_elements = len(ElMD(metric="mod_petti").periodic_tab)
+
+settings = {
+    "INLINE": "never",
+    "FASTMATH": True,
+    "COLUMNS": n_elements,
+    "USE_64": False,
+    "TARGET": "cuda",
+}
+
+with open("dist_matrix_settings.json", "w") as f:
+    json.dump(settings, f)
+
+from mat_discover.ElM2D import ElM2D_
 
 reload(ElM2D_)
 
@@ -32,7 +50,7 @@ class Testing(unittest.TestCase):
         # df = pd.read_csv("train-debug.csv")
         df = pd.read_csv(join(dirname(relpath(__file__)), "stable-mp.csv"))
         formulas = df["formula"]
-        sub_formulas = formulas[0:500]
+        sub_formulas = formulas[0:100]
         with Timer("dm_wasserstein"):
             mapper.fit(sub_formulas, target="cuda")
             dm_wasserstein = mapper.dm

@@ -30,11 +30,13 @@ https://networkx.github.io/documentation/networkx-1.10/_modules/networkx/algorit
 Requires umap which may be installed via:
     conda install -c conda-forge umap-learn
 """
-import os
+# import os
 from operator import attrgetter
 from importlib import reload
-from typing import Optional
-from types import ModuleType
+import json
+
+# from typing import Optional
+# from types import ModuleType
 
 from numba import cuda
 
@@ -57,16 +59,35 @@ from tqdm import tqdm
 
 from ElMD import ElMD, EMD
 
-# number of columns of U and V must be set as env var before import
-# HACK: define a wrapper to ElMD() so that you can use a different scale than mod_petti with cuda_dist_matrix
 n_elements = len(ElMD(metric="mod_petti").periodic_tab)
-os.environ["COLUMNS"] = str(n_elements)
 
-# other environment variables (set before importing cuda_dist_matrix)
-os.environ["USE_64"] = "0"
-os.environ["INLINE"] = "never"
-os.environ["FASTMATH"] = "1"
+# # number of columns of U and V must be set as env var before import
+# # HACK: define a wrapper to ElMD() so that you can use a different scale than mod_petti with cuda_dist_matrix
+# os.environ["COLUMNS"] = str(n_elements)
+
+# # other environment variables (set before importing cuda_dist_matrix)
+# os.environ["USE_64"] = "0"
+# os.environ["INLINE"] = "never"
+# os.environ["FASTMATH"] = "1"
 # os.environ["TARGET"] = "cuda"
+
+use_cuda = cuda.is_available()
+if use_cuda:
+    target = "cuda"
+else:
+    target = "cpu"
+
+settings = {
+    "INLINE": "never",
+    "FASTMATH": True,
+    "COLUMNS": n_elements,
+    "USE_64": False,
+    "TARGET": target,
+}
+
+with open("dist_matrix_settings.json", "w") as f:
+    json.dump(settings, f)
+
 
 from mat_discover.ElM2D import njit_dist_matrix  # noqa
 
@@ -76,15 +97,14 @@ cpu_dist_matrix = njit_dist_matrix.dist_matrix
 
 # REVIEW: why is it slower now?
 # cuda_dist_matrix: Optional[ModuleType]
-# if cuda.is_available():
-# from . import cuda_dist_matrix  # noqa
-from mat_discover.ElM2D import cuda_dist_matrix  # noqa
+if use_cuda:
+    from mat_discover.ElM2D import cuda_dist_matrix  # noqa
 
-# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
-reload(cuda_dist_matrix)
-gpu_dist_matrix = cuda_dist_matrix.dist_matrix
-# else:
-#     gpu_dist_matrix = None
+    # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+    reload(cuda_dist_matrix)
+    gpu_dist_matrix = cuda_dist_matrix.dist_matrix
+else:
+    gpu_dist_matrix = None
 
 
 def main():

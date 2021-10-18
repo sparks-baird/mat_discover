@@ -4,6 +4,7 @@ Nopython version of dist_matrix.
 Author: Sterling Baird
 """
 import os
+import json
 import numpy as np
 
 from numba import prange, njit
@@ -12,11 +13,19 @@ from numba.types import int32, float32, int64, float64
 # from mat_discover.ElM2D.metrics import njit_wasserstein_distance as wasserstein_distance
 from mat_discover.ElM2D.metrics import euclidean_distance
 
-inline = os.environ.get("INLINE", "never")
-fastmath = bool(os.environ.get("FASTMATH", "1"))
-cols = os.environ.get("COLUMNS")  # 121 for ElM2D repo
-USE_64 = bool(os.environ.get("USE_64", "0"))
-target = os.environ.get("TARGET", "cuda")
+# inline = os.environ.get("INLINE", "never")
+# fastmath = bool(os.environ.get("FASTMATH", "1"))
+# cols = os.environ.get("COLUMNS")  # 121 for ElM2D repo
+# USE_64 = bool(os.environ.get("USE_64", "0"))
+# target = os.environ.get("TARGET", "cuda")
+
+with open("dist_matrix_settings.json", "r") as f:
+    settings = json.load(f)
+inline = settings.get("INLINE", "never")
+fastmath = settings.get("FASTMATH", True)
+cols = settings.get("COLUMNS")
+USE_64 = settings.get("USE_64", "0")
+target = settings.get("TARGET", "cuda")
 
 if USE_64:
     bits = 64
@@ -70,8 +79,15 @@ debug = False
 
 # TODO: switch to the more hard-coded version (faster than the NumPy functions)
 @njit(fastmath=fastmath, debug=debug)
-def wasserstein_distance(
-    u_values, v_values, u_weights=None, v_weights=None, p=1, presorted=False
+def cdf_distance(
+    u_values,
+    v_values,
+    u_weights=None,
+    v_weights=None,
+    p=1,
+    presorted=False,
+    cumweighted=False,
+    prepended=False,
 ):
     r"""
     Compute first Wasserstein distance.
@@ -164,6 +180,70 @@ def wasserstein_distance(
         return np.sqrt(np.sum(np.multiply(np.power(u_cdf - v_cdf, 2), deltas)))
     return np.power(
         np.sum(np.multiply(np.power(np.abs(u_cdf - v_cdf), p), deltas)), 1 / p
+    )
+
+
+@njit(fastmath=fastmath, debug=debug)
+def wasserstein_distance(
+    u,
+    v,
+    u_weights=None,
+    v_weights=None,
+    presorted=False,
+    cumweighted=False,
+    prepended=False,
+):
+    r"""
+    Compute the first Wasserstein distance between two 1D distributions.
+
+    This distance is also known as the earth mover's distance, since it can be
+    seen as the minimum amount of "work" required to transform :math:`u` into
+    :math:`v`, where "work" is measured as the amount of distribution weight
+    that must be moved, multiplied by the distance it has to be moved.
+
+    Source
+    ------
+    https://github.com/scipy/scipy/blob/47bb6febaa10658c72962b9615d5d5aa2513fa3a/scipy/stats/stats.py#L8245-L8319 # noqa
+
+    Parameters
+    ----------
+    u_values, v_values : array_like
+        Values observed in the (empirical) distribution.
+    u_weights, v_weights : array_like, optional
+        Weight for each value. If unspecified, each value is assigned the same
+        weight.
+        `u_weights` (resp. `v_weights`) must have the same length as
+        `u_values` (resp. `v_values`). If the weight sum differs from 1, it
+        must still be positive and finite so that the weights can be normalized
+        to sum to 1.
+
+    Returns
+    -------
+    distance : float
+        The computed distance between the distributions.
+
+    Notes
+    -----
+    The input distributions can be empirical, therefore coming from samples
+    whose values are effectively inputs of the function, or they can be seen as
+    generalized functions, in which case they are weighted sums of Dirac delta
+    functions located at the specified values.
+
+    References
+    ----------
+    .. [1] Bellemare, Danihelka, Dabney, Mohamed, Lakshminarayanan, Hoyer,
+           Munos "The Cramer Distance as a Solution to Biased Wasserstein
+           Gradients" (2017). :arXiv:`1705.10743`.
+    """
+    return cdf_distance(
+        u,
+        v,
+        u_weights,
+        v_weights,
+        1,
+        presorted=False,
+        cumweighted=False,
+        prepended=False,
     )
 
 

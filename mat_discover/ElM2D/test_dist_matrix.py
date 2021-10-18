@@ -1,23 +1,41 @@
 # -*- coding: utf-8 -*-
 """Test distance matrix calculations using CUDA/Numba."""
-from scipy.spatial.distance import euclidean, cdist
-from scipy.stats import wasserstein_distance as scipy_wasserstein_distance
+import os
+import json
+from importlib import reload
+
 from numpy.testing import assert_allclose
 import numpy as np
-import os
-from importlib import reload
+
+from scipy.spatial.distance import euclidean, cdist
+from scipy.stats import wasserstein_distance as scipy_wasserstein_distance
+
 
 # os.environ["NUMBA_DISABLE_JIT"] = "1"
 
-# number of columns of U and V must be set as env var before import dist_matrix
-cols = 100
-os.environ["COLUMNS"] = str(cols)
+from ElMD import ElMD
 
-# other environment variables (set before importing dist_matrix)
-os.environ["USE_64"] = "0"
-os.environ["INLINE"] = "never"
-os.environ["FASTMATH"] = "1"
-os.environ["TARGET"] = "cuda"
+cols = len(ElMD(metric="mod_petti").periodic_tab)
+
+# number of columns of U and V must be set as env var before import dist_matrix
+# os.environ["COLUMNS"] = str(cols)
+
+# # other environment variables (set before importing dist_matrix)
+# os.environ["USE_64"] = "0"
+# os.environ["INLINE"] = "never"
+# os.environ["FASTMATH"] = "1"
+# os.environ["TARGET"] = "cuda"
+
+settings = {
+    "INLINE": "never",
+    "FASTMATH": True,
+    "COLUMNS": cols,
+    "USE_64": False,
+    "TARGET": "cuda",
+}
+
+with open("dist_matrix_settings.json", "w") as f:
+    json.dump(settings, f)
 
 from mat_discover.utils.Timer import Timer  # noqa
 from numba.cuda.testing import unittest, CUDATestCase  # noqa

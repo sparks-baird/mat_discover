@@ -10,6 +10,7 @@ Cases:
 Various distance metrics are available.
 """
 import os
+import json
 import numpy as np
 from math import ceil
 from .metrics import wasserstein_distance, euclidean_distance
@@ -18,14 +19,24 @@ from .metrics import wasserstein_distance, euclidean_distance
 # os.environ["NUMBA_ENABLE_CUDASIM"] = "1"
 # os.environ["NUMBA_CUDA_DEBUGINFO"] = "1"
 
+
 from numba import cuda, jit  # noqa
 from numba.types import int32, float32, int64, float64  # noqa
 
-inline = os.environ.get("INLINE", "never")
-fastmath = bool(os.environ.get("FASTMATH", "1"))
-cols = os.environ.get("COLUMNS")  # 121 for ElM2D repo
-USE_64 = bool(os.environ.get("USE_64", "0"))
-target = os.environ.get("TARGET", "cuda")
+# inline = os.environ.get("INLINE", "never")
+# fastmath = bool(os.environ.get("FASTMATH", "1"))
+# cols = os.environ.get("COLUMNS")  # 121 for ElM2D repo
+# USE_64 = bool(os.environ.get("USE_64", "0"))
+# target = os.environ.get("TARGET", "cuda")
+
+with open("dist_matrix_settings.json", "r") as f:
+    settings = json.load(f)
+inline = settings.get("INLINE", "never")
+fastmath = settings.get("FASTMATH", True)
+cols = settings.get("COLUMNS")
+USE_64 = settings.get("USE_64", "0")
+target = settings.get("TARGET", "cuda")
+
 
 if USE_64 is None:
     USE_64 = False
@@ -42,6 +53,11 @@ else:
     np_float = np.float32
     np_int = np.int32
 
+# override types
+if target == "cpu":
+    nb_float = np_float
+    nb_int = np_int
+
 if cols is not None:
     cols = int(cols)
     cols_plus_1 = cols + 1
@@ -54,11 +70,6 @@ else:
         "must be defined as the environment variable, COLUMNS, "
         'via e.g. `os.environ["COLUMNS"] = "100"`.'
     )
-
-# override types
-if target == "cpu":
-    nb_float = np_float
-    nb_int = np_int
 
 # threads-per-block
 TPB = 16
