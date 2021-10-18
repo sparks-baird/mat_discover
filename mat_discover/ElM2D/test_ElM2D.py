@@ -14,6 +14,8 @@ from os.path import join, dirname, relpath
 from numpy.testing import assert_allclose
 import numpy as np
 
+from numba import cuda
+
 from sklearn.metrics import mean_squared_error
 from scipy.spatial.distance import squareform
 
@@ -25,18 +27,23 @@ import pandas as pd
 
 from ElMD import ElMD
 
-n_elements = len(ElMD(metric="mod_petti").periodic_tab)
+if cuda.is_available():
+    target = "cuda"
+else:
+    target = "cpu"
 
-settings = {
-    "INLINE": "never",
-    "FASTMATH": True,
-    "COLUMNS": n_elements,
-    "USE_64": False,
-    "TARGET": "cuda",
-}
+# n_elements = len(ElMD(metric="mod_petti").periodic_tab)
 
-with open("dist_matrix_settings.json", "w") as f:
-    json.dump(settings, f)
+# settings = {
+#     "INLINE": "never",
+#     "FASTMATH": True,
+#     "COLUMNS": n_elements,
+#     "USE_64": False,
+#     "TARGET": "cuda",
+# }
+
+# with open("dist_matrix_settings.json", "w") as f:
+#     json.dump(settings, f)
 
 from mat_discover.ElM2D import ElM2D_
 
@@ -53,7 +60,7 @@ class Testing(unittest.TestCase):
         formulas = df["formula"]
         sub_formulas = formulas[0:100]
         with Timer("dm_wasserstein"):
-            mapper.fit(sub_formulas, target="cuda")
+            mapper.fit(sub_formulas, target=target)
             dm_wasserstein = mapper.dm
 
         # FIXME: njit_dist_matrix not inheriting env vars, are env vars even necessary for njit?
