@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted #ubuntu-latest
     strategy:
       max-parallel: 5
 
@@ -26,13 +26,13 @@ jobs:
         channel-priority: true
         activate-environment: mat_discover
         environment-file: environment.yml
-    - shell: bash -l {0}
-      run: |
-        conda info
-        conda list
-        conda config --show-sources
-        conda config --show
-        printenv | sort
+#     - shell: bash -l {0}
+#       run: |
+#         conda info
+#         conda list
+#         conda config --show-sources
+#         conda config --show
+#         printenv | sort
 #     - shell: bash -l {0}
 #       run: mamba install jupyterlab
 #       run: mamba env create -f environment.yml # already taken care of above
