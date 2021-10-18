@@ -31,6 +31,7 @@ Requires umap which may be installed via:
     conda install -c conda-forge umap-learn
 """
 # import os
+# from warnings import warn
 from operator import attrgetter
 from importlib import reload
 import json
@@ -76,6 +77,8 @@ if use_cuda:
     target = "cuda"
 else:
     target = "cpu"
+
+# warn("target: " + target)
 
 settings = {
     "INLINE": "never",
