@@ -20,14 +20,14 @@ jobs:
       
     - uses: psf/black@stable #https://black.readthedocs.io/en/stable/integrations/github_actions.html
     
-    - uses: conda-incubator/setup-miniconda@v2
-      with:
-        python-version: 3.8
-        mamba-version: "*"
-        channels: conda-forge,defaults
-        channel-priority: true
-        activate-environment: mat_discover
-        environment-file: environment.yml
+#     - uses: conda-incubator/setup-miniconda@v2
+#       with:
+#         python-version: 3.8
+#         mamba-version: "*"
+#         channels: conda-forge,defaults
+#         channel-priority: true
+#         activate-environment: mat_discover
+#         environment-file: environment.yml
 #     - shell: bash -l {0}
 #       run: |
 #         conda info
@@ -58,5 +58,5 @@ jobs:
       shell: bash -l {0}
       run: |
         mamba install flit
-        flit install --extras test
+        flit install --extras test, cpu
         python -m pytest
