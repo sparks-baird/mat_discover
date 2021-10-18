@@ -1,0 +1,1 @@
+{"INLINE": "never", "FASTMATH": true, "COLUMNS": 224, "USE_64": false, "TARGET": "cuda"}
