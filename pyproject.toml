@@ -35,6 +35,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest",
+    "ElM2D",
     "pytest-cov",
 ]
 
