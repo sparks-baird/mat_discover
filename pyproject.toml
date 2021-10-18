@@ -13,6 +13,7 @@ dependencies = [
     "tqdm",
     "seaborn",
     "pymatgen",
+    "numpy",
     "scipy",
     "hdbscan",
     "numba>=0.53.1",
