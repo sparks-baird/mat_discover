@@ -58,5 +58,5 @@ jobs:
       shell: bash -l {0}
       run: |
         pip install flit
-        flit install --extras test, cpu
+        flit install --extras [test, cpu]
         python -m pytest
