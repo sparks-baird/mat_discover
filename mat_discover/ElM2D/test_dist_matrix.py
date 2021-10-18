@@ -12,7 +12,8 @@ from scipy.stats import wasserstein_distance as scipy_wasserstein_distance
 
 from mat_discover.utils.Timer import Timer
 from numba.cuda.testing import unittest, CUDATestCase
-from numba import cuda
+
+# from numba import cuda
 
 # os.environ["NUMBA_DISABLE_JIT"] = "1"
 
@@ -40,20 +41,20 @@ settings = {
 with open("dist_matrix_settings.json", "w") as f:
     json.dump(settings, f)
 
-use_cuda = cuda.is_available()
+# use_cuda = cuda.is_available()
 
-if use_cuda:
-    from mat_discover.ElM2D import cuda_dist_matrix  # noqa
+# if use_cuda:
+from mat_discover.ElM2D import cuda_dist_matrix  # noqa
 
-    # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
-    reload(cuda_dist_matrix)
-    my_dist_matrix = cuda_dist_matrix.dist_matrix
-else:
-    from mat_discover.ElM2D import njit_dist_matrix  # noqa
+# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+reload(cuda_dist_matrix)
+gpu_dist_matrix = cuda_dist_matrix.dist_matrix
+# else:
+from mat_discover.ElM2D import njit_dist_matrix  # noqa
 
-    # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
-    reload(njit_dist_matrix)
-    my_dist_matrix = njit_dist_matrix.dist_matrix
+# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+reload(njit_dist_matrix)
+cpu_dist_matrix = njit_dist_matrix.dist_matrix
 
 verbose_test = True
 
@@ -187,7 +188,11 @@ class TestDistMat(CUDATestCase):
                 x[0:6] for x in [U, V, U_weights, V_weights]
             ]  # noqa
 
-            for target in ["cuda"]:  # "cpu" not implemented
+            for target in ["cuda", "cpu"]:  # "cpu" not implemented
+                if target == "cuda":
+                    my_dist_matrix = gpu_dist_matrix
+                elif target == "cpu":
+                    my_dist_matrix = cpu_dist_matrix
                 for metric in ["euclidean", "wasserstein"]:
                     print("[" + target.upper() + "_" + metric.upper() + "]")
 

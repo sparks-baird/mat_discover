@@ -25,7 +25,8 @@ inline = settings.get("INLINE", "never")
 fastmath = settings.get("FASTMATH", True)
 cols = settings.get("COLUMNS")
 USE_64 = settings.get("USE_64", "0")
-target = settings.get("TARGET", "cuda")
+# target = settings.get("TARGET", "cuda")
+target = "cpu"
 
 if USE_64:
     bits = 64
@@ -43,8 +44,6 @@ else:
 fastmath = True
 parallel = True
 debug = False
-
-# target = "cpu"
 
 
 # def myjit(f):

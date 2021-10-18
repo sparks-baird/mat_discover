@@ -72,6 +72,7 @@ n_elements = len(ElMD(metric="mod_petti").periodic_tab)
 # os.environ["FASTMATH"] = "1"
 # os.environ["TARGET"] = "cuda"
 
+# overriden by ElM2D class if self.target is not None
 use_cuda = cuda.is_available()
 if use_cuda:
     target = "cuda"

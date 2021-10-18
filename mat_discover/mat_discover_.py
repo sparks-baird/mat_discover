@@ -67,7 +67,7 @@ plt.rcParams.update(
     }
 )
 
-use_cuda = torch.cuda.is_available()
+# use_cuda = torch.cuda.is_available()
 
 # plt.rcParams["text.usetex"] = True
 

@@ -27,10 +27,10 @@ import pandas as pd
 
 from ElMD import ElMD
 
-if cuda.is_available():
-    target = "cuda"
-else:
-    target = "cpu"
+# if cuda.is_available():
+#     target = "cuda"
+# else:
+#     target = "cpu"
 
 # n_elements = len(ElMD(metric="mod_petti").periodic_tab)
 

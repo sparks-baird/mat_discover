@@ -35,7 +35,8 @@ inline = settings.get("INLINE", "never")
 fastmath = settings.get("FASTMATH", True)
 cols = settings.get("COLUMNS")
 USE_64 = settings.get("USE_64", "0")
-target = settings.get("TARGET", "cuda")
+target = "cuda"
+# target = settings.get("TARGET", "cuda")
 
 
 if USE_64 is None:
@@ -53,10 +54,10 @@ else:
     np_float = np.float32
     np_int = np.int32
 
-# override types
-if target == "cpu":
-    nb_float = np_float
-    nb_int = np_int
+# # override types
+# if target == "cpu":
+#     nb_float = np_float
+#     nb_int = np_int
 
 if cols is not None:
     cols = int(cols)
