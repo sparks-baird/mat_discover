@@ -35,6 +35,7 @@ dependencies = [
 test = [
     "pytest",
     "ElM2D",
+    "EleMD",
     "pytest-cov",
 ]
 gpu = ["torch==1.9.1+cu111"]
