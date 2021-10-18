@@ -58,6 +58,6 @@ jobs:
       shell: bash -l {0}
       run: |
         pip install flit
-        # export PIP_FIND_LINKS=https://download.pytorch.org/whl/torch_stable.html
-        flit install --deps production --extras test,cpu
+        export PIP_FIND_LINKS=https://download.pytorch.org/whl/torch_stable.html
+        flit install --deps production --extras test,gpu
         python -m pytest
