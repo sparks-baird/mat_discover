@@ -3,16 +3,18 @@ name: Python Package using Conda
 on:
   push:
     paths:
-    - '**.py' # only run workflow when source files changed
+#     - '**.py' # only run workflow when source files changed
 
 jobs:
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest #ubuntu-latest
     strategy:
       max-parallel: 5
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       
@@ -26,13 +28,13 @@ jobs:
         channel-priority: true
         activate-environment: mat_discover
         environment-file: environment.yml
-    - shell: bash -l {0}
-      run: |
-        conda info
-        conda list
-        conda config --show-sources
-        conda config --show
-        printenv | sort
+#     - shell: bash -l {0}
+#       run: |
+#         conda info
+#         conda list
+#         conda config --show-sources
+#         conda config --show
+#         printenv | sort
 #     - shell: bash -l {0}
 #       run: mamba install jupyterlab
 #       run: mamba env create -f environment.yml # already taken care of above
@@ -55,5 +57,6 @@ jobs:
     - name: Test with pytest
       shell: bash -l {0}
       run: |
-        mamba install pytest
-        pytest
+        mamba install pytest flit
+        flit install
+        python -m pytest

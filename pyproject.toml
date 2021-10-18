@@ -38,6 +38,7 @@ test = [
     "ElM2D",
     "pytest-cov",
 ]
+gpu = ["torch==1.9.1+cu111"]
 
 [project.urls]
 Source = "https://github.com/sparks-baird/mat_discover"
