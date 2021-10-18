@@ -58,5 +58,5 @@ jobs:
       shell: bash -l {0}
       run: |
         mamba install flit
-        flit install --deps test
+        flit install --extras test
         python -m pytest
