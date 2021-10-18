@@ -18,7 +18,7 @@ jobs:
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       
-    - uses: psf/black@stable #https://black.readthedocs.io/en/stable/integrations/github_actions.html
+#     - uses: psf/black@stable #https://black.readthedocs.io/en/stable/integrations/github_actions.html
     
 #     - uses: conda-incubator/setup-miniconda@v2
 #       with:
@@ -58,5 +58,6 @@ jobs:
       shell: bash -l {0}
       run: |
         pip install flit
-        flit install --extras test,cpu
+        export PIP_FIND_LINKS=https://download.pytorch.org/whl/torch_stable.html
+        flit install --extras test,gpu
         python -m pytest
