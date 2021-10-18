@@ -11,6 +11,7 @@ import json
 import numpy as np
 from . import helper as hp
 from math import sqrt
+from numba import jit
 from numba.types import int32, float32, int64, float64  # noqa
 
 # inline = os.environ.get("INLINE", "never")
