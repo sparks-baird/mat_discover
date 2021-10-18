@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-linux:
-    runs-on: self-hosted #ubuntu-latest
+    runs-on: windows-latest #ubuntu-latest
     strategy:
       max-parallel: 5
 
