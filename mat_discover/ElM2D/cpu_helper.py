@@ -25,6 +25,7 @@ def copy(a, out):
         i = int(i)
         out[i] = a[i]
 
+
 @jit(inline=inline)
 def insertionSort(arr):
     """
