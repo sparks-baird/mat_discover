@@ -42,7 +42,7 @@ else:
 
 # @njit(fastmath=fastmath, debug=debug)
 @njit(
-    "void(float{0}[:], float{0}[:], float{0}[:], float{0}[:,:],int{0}, bool, bool, bool)".format(
+    "float{0}(float{0}[:], float{0}[:], float{0}[:], float{0}[:,:],int{0}, bool, bool, bool)".format(
         bits
     ),
     fastmath=fastmath,
@@ -217,7 +217,7 @@ def cdf_distance(
 
 # @njit(fastmath=fastmath, debug=debug)
 @njit(
-    "void(float{0}[:], float{0}[:], float{0}[:], float{0}[:,:], bool, bool, bool)".format(
+    "float{0}(float{0}[:], float{0}[:], float{0}[:], float{0}[:,:], bool, bool, bool)".format(
         bits
     ),
     fastmath=fastmath,
