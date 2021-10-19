@@ -1,4 +1,5 @@
 """Metrics file specific to njit / CPU implementations."""
+import json
 from math import sqrt
 import numpy as np
 
@@ -6,8 +7,39 @@ from . import cpu_helper as hp
 
 from numba import njit
 
-fastmath = True
+with open("dist_matrix_settings.json", "r") as f:
+    settings = json.load(f)
+inline = settings.get("INLINE", "never")
+fastmath = settings.get("FASTMATH", True)
+cols = settings.get("COLUMNS")
+USE_64 = settings.get("USE_64", "0")
+target = settings.get("TARGET", "cuda")
+
 debug = False
+
+if USE_64 is None:
+    USE_64 = False
+if USE_64:
+    bits = 64
+    np_float = np.float64
+    np_int = np.int64
+else:
+    bits = 32
+    np_float = np.float32
+    np_int = np.int32
+
+if cols is not None:
+    cols = int(cols)
+    cols_plus_1 = cols + 1
+    tot_cols = cols * 2
+    tot_cols_minus_1 = tot_cols - 1
+else:
+    raise KeyError(
+        "For performance reasons and architecture constraints "
+        "the number of columns of U (which is the same as V) "
+        "must be defined as the environment variable, COLUMNS, "
+        'via e.g. `os.environ["COLUMNS"] = "100"`.'
+    )
 
 
 @njit(fastmath=fastmath, debug=debug)
@@ -70,11 +102,6 @@ def cdf_distance(
             Hoyer, Munos "The Cramer Distance as a Solution to Biased
             Wasserstein Gradients" (2017). :arXiv:`1705.10743`.
     """
-    cols = len(u)
-    tot_cols = len(u) * 2
-    tot_cols_minus_1 = tot_cols - 1
-    cols_plus_1 = cols + 1
-
     # allocate local float arrays
     # combined vector
     uv = np.zeros(tot_cols, "float")
@@ -135,7 +162,7 @@ def cdf_distance(
 
             # inplace to avoid extra cuda local array
             hp.sort_by_indices(u_weights, u_sorter, u_sorted_weights)
-            hp.sort_by_indices(u_weights, u_sorter, v_sorted_weights)
+            hp.sort_by_indices(v_weights, v_sorter, v_sorted_weights)
 
         # cumulative weights
         if not cumweighted:
@@ -230,7 +257,7 @@ def wasserstein_distance(
            Gradients" (2017). :arXiv:`1705.10743`.
     """
     return cdf_distance(
-        u, v, u_weights, v_weights, 1, presorted, cumweighted, prepended
+        u, v, u_weights, v_weights, np_int(1), presorted, cumweighted, prepended
     )  # noqa
 
 

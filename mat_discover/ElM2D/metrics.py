@@ -183,7 +183,7 @@ def cdf_distance(
 
             # inplace to avoid extra cuda local array
             hp.sort_by_indices(u_weights, u_sorter, u_sorted_weights)
-            hp.sort_by_indices(u_weights, u_sorter, v_sorted_weights)
+            hp.sort_by_indices(v_weights, v_sorter, v_sorted_weights)
 
         # cumulative weights
         if not cumweighted:
