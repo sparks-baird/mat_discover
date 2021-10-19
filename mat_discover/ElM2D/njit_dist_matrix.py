@@ -310,14 +310,15 @@ def compute_distance(u, v, u_weights, v_weights, metric_num):
     return d
 
 
-# @njit(
-#     "void(float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], "
-#     "int{0}[:,:], float{0}[:], int{0})".format(bits),
-#     fastmath=fastmath,
-#     parallel=parallel,
-#     debug=debug,
-# )
-@njit(fastmath=fastmath, parallel=parallel, debug=debug)
+# @njit(fastmath=fastmath, parallel=parallel, debug=debug)
+@njit(
+    "void(float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], int{0})".format(
+        bits
+    ),
+    fastmath=fastmath,
+    parallel=parallel,
+    debug=debug,
+)
 def sparse_distance_matrix(U, V, U_weights, V_weights, pairs, out, metric_num):
     """
     Calculate sparse pairwise distances between two sets of vectors for pairs.
@@ -358,13 +359,13 @@ def sparse_distance_matrix(U, V, U_weights, V_weights, pairs, out, metric_num):
         out[k] = d
 
 
-# @njit(
-#     "void(float{0}[:,:], float{0}[:,:], float{0}[:,:], int{0})".format(bits),
-#     fastmath=fastmath,
-#     parallel=parallel,
-#     debug=debug,
-# )
-@njit(fastmath=fastmath, parallel=parallel, debug=debug)
+# @njit(fastmath=fastmath, parallel=parallel, debug=debug)
+@njit(
+    "void(float{0}[:,:], float{0}[:,:], float{0}[:,:], int{0})".format(bits),
+    fastmath=fastmath,
+    parallel=parallel,
+    debug=debug,
+)
 def one_set_distance_matrix(U, U_weights, out, metric_num):
     """
     Calculate pairwise distances within single set of vectors.
@@ -401,14 +402,15 @@ def one_set_distance_matrix(U, U_weights, out, metric_num):
 
 
 # faster compilation *and* runtimes with explicit signature (tested on cuda.jit)
-# @njit(
-#     "void(float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], "
-#     "float{0}[:,:], int{0})".format(bits),
-#     fastmath=fastmath,
-#     parallel=parallel,
-#     debug=debug,
-# )
-@njit(fastmath=fastmath, parallel=parallel, debug=debug)
+# @njit(fastmath=fastmath, parallel=parallel, debug=debug)
+@njit(
+    "void(float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], int{0})".format(
+        bits
+    ),
+    fastmath=fastmath,
+    parallel=parallel,
+    debug=debug,
+)
 def two_set_distance_matrix(U, V, U_weights, V_weights, out, metric_num):
     """Calculate distance matrix between two sets of vectors."""
     dm_rows = U.shape[0]
@@ -506,6 +508,13 @@ def dist_matrix(
             V_weights = np.column_stack((zero, V_weights))
 
     out = np.zeros(shape, dtype=np_float)
+    U = U.astype(np_float)
+    if V is not None:
+        V = V.astype(np_float)
+    if U_weights is not None:
+        U_weights = U_weights.astype(np_float)
+    if V_weights is not None:
+        V_weights = V_weights.astype(np_float)
 
     if isXY and not pairQ:
         # distance matrix between two sets of vectors
