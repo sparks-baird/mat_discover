@@ -9,25 +9,13 @@ Cases:
 
 Various distance metrics are available.
 """
-import os
 import json
 import numpy as np
 from math import ceil
 from .metrics import wasserstein_distance, euclidean_distance
 
-# CUDA Simulator not working..
-# os.environ["NUMBA_ENABLE_CUDASIM"] = "1"
-# os.environ["NUMBA_CUDA_DEBUGINFO"] = "1"
-
-
 from numba import cuda, jit  # noqa
 from numba.types import int32, float32, int64, float64  # noqa
-
-# inline = os.environ.get("INLINE", "never")
-# fastmath = bool(os.environ.get("FASTMATH", "1"))
-# cols = os.environ.get("COLUMNS")  # 121 for ElM2D repo
-# USE_64 = bool(os.environ.get("USE_64", "0"))
-# target = os.environ.get("TARGET", "cuda")
 
 with open("dist_matrix_settings.json", "r") as f:
     settings = json.load(f)
@@ -554,3 +542,13 @@ def dist_matrix(
 
 
 # os.environ["MACHINE_BITS"] = str(bits)
+
+# CUDA Simulator not working..
+# os.environ["NUMBA_ENABLE_CUDASIM"] = "1"
+# os.environ["NUMBA_CUDA_DEBUGINFO"] = "1"
+
+# inline = os.environ.get("INLINE", "never")
+# fastmath = bool(os.environ.get("FASTMATH", "1"))
+# cols = os.environ.get("COLUMNS")  # 121 for ElM2D repo
+# USE_64 = bool(os.environ.get("USE_64", "0"))
+# target = os.environ.get("TARGET", "cuda")

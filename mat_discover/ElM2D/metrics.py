@@ -5,20 +5,15 @@ Created on Wed Sep  8 14:47:43 2021
 
 @author: sterg
 """
-import os
-from unittest.mock import patch
+# from unittest.mock import patch
 import json
 import numpy as np
 from . import helper as hp
 from math import sqrt
-from numba import jit
+
 from numba.types import int32, float32, int64, float64  # noqa
 
-# inline = os.environ.get("INLINE", "never")
-# fastmath = bool(os.environ.get("FASTMATH", "1"))
-# cols = os.environ.get("COLUMNS")  # 121 for ElM2D repo
-# USE_64 = bool(os.environ.get("USE_64", "0"))
-# target = os.environ.get("TARGET", "cuda")
+from numba import cuda  # noqa
 
 with open("dist_matrix_settings.json", "r") as f:
     settings = json.load(f)
@@ -28,10 +23,11 @@ cols = settings.get("COLUMNS")
 USE_64 = settings.get("USE_64", "0")
 target = settings.get("TARGET", "cuda")
 
-if target == "cuda":
-    from numba import cuda, jit, njit  # noqa
-elif target == "cpu":
-    patch("cuda.local.array", np.zeros)
+# if target == "cuda":
+
+
+# elif target == "cpu":
+# patch("cuda.local.array", np.zeros)
 
 
 if USE_64 is None:
@@ -66,8 +62,8 @@ else:
         'via e.g. `os.environ["COLUMNS"] = "100"`.'
     )
 
-# TODO: explicit signature?
-@jit(inline=inline)
+# TODO: explicit signature? Possibly faster
+@cuda.jit(device=True, inline=inline)
 def cdf_distance(
     u, v, u_weights, v_weights, p, presorted, cumweighted, prepended
 ):  # noqa
@@ -236,7 +232,7 @@ def cdf_distance(
 
 
 # TODO: explicit signature?
-@jit(inline=inline)
+@cuda.jit(device=True, inline=inline)
 def wasserstein_distance(
     u, v, u_weights, v_weights, presorted, cumweighted, prepended
 ):  # noqa
@@ -288,7 +284,7 @@ def wasserstein_distance(
 
 
 # TODO: explicit signature?
-@jit(inline=inline)
+@cuda.jit(device=True, inline=inline)
 def euclidean_distance(a, b):
     """
     Calculate Euclidean distance between vectors a and b.
@@ -310,3 +306,11 @@ def euclidean_distance(a, b):
         d += (b[i] - a[i]) ** 2
     d = sqrt(d)
     return d
+
+
+# %% Code Graveyard
+# inline = os.environ.get("INLINE", "never")
+# fastmath = bool(os.environ.get("FASTMATH", "1"))
+# cols = os.environ.get("COLUMNS")  # 121 for ElM2D repo
+# USE_64 = bool(os.environ.get("USE_64", "0"))
+# target = os.environ.get("TARGET", "cuda")

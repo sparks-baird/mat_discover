@@ -2,18 +2,14 @@
 from math import sqrt
 import numpy as np
 
-from . import helper as hp
-
-# from . import cpu_helper as hp
+from . import cpu_helper as hp
 
 from numba import njit
 
 fastmath = True
 debug = False
 
-inline = "never"
 
-# FIXME: for some reason, not evaluating correctly. Maybe a copy issue?
 @njit(fastmath=fastmath, debug=debug)
 def cdf_distance(
     u, v, u_weights, v_weights, p, presorted, cumweighted, prepended

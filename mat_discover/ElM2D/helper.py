@@ -1,12 +1,12 @@
 """Helper functions for distance matrix computations."""
 import os
 from math import sqrt
-from numba import jit
+from numba import cuda
 
 inline = os.environ.get("INLINE", "never")
 
 
-@jit(inline=inline)
+@cuda.jit(device=True, inline=inline)
 def copy(a, out):
     """
     Copy a into out.
@@ -28,7 +28,7 @@ def copy(a, out):
         out[i] = a[i]
 
 
-@jit(inline=inline)
+@cuda.jit(device=True, inline=inline)
 def insertionSort(arr):
     """
     Perform insertion sorting on a vector.
@@ -57,7 +57,7 @@ def insertionSort(arr):
         arr[j + 1] = key
 
 
-@jit(inline=inline)
+@cuda.jit(device=True, inline=inline)
 def insertionArgSort(arr, ids):
     """
     Perform insertion sorting on a vector and track the sorting indices.
@@ -96,7 +96,7 @@ def insertionArgSort(arr, ids):
         ids[j + 1] = id_key
 
 
-@jit(inline=inline)
+@cuda.jit(device=True, inline=inline)
 def concatenate(vec, vec2, out):
     """
     Concatenate two vectors.
@@ -128,7 +128,7 @@ def concatenate(vec, vec2, out):
         out[i + n] = vec2[i]
 
 
-@jit(inline=inline)
+@cuda.jit(device=True, inline=inline)
 def diff(vec, out):
     """
     Compute gradient.
@@ -156,7 +156,7 @@ def diff(vec, out):
 # maybe there's a faster implementation somewhere
 
 
-@jit(inline=inline)
+@cuda.jit(device=True, inline=inline)
 def bisect_right(a, v, ids):
     """
     Return indices where to insert items in v in list a, assuming a is sorted.
@@ -199,7 +199,7 @@ def bisect_right(a, v, ids):
         ids[i] = lo
 
 
-@jit(inline=inline)
+@cuda.jit(device=True, inline=inline)
 def sort_by_indices(v, ids, out):
     """
     Sort v by ids and assign to out, as in out = v[ids].
@@ -223,7 +223,7 @@ def sort_by_indices(v, ids, out):
         out[i] = v[idx]
 
 
-@jit(inline=inline)
+@cuda.jit(device=True, inline=inline)
 def cumsum(vec, out):
     """
     Return the cumulative sum of the elements in a vector.
@@ -254,7 +254,7 @@ def cumsum(vec, out):
         out[i] = total
 
 
-@jit(inline=inline)
+@cuda.jit(device=True, inline=inline)
 def divide(v, b, out):
     """
     Divide a vector by a scalar.
@@ -277,7 +277,7 @@ def divide(v, b, out):
         out[i] = v[i] / b
 
 
-@jit(inline=inline)
+@cuda.jit(device=True, inline=inline)
 def integrate(u_cdf, v_cdf, deltas, p):
     """
     Integrate between two vectors using a p-norm.

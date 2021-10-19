@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
 """Test distance matrix calculations using CUDA/Numba."""
-import os
 import json
 from importlib import reload
 
@@ -13,22 +11,9 @@ from scipy.stats import wasserstein_distance as scipy_wasserstein_distance
 from mat_discover.utils.Timer import Timer
 from numba.cuda.testing import unittest, CUDATestCase
 
-# from numba import cuda
-
-# os.environ["NUMBA_DISABLE_JIT"] = "1"
-
 from ElMD import ElMD
 
 cols = len(ElMD(metric="mod_petti").periodic_tab)
-
-# number of columns of U and V must be set as env var before import dist_matrix
-# os.environ["COLUMNS"] = str(cols)
-
-# # other environment variables (set before importing dist_matrix)
-# os.environ["USE_64"] = "0"
-# os.environ["INLINE"] = "never"
-# os.environ["FASTMATH"] = "1"
-# os.environ["TARGET"] = "cuda"
 
 settings = {
     "INLINE": "never",
@@ -41,9 +26,6 @@ settings = {
 with open("dist_matrix_settings.json", "w") as f:
     json.dump(settings, f)
 
-# use_cuda = cuda.is_available()
-
-# if use_cuda:
 from mat_discover.ElM2D import cuda_dist_matrix  # noqa
 
 # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
@@ -322,3 +304,19 @@ if __name__ == "__main__":
 #     np.allclose(one_set_sparse, one_sparse_check),
 #     np.allclose(two_set_sparse, two_sparse_check)
 #     ]
+
+# number of columns of U and V must be set as env var before import dist_matrix
+# os.environ["COLUMNS"] = str(cols)
+
+# # other environment variables (set before importing dist_matrix)
+# os.environ["USE_64"] = "0"
+# os.environ["INLINE"] = "never"
+# os.environ["FASTMATH"] = "1"
+# os.environ["TARGET"] = "cuda"
+
+# from numba import cuda
+
+# os.environ["NUMBA_DISABLE_JIT"] = "1"
+
+# if use_cuda:
+# use_cuda = cuda.is_available()
