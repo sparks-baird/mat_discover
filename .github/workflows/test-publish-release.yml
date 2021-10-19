@@ -29,11 +29,11 @@ jobs:
         pip install flit torch # torch is CPU version
         flit install
         
-    - name: Pytest
-      shell: bash -l {0}
-      run: |
-        export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
-        python -m pytest
+    # - name: Pytest
+    #   shell: bash -l {0}
+    #   run: |
+    #     export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
+    #     python -m pytest
         
     - name: Build and publish
       run: |
