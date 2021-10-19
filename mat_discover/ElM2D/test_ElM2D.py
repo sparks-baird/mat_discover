@@ -61,6 +61,7 @@ class Testing(unittest.TestCase):
         # mapper.fit(sub_formulas, target="cpu")
         # dm_wasserstein = mapper.dm
 
+        # TODO: replace check with a CSV file
         with Timer("dm_network"):
             mapper2 = pip_ElM2D(sub_formulas)
             # mapper2 = ElM2D(emd_algorithm="network_simplex")
