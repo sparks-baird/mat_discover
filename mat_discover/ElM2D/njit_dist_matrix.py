@@ -82,12 +82,12 @@ debug = False
 # def cdf_distance(
 #     u_values,
 #     v_values,
-#     u_weights=None,
-#     v_weights=None,
-#     p=1,
-#     presorted=False,
-#     cumweighted=False,
-#     prepended=False,
+#     u_weights,
+#     v_weights,
+#     p,
+#     presorted,
+#     cumweighted,
+#     prepended,
 # ):
 #     r"""
 #     Compute first Wasserstein distance.
@@ -187,11 +187,11 @@ debug = False
 # def wasserstein_distance(
 #     u,
 #     v,
-#     u_weights=None,
-#     v_weights=None,
-#     presorted=False,
-#     cumweighted=False,
-#     prepended=False,
+#     u_weights,
+#     v_weights,
+#     presorted,
+#     cumweighted,
+#     prepended,
 # ):
 #     r"""
 #     Compute the first Wasserstein distance between two 1D distributions.
