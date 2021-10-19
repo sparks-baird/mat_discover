@@ -5,7 +5,7 @@ from importlib import reload
 import numpy as np
 from scipy.stats import wasserstein_distance as scipy_wasserstein_distance
 
-os.environ["NUMBA_DISABLE_JIT"] = "0"
+# os.environ["NUMBA_DISABLE_JIT"] = "0"
 
 cols = 100
 
