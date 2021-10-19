@@ -64,7 +64,7 @@ else:
 TPB = 16
 
 # TODO: explicit signature?
-@jit(inline=inline)
+@cuda.jit(device=True, inline=inline)
 def compute_distance(u, v, u_weights, v_weights, metric_num):
     """
     Calculate weighted distance between two vectors, u and v.
