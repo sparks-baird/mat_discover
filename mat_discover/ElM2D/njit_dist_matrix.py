@@ -11,7 +11,8 @@ from numba import prange, njit
 from numba.types import int32, float32, int64, float64
 
 # from mat_discover.ElM2D.metrics import njit_wasserstein_distance as wasserstein_distance
-from mat_discover.ElM2D.metrics import euclidean_distance
+# from mat_discover.ElM2D.metrics import euclidean_distance
+from mat_discover.ElM2D.cpu_metrics import wasserstein_distance, euclidean_distance
 
 # inline = os.environ.get("INLINE", "never")
 # fastmath = bool(os.environ.get("FASTMATH", "1"))
@@ -76,174 +77,174 @@ debug = False
 #     wasserstein_distance.py_func, fastmath=fastmath, debug=debug
 # )
 
-# TODO: switch to the more hard-coded version (faster than the NumPy functions)
-@njit(fastmath=fastmath, debug=debug)
-def cdf_distance(
-    u_values,
-    v_values,
-    u_weights=None,
-    v_weights=None,
-    p=1,
-    presorted=False,
-    cumweighted=False,
-    prepended=False,
-):
-    r"""
-    Compute first Wasserstein distance.
+# # TODO: switch to the more hard-coded version (faster than the NumPy functions)
+# @njit(fastmath=fastmath, debug=debug)
+# def cdf_distance(
+#     u_values,
+#     v_values,
+#     u_weights=None,
+#     v_weights=None,
+#     p=1,
+#     presorted=False,
+#     cumweighted=False,
+#     prepended=False,
+# ):
+#     r"""
+#     Compute first Wasserstein distance.
 
-    Compute, between two one-dimensional distributions :math:`u` and
-    :math:`v`, whose respective CDFs are :math:`U` and :math:`V`, the
-    statistical distance that is defined as:
-    .. math::
-        l_p(u, v) = \left( \int_{-\infty}^{+\infty} |U-V|^p \right)^{1/p}
-    p is a positive parameter; p = 1 gives the Wasserstein distance, p = 2
-    gives the energy distance.
+#     Compute, between two one-dimensional distributions :math:`u` and
+#     :math:`v`, whose respective CDFs are :math:`U` and :math:`V`, the
+#     statistical distance that is defined as:
+#     .. math::
+#         l_p(u, v) = \left( \int_{-\infty}^{+\infty} |U-V|^p \right)^{1/p}
+#     p is a positive parameter; p = 1 gives the Wasserstein distance, p = 2
+#     gives the energy distance.
 
-    Source:
-        https://github.com/scipy/scipy/blob/47bb6febaa10658c72962b9615d5d5aa2513fa3a/scipy/stats/stats.py#L8404
+#     Source:
+#         https://github.com/scipy/scipy/blob/47bb6febaa10658c72962b9615d5d5aa2513fa3a/scipy/stats/stats.py#L8404
 
-    Parameters
-    ----------
-    u_values, v_values : array_like
-        Values observed in the (empirical) distribution.
-    u_weights, v_weights : array_like, optional
-        Weight for each value. If unspecified, each value is assigned the same
-        weight.
-        `u_weights` (resp. `v_weights`) must have the same length as
-        `u_values` (resp. `v_values`). If the weight sum differs from 1, it
-        must still be positive and finite so that the weights can be normalized
-        to sum to 1.
+#     Parameters
+#     ----------
+#     u_values, v_values : array_like
+#         Values observed in the (empirical) distribution.
+#     u_weights, v_weights : array_like, optional
+#         Weight for each value. If unspecified, each value is assigned the same
+#         weight.
+#         `u_weights` (resp. `v_weights`) must have the same length as
+#         `u_values` (resp. `v_values`). If the weight sum differs from 1, it
+#         must still be positive and finite so that the weights can be normalized
+#         to sum to 1.
 
-    Returns
-    -------
-    distance : float
-        The computed distance between the distributions.
+#     Returns
+#     -------
+#     distance : float
+#         The computed distance between the distributions.
 
-    Notes
-    -----
-    The input distributions can be empirical, therefore coming from samples
-    whose values are effectively inputs of the function, or they can be seen as
-    generalized functions, in which case they are weighted sums of Dirac delta
-    functions located at the specified values.
+#     Notes
+#     -----
+#     The input distributions can be empirical, therefore coming from samples
+#     whose values are effectively inputs of the function, or they can be seen as
+#     generalized functions, in which case they are weighted sums of Dirac delta
+#     functions located at the specified values.
 
-    References
-    ----------
-    .. [1] Bellemare, Danihelka, Dabney, Mohamed, Lakshminarayanan, Hoyer,
-            Munos "The Cramer Distance as a Solution to Biased Wasserstein
-            Gradients" (2017). :arXiv:`1705.10743`.
-    """
-    if not presorted:
-        u_sorter = np.argsort(u_values)
-        v_sorter = np.argsort(v_values)
+#     References
+#     ----------
+#     .. [1] Bellemare, Danihelka, Dabney, Mohamed, Lakshminarayanan, Hoyer,
+#             Munos "The Cramer Distance as a Solution to Biased Wasserstein
+#             Gradients" (2017). :arXiv:`1705.10743`.
+#     """
+#     if not presorted:
+#         u_sorter = np.argsort(u_values)
+#         v_sorter = np.argsort(v_values)
 
-        u_values = u_values[u_sorter]
-        v_values = v_values[v_sorter]
+#         u_values = u_values[u_sorter]
+#         v_values = v_values[v_sorter]
 
-        u_weights = u_weights[u_sorter]
-        v_weights = v_weights[v_sorter]
+#         u_weights = u_weights[u_sorter]
+#         v_weights = v_weights[v_sorter]
 
-    all_values = np.concatenate((u_values, v_values))
-    # all_values.sort(kind='mergesort')
-    all_values.sort()
+#     all_values = np.concatenate((u_values, v_values))
+#     # all_values.sort(kind='mergesort')
+#     all_values.sort()
 
-    # Compute the differences between pairs of successive values of u and v.
-    deltas = np.diff(all_values)
+#     # Compute the differences between pairs of successive values of u and v.
+#     deltas = np.diff(all_values)
 
-    # Get the respective positions of the values of u and v among the values of
-    # both distributions.
-    u_cdf_indices = np.searchsorted(u_values, all_values[:-1], side="right")
-    v_cdf_indices = np.searchsorted(v_values, all_values[:-1], side="right")
+#     # Get the respective positions of the values of u and v among the values of
+#     # both distributions.
+#     u_cdf_indices = np.searchsorted(u_values, all_values[:-1], side="right")
+#     v_cdf_indices = np.searchsorted(v_values, all_values[:-1], side="right")
 
-    zero = np.array([0])
-    # Calculate the CDFs of u and v using their weights, if specified.
-    if u_weights is None:
-        u_cdf = u_cdf_indices / u_values.size
-    else:
-        uw_cumsum = np.cumsum(u_weights)
-        u_sorted_cumweights = np.concatenate((zero, uw_cumsum))
-        u_cdf = u_sorted_cumweights[u_cdf_indices] / u_sorted_cumweights[-1]
+#     zero = np.array([0])
+#     # Calculate the CDFs of u and v using their weights, if specified.
+#     if u_weights is None:
+#         u_cdf = u_cdf_indices / u_values.size
+#     else:
+#         uw_cumsum = np.cumsum(u_weights)
+#         u_sorted_cumweights = np.concatenate((zero, uw_cumsum))
+#         u_cdf = u_sorted_cumweights[u_cdf_indices] / u_sorted_cumweights[-1]
 
-    if v_weights is None:
-        v_cdf = v_cdf_indices / v_values.size
-    else:
-        vw_cumsum = np.cumsum(v_weights)
-        v_sorted_cumweights = np.concatenate((zero, vw_cumsum))
-        v_cdf = v_sorted_cumweights[v_cdf_indices] / v_sorted_cumweights[-1]
+#     if v_weights is None:
+#         v_cdf = v_cdf_indices / v_values.size
+#     else:
+#         vw_cumsum = np.cumsum(v_weights)
+#         v_sorted_cumweights = np.concatenate((zero, vw_cumsum))
+#         v_cdf = v_sorted_cumweights[v_cdf_indices] / v_sorted_cumweights[-1]
 
-    # Compute the value of the integral based on the CDFs.
-    # If p = 1 or p = 2, we avoid using np.power, which introduces an overhead
-    # of about 15%.
-    if p == 1:
-        return np.sum(np.multiply(np.abs(u_cdf - v_cdf), deltas))
-    if p == 2:
-        return np.sqrt(np.sum(np.multiply(np.power(u_cdf - v_cdf, 2), deltas)))
-    return np.power(
-        np.sum(np.multiply(np.power(np.abs(u_cdf - v_cdf), p), deltas)), 1 / p
-    )
+#     # Compute the value of the integral based on the CDFs.
+#     # If p = 1 or p = 2, we avoid using np.power, which introduces an overhead
+#     # of about 15%.
+#     if p == 1:
+#         return np.sum(np.multiply(np.abs(u_cdf - v_cdf), deltas))
+#     if p == 2:
+#         return np.sqrt(np.sum(np.multiply(np.power(u_cdf - v_cdf, 2), deltas)))
+#     return np.power(
+#         np.sum(np.multiply(np.power(np.abs(u_cdf - v_cdf), p), deltas)), 1 / p
+#     )
 
 
-@njit(fastmath=fastmath, debug=debug)
-def wasserstein_distance(
-    u,
-    v,
-    u_weights=None,
-    v_weights=None,
-    presorted=False,
-    cumweighted=False,
-    prepended=False,
-):
-    r"""
-    Compute the first Wasserstein distance between two 1D distributions.
+# @njit(fastmath=fastmath, debug=debug)
+# def wasserstein_distance(
+#     u,
+#     v,
+#     u_weights=None,
+#     v_weights=None,
+#     presorted=False,
+#     cumweighted=False,
+#     prepended=False,
+# ):
+#     r"""
+#     Compute the first Wasserstein distance between two 1D distributions.
 
-    This distance is also known as the earth mover's distance, since it can be
-    seen as the minimum amount of "work" required to transform :math:`u` into
-    :math:`v`, where "work" is measured as the amount of distribution weight
-    that must be moved, multiplied by the distance it has to be moved.
+#     This distance is also known as the earth mover's distance, since it can be
+#     seen as the minimum amount of "work" required to transform :math:`u` into
+#     :math:`v`, where "work" is measured as the amount of distribution weight
+#     that must be moved, multiplied by the distance it has to be moved.
 
-    Source
-    ------
-    https://github.com/scipy/scipy/blob/47bb6febaa10658c72962b9615d5d5aa2513fa3a/scipy/stats/stats.py#L8245-L8319 # noqa
+#     Source
+#     ------
+#     https://github.com/scipy/scipy/blob/47bb6febaa10658c72962b9615d5d5aa2513fa3a/scipy/stats/stats.py#L8245-L8319 # noqa
 
-    Parameters
-    ----------
-    u_values, v_values : array_like
-        Values observed in the (empirical) distribution.
-    u_weights, v_weights : array_like, optional
-        Weight for each value. If unspecified, each value is assigned the same
-        weight.
-        `u_weights` (resp. `v_weights`) must have the same length as
-        `u_values` (resp. `v_values`). If the weight sum differs from 1, it
-        must still be positive and finite so that the weights can be normalized
-        to sum to 1.
+#     Parameters
+#     ----------
+#     u_values, v_values : array_like
+#         Values observed in the (empirical) distribution.
+#     u_weights, v_weights : array_like, optional
+#         Weight for each value. If unspecified, each value is assigned the same
+#         weight.
+#         `u_weights` (resp. `v_weights`) must have the same length as
+#         `u_values` (resp. `v_values`). If the weight sum differs from 1, it
+#         must still be positive and finite so that the weights can be normalized
+#         to sum to 1.
 
-    Returns
-    -------
-    distance : float
-        The computed distance between the distributions.
+#     Returns
+#     -------
+#     distance : float
+#         The computed distance between the distributions.
 
-    Notes
-    -----
-    The input distributions can be empirical, therefore coming from samples
-    whose values are effectively inputs of the function, or they can be seen as
-    generalized functions, in which case they are weighted sums of Dirac delta
-    functions located at the specified values.
+#     Notes
+#     -----
+#     The input distributions can be empirical, therefore coming from samples
+#     whose values are effectively inputs of the function, or they can be seen as
+#     generalized functions, in which case they are weighted sums of Dirac delta
+#     functions located at the specified values.
 
-    References
-    ----------
-    .. [1] Bellemare, Danihelka, Dabney, Mohamed, Lakshminarayanan, Hoyer,
-           Munos "The Cramer Distance as a Solution to Biased Wasserstein
-           Gradients" (2017). :arXiv:`1705.10743`.
-    """
-    return cdf_distance(
-        u,
-        v,
-        u_weights,
-        v_weights,
-        1,
-        presorted=False,
-        cumweighted=False,
-        prepended=False,
-    )
+#     References
+#     ----------
+#     .. [1] Bellemare, Danihelka, Dabney, Mohamed, Lakshminarayanan, Hoyer,
+#            Munos "The Cramer Distance as a Solution to Biased Wasserstein
+#            Gradients" (2017). :arXiv:`1705.10743`.
+#     """
+#     return cdf_distance(
+#         u,
+#         v,
+#         u_weights,
+#         v_weights,
+#         1,
+#         presorted=False,
+#         cumweighted=False,
+#         prepended=False,
+#     )
 
 
 # @njit(fastmath=fastmath, debug=debug)
@@ -308,7 +309,7 @@ def compute_distance(u, v, u_weights, v_weights, metric_num):
         # d = wasserstein_distance(
         #     u, v, u_weights=u_weights, v_weights=v_weights, p=1, presorted=True
         # )
-        d = wasserstein_distance(u, v, u_weights, v_weights, 1, True)
+        d = wasserstein_distance(u, v, u_weights, v_weights, True, True, True)
     else:
         raise NotImplementedError(
             "Specified metric is mispelled or has not been implemented yet. \
@@ -486,7 +487,7 @@ def dist_matrix(
 
     if pairQ:
         npairs = pairs.shape[0]
-        shape = (npairs, 1)
+        shape = (npairs,)
     else:
         shape = (m, m2)
 
@@ -520,7 +521,7 @@ def dist_matrix(
 
     elif not isXY and pairQ:
         # specified pairwise distances within single set of vectors
-        sparse_distance_matrix(U, U, U_weights, U_weights, pairs, out, isXY, metric_num)
+        sparse_distance_matrix(U, U, U_weights, U_weights, pairs, out, metric_num)
 
     elif not isXY and not pairQ:
         # distance matrix within single set of vectors
@@ -528,7 +529,7 @@ def dist_matrix(
 
     elif isXY and pairQ:
         # specified pairwise distances between two sets of vectors
-        sparse_distance_matrix(U, V, U_weights, V_weights, pairs, out, isXY, metric_num)
+        sparse_distance_matrix(U, V, U_weights, V_weights, pairs, out, metric_num)
 
     return out
 
