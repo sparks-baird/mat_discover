@@ -2,8 +2,8 @@ name: Test, Publish, and Release
 
 on: 
   push:
-#     tags:
-#     - "v*.*.*"
+    tags:
+    - "v*.*.*"
 
 # on:
 #   release:
