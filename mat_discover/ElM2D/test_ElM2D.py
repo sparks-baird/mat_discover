@@ -32,6 +32,8 @@ from ElMD import ElMD
 # else:
 #     target = "cpu"
 
+target = "cuda"
+
 # n_elements = len(ElMD(metric="mod_petti").periodic_tab)
 
 # settings = {
