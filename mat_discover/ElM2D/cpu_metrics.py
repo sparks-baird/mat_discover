@@ -40,7 +40,14 @@ else:
     )
 
 
-@njit(fastmath=fastmath, debug=debug)
+# @njit(fastmath=fastmath, debug=debug)
+@njit(
+    "void(float{0}[:], float{0}[:], float{0}[:], float{0}[:,:],int{0}, bool, bool, bool)".format(
+        bits
+    ),
+    fastmath=fastmath,
+    debug=debug,
+)
 def cdf_distance(
     u, v, u_weights, v_weights, p, presorted, cumweighted, prepended
 ):  # noqa
@@ -102,20 +109,20 @@ def cdf_distance(
     """
     # allocate local float arrays
     # combined vector
-    uv = np.zeros(tot_cols, "float")
-    uv_deltas = np.zeros(tot_cols_minus_1, "float")
+    uv = np.zeros(tot_cols, dtype=np_float)
+    uv_deltas = np.zeros(tot_cols_minus_1, dtype=np_float)
 
     # CDFs
-    u_cdf = np.zeros(tot_cols_minus_1, "float")
-    v_cdf = np.zeros(tot_cols_minus_1, "float")
+    u_cdf = np.zeros(tot_cols_minus_1, dtype=np_float)
+    v_cdf = np.zeros(tot_cols_minus_1, dtype=np_float)
 
     # allocate local int arrays
     # CDF indices via binary search
-    u_cdf_indices = np.zeros(tot_cols_minus_1, "int")
-    v_cdf_indices = np.zeros(tot_cols_minus_1, "int")
+    u_cdf_indices = np.zeros(tot_cols_minus_1, dtype=np_int)
+    v_cdf_indices = np.zeros(tot_cols_minus_1, dtype=np_int)
 
-    u_cdf_sorted_cumweights = np.zeros(tot_cols_minus_1, "float")
-    v_cdf_sorted_cumweights = np.zeros(tot_cols_minus_1, "float")
+    u_cdf_sorted_cumweights = np.zeros(tot_cols_minus_1, dtype=np_float)
+    v_cdf_sorted_cumweights = np.zeros(tot_cols_minus_1, dtype=np_float)
 
     # short-circuit
     if presorted and cumweighted and prepended:
@@ -141,14 +148,14 @@ def cdf_distance(
         # sorting
         if not presorted:
             # local arrays
-            u_sorted = np.zeros(cols, "float")
-            v_sorted = np.zeros(cols, "float")
+            u_sorted = np.zeros(cols, dtype=np_float)
+            v_sorted = np.zeros(cols, dtype=np_float)
 
-            u_sorter = np.zeros(cols, "int")
-            v_sorter = np.zeros(cols, "int")
+            u_sorter = np.zeros(cols, dtype=np_int)
+            v_sorter = np.zeros(cols, dtype=np_int)
 
-            u_sorted_weights = np.zeros(cols, "float")
-            v_sorted_weights = np.zeros(cols, "float")
+            u_sorted_weights = np.zeros(cols, dtype=np_float)
+            v_sorted_weights = np.zeros(cols, dtype=np_float)
 
             # local copy since quickArgSortIterative sorts in-place
             hp.copy(u, u_sorted)
@@ -165,18 +172,18 @@ def cdf_distance(
         # cumulative weights
         if not cumweighted:
             # local arrays
-            u_cumweights = np.zeros(cols, "float")
-            v_cumweights = np.zeros(cols, "float")
+            u_cumweights = np.zeros(cols, dtype=np_float)
+            v_cumweights = np.zeros(cols, dtype=np_float)
             # accumulate
             hp.cumsum(u_sorted_weights, u_cumweights)
             hp.cumsum(v_sorted_weights, v_cumweights)
 
         # prepend weights with zero
         if not prepended:
-            zero = np.zeros(1, "float")
+            zero = np.zeros(1, dtype=np_float)
 
-            u_0_cumweights = np.zeros(cols_plus_1, "float")
-            v_0_cumweights = np.zeros(cols_plus_1, "float")
+            u_0_cumweights = np.zeros(cols_plus_1, dtype=np_float)
+            v_0_cumweights = np.zeros(cols_plus_1, dtype=np_float)
 
             hp.concatenate(zero, u_cumweights, u_0_cumweights)
             hp.concatenate(zero, v_cumweights, v_0_cumweights)
@@ -208,7 +215,14 @@ def cdf_distance(
     return out
 
 
-@njit(fastmath=fastmath, debug=debug)
+# @njit(fastmath=fastmath, debug=debug)
+@njit(
+    "void(float{0}[:], float{0}[:], float{0}[:], float{0}[:,:], bool, bool, bool)".format(
+        bits
+    ),
+    fastmath=fastmath,
+    debug=debug,
+)
 def wasserstein_distance(
     u, v, u_weights, v_weights, presorted, cumweighted, prepended
 ):  # noqa
