@@ -1,152 +1,152 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Sep  8 01:36:51 2021
-
-@author: sterg
-"""
+"""Test functions for njit wasserstein metric."""
 import os
+import json
 from importlib import reload
 
 import numpy as np
 from scipy.stats import wasserstein_distance as scipy_wasserstein_distance
 
-# from numba import njit
+os.environ["NUMBA_DISABLE_JIT"] = "1"
 
-# os.environ["NUMBA_DISABLE_JIT"] = "1"
+cols = 100
+
+settings = {
+    "INLINE": "never",
+    "FASTMATH": True,
+    "COLUMNS": cols,
+    "USE_64": False,
+    "TARGET": "cuda",
+}
+
+with open("dist_matrix_settings.json", "w") as f:
+    json.dump(settings, f)
 
 from mat_discover.ElM2D import cpu_metrics, njit_dist_matrix  # noqa
 
 reload(cpu_metrics)
 reload(njit_dist_matrix)
 
-# wasserstein_distance = cpu_metrics.wasserstein_distance
+# for some reason, inaccurate
+wasserstein_distance = cpu_metrics.wasserstein_distance
 
-wasserstein_distance = njit_dist_matrix.wasserstein_distance
-
-fastmath = bool(os.environ.get("FASTMATH", "1"))
-debug = bool(os.environ.get("DEBUG", "0"))
+# accurate
+# wasserstein_distance = njit_dist_matrix.wasserstein_distance
 
 # generate test data
 np.random.seed(42)
-rows = 200
-cols = 100
+rows = 10
 
-[U, V, U_weights, V_weights] = [np.random.rand(rows, cols) for i in range(4)]
-
-testpairs = np.array([(1, 2), (2, 3), (3, 4)])
+[U, V, U_weights, V_weights] = [
+    10 * np.random.rand(rows, cols).astype(np.float32) for _ in range(4)
+]
 
 # %% unit tests
-one_set_check = scipy_wasserstein_distance(
-    U[0], U[1], u_weights=U_weights[0], v_weights=U_weights[1]
-)
-two_set_check = scipy_wasserstein_distance(
-    U[0], V[0], u_weights=U_weights[0], v_weights=V_weights[0]
-)
-i, j = testpairs[0]
-one_sparse_check = scipy_wasserstein_distance(
-    U[i], U[j], u_weights=U_weights[i], v_weights=U_weights[j]
-)
-two_sparse_check = scipy_wasserstein_distance(
-    U[i], V[j], u_weights=U_weights[i], v_weights=V_weights[j]
-)
-
-# calculations
-one_set = wasserstein_distance(
-    U[0], U[1], U_weights[0], U_weights[1], False, False, False
-)
-two_set = wasserstein_distance(
-    U[0], V[0], U_weights[0], V_weights[0], False, False, False
-)
-
-one_set_sparse = wasserstein_distance(
-    U[i], U[j], U_weights[i], U_weights[j], False, False, False
-)
-two_set_sparse = wasserstein_distance(
-    U[i], V[j], U_weights[i], V_weights[j], False, False, False
-)
-
 tol = 1e-4
 
 
 def test_one_set():
-    assert abs(one_set - one_set_check) < tol
+    one_set_check = scipy_wasserstein_distance(
+        U[0], U[1], u_weights=U_weights[0], v_weights=U_weights[1]
+    )
+    one_set = wasserstein_distance(
+        U[0], U[1], U_weights[0], U_weights[1], False, False, False
+    )
+    assert abs(one_set - one_set_check) < tol, "one set discrepancy"
 
 
 def test_two_set():
-    assert abs(two_set - two_set_check) < tol
+    two_set_check = scipy_wasserstein_distance(
+        U[0], V[0], u_weights=U_weights[0], v_weights=V_weights[0]
+    )
+    two_set = wasserstein_distance(
+        U[0], V[0], U_weights[0], V_weights[0], False, False, False
+    )
+    assert abs(two_set - two_set_check) < tol, "two set discrepancy"
 
 
 def test_one_set_sparse():
-    assert abs(one_set_sparse - one_sparse_check) < tol
+    one_sparse_check = scipy_wasserstein_distance(
+        U[1], U[2], u_weights=U_weights[1], v_weights=U_weights[2]
+    )
+    one_set_sparse = wasserstein_distance(
+        U[1], U[2], U_weights[1], U_weights[2], False, False, False
+    )
+    assert abs(one_set_sparse - one_sparse_check) < tol, "one set sparse discrepancy"
 
 
 def test_two_set_sparse():
-    assert abs(two_set_sparse - two_sparse_check) < tol
+    two_sparse_check = scipy_wasserstein_distance(
+        U[1], V[2], u_weights=U_weights[1], v_weights=V_weights[2]
+    )
+    two_set_sparse = wasserstein_distance(
+        U[1], V[2], U_weights[1], V_weights[2], False, False, False
+    )
+    assert abs(two_set_sparse - two_sparse_check) < tol, "two set sparse discrepancy"
 
 
 # %% wasserstein helper functions
-def my_wasserstein_distance(u_uw, v_vw):
-    """
-    Return Earth Mover's distance using concatenated values and weights.
+# def my_wasserstein_distance(u_uw, v_vw):
+#     """
+#     Return Earth Mover's distance using concatenated values and weights.
 
-    Parameters
-    ----------
-    u_uw : 1D numeric array
-        Horizontally stacked values and weights of first distribution.
-    v_vw : TYPE
-        Horizontally stacked values and weights of second distribution.
+#     Parameters
+#     ----------
+#     u_uw : 1D numeric array
+#         Horizontally stacked values and weights of first distribution.
+#     v_vw : TYPE
+#         Horizontally stacked values and weights of second distribution.
 
-    Returns
-    -------
-    distance : numeric scalar
-        Earth Mover's distance given two distributions.
+#     Returns
+#     -------
+#     distance : numeric scalar
+#         Earth Mover's distance given two distributions.
 
-    """
-    # split into values and weights
-    n = len(u_uw)
-    i = n // 2
-    u = u_uw[0:i]
-    uw = u_uw[i:n]
-    v = v_vw[0:i]
-    vw = v_vw[i:n]
-    # calculate distance
-    distance = wasserstein_distance(u, v, u_weights=uw, v_weights=vw)
-    return distance
+#     """
+#     # split into values and weights
+#     n = len(u_uw)
+#     i = n // 2
+#     u = u_uw[0:i]
+#     uw = u_uw[i:n]
+#     v = v_vw[0:i]
+#     vw = v_vw[i:n]
+#     # calculate distance
+#     distance = wasserstein_distance(u, v, u_weights=uw, v_weights=vw)
+#     return distance
 
 
-def join_wasserstein(U, V, Uw, Vw):
-    """
-    Horizontally stack values and weights for each distribution.
+# def join_wasserstein(U, V, Uw, Vw):
+#     """
+#     Horizontally stack values and weights for each distribution.
 
-    Weights are added as additional columns to values.
+#     Weights are added as additional columns to values.
 
-    Example:
-        u_uw, v_vw = join_wasserstein(u, v, uw, vw)
-        d = my_wasserstein_distance(u_uw, v_vw)
-        cdist(u_uw, v_vw, metric=my_wasserstein_distance)
+#     Example:
+#         u_uw, v_vw = join_wasserstein(u, v, uw, vw)
+#         d = my_wasserstein_distance(u_uw, v_vw)
+#         cdist(u_uw, v_vw, metric=my_wasserstein_distance)
 
-    Parameters
-    ----------
-    u : 1D or 2D numeric array
-        First set of distribution values.
-    v : 1D or 2D numeric array
-        Second set of values of distribution values.
-    uw : 1D or 2D numeric array
-        Weights for first distribution.
-    vw : 1D or 2D numeric array
-        Weights for second distribution.
+#     Parameters
+#     ----------
+#     u : 1D or 2D numeric array
+#         First set of distribution values.
+#     v : 1D or 2D numeric array
+#         Second set of values of distribution values.
+#     uw : 1D or 2D numeric array
+#         Weights for first distribution.
+#     vw : 1D or 2D numeric array
+#         Weights for second distribution.
 
-    Returns
-    -------
-    u_uw : 1D or 2D numeric array
-        Horizontally stacked values and weights of first distribution.
-    v_vw : TYPE
-        Horizontally stacked values and weights of second distribution.
+#     Returns
+#     -------
+#     u_uw : 1D or 2D numeric array
+#         Horizontally stacked values and weights of first distribution.
+#     v_vw : TYPE
+#         Horizontally stacked values and weights of second distribution.
 
-    """
-    U_Uw = np.concatenate((U, Uw), axis=1)
-    V_Vw = np.concatenate((V, Vw), axis=1)
-    return U_Uw, V_Vw
+#     """
+#     U_Uw = np.concatenate((U, Uw), axis=1)
+#     V_Vw = np.concatenate((V, Vw), axis=1)
+#     return U_Uw, V_Vw
 
 
 # @njit(fastmath=fastmath, debug=debug)
@@ -196,7 +196,8 @@ def wasserstein_distance_check(u_values, v_values, u_weights=None, v_weights=Non
     v_sorter = np.argsort(v_values)
 
     all_values = np.concatenate((u_values, v_values))
-    all_values.sort(kind="mergesort")
+    # all_values.sort(kind="mergesort")
+    all_values.sort()
 
     # Compute the differences between pairs of successive values of u and v.
     deltas = np.diff(all_values)
@@ -231,7 +232,13 @@ def wasserstein_distance_check(u_values, v_values, u_weights=None, v_weights=Non
     )
 
 
-U_Uw, V_Vw = join_wasserstein(U, V, U_weights, V_weights)
+# U_Uw, V_Vw = join_wasserstein(U, V, U_weights, V_weights)
+
+if __name__ == "__main__":
+    test_one_set()
+    test_one_set_sparse()
+    test_two_set()
+    test_two_set_sparse()
 
 
 # %% CODE GRAVEYARD
