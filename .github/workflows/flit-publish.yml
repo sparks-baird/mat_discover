@@ -1,4 +1,4 @@
-name: Python Package using Conda
+name: Publish to PyPI via Flit
 
 on: 
   push:
@@ -16,6 +16,8 @@ jobs:
     steps:
     - name: Checkout source
       uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: Set up Python 3.8
       uses: actions/setup-python@v1
       with:
