@@ -5,16 +5,17 @@ This test ensures that the fast implementation "wasserstein" produces "close" va
 to the original network simplex method.
 """
 import os
-import json
+
+# import json
 import unittest
 from importlib import reload
 
 from os.path import join, dirname, relpath
 
 from numpy.testing import assert_allclose
-import numpy as np
 
-from numba import cuda
+# import numpy as np
+# from numba import cuda
 
 from sklearn.metrics import mean_squared_error
 from scipy.spatial.distance import squareform
@@ -27,27 +28,18 @@ import pandas as pd
 
 from ElMD import ElMD
 
-# if cuda.is_available():
-#     target = "cuda"
-# else:
-#     target = "cpu"
-
 target = "cuda"
 
-# n_elements = len(ElMD(metric="mod_petti").periodic_tab)
+n_elements = len(ElMD(metric="mod_petti").periodic_tab)
 
-# settings = {
-#     "INLINE": "never",
-#     "FASTMATH": True,
-#     "COLUMNS": n_elements,
-#     "USE_64": False,
-#     "TARGET": "cuda",
-# }
+# # number of columns of U and V and other env vars must be set as env var before import
+os.environ["COLUMNS"] = str(n_elements)
+os.environ["USE_64"] = "0"
+os.environ["INLINE"] = "never"
+os.environ["FASTMATH"] = "1"
+os.environ["TARGET"] = target
 
-# with open("dist_matrix_settings.json", "w") as f:
-#     json.dump(settings, f)
-
-from mat_discover.ElM2D import ElM2D_
+from mat_discover.ElM2D import ElM2D_  # noqa
 
 reload(ElM2D_)
 
@@ -65,8 +57,8 @@ class Testing(unittest.TestCase):
             mapper.fit(sub_formulas, target=target)
             dm_wasserstein = mapper.dm
 
-        # FIXME: njit_dist_matrix not inheriting env vars, are env vars even necessary for njit?
-        # mapper.fit(sub_formulas)
+        # FIXME: njit_dist_matrix not inheriting env vars, are env vars even necessary for njit
+        # mapper.fit(sub_formulas, target="cpu")
         # dm_wasserstein = mapper.dm
 
         with Timer("dm_network"):
@@ -136,3 +128,21 @@ if __name__ == "__main__":
 # Note: "network_simplex" emd_algorithm produces a "freeze_support()" error in
 # Spyder IPython and Spyder external terminal without the if __name == "__main__" on
 # Windows. This is likely due to the way Pool is used internally within ElM2D.
+
+# n_elements = len(ElMD(metric="mod_petti").periodic_tab)
+
+# settings = {
+#     "INLINE": "never",
+#     "FASTMATH": True,
+#     "COLUMNS": n_elements,
+#     "USE_64": False,
+#     "TARGET": "cuda",
+# }
+
+# with open("dist_matrix_settings.json", "w") as f:
+#     json.dump(settings, f)
+
+# if cuda.is_available():
+#     target = "cuda"
+# else:
+#     target = "cpu"

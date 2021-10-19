@@ -9,7 +9,7 @@ Cases:
 
 Various distance metrics are available.
 """
-import json
+import os
 import numpy as np
 from math import ceil
 from .metrics import wasserstein_distance, euclidean_distance
@@ -17,14 +17,11 @@ from .metrics import wasserstein_distance, euclidean_distance
 from numba import cuda, jit  # noqa
 from numba.types import int32, float32, int64, float64  # noqa
 
-with open("dist_matrix_settings.json", "r") as f:
-    settings = json.load(f)
-inline = settings.get("INLINE", "never")
-fastmath = settings.get("FASTMATH", True)
-cols = settings.get("COLUMNS")
-USE_64 = settings.get("USE_64", "0")
+inline = os.environ.get("INLINE", "never")
+fastmath = bool(os.environ.get("FASTMATH", "1"))
+cols = os.environ.get("COLUMNS")
+USE_64 = bool(os.environ.get("USE_64", "0"))
 target = "cuda"
-# target = settings.get("TARGET", "cuda")
 
 
 if USE_64 is None:

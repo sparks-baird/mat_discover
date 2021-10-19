@@ -1,35 +1,28 @@
 """Test functions for njit wasserstein metric."""
 import os
-import json
 from importlib import reload
 
 import numpy as np
 from scipy.stats import wasserstein_distance as scipy_wasserstein_distance
 
-os.environ["NUMBA_DISABLE_JIT"] = "1"
+os.environ["NUMBA_DISABLE_JIT"] = "0"
 
 cols = 100
 
-settings = {
-    "INLINE": "never",
-    "FASTMATH": True,
-    "COLUMNS": cols,
-    "USE_64": False,
-    "TARGET": "cuda",
-}
-
-with open("dist_matrix_settings.json", "w") as f:
-    json.dump(settings, f)
+os.environ["COLUMNS"] = str(cols)
+os.environ["USE_64"] = "0"
+os.environ["INLINE"] = "never"
+os.environ["FASTMATH"] = "1"
+os.environ["TARGET"] = "cpu"
 
 from mat_discover.ElM2D import cpu_metrics, njit_dist_matrix  # noqa
 
 reload(cpu_metrics)
 reload(njit_dist_matrix)
 
-# for some reason, inaccurate
 wasserstein_distance = cpu_metrics.wasserstein_distance
 
-# accurate
+# slower
 # wasserstein_distance = njit_dist_matrix.wasserstein_distance
 
 # generate test data
@@ -47,7 +40,7 @@ tol = 1e-4
 def test_one_set():
     one_set_check = scipy_wasserstein_distance(
         U[0], U[1], u_weights=U_weights[0], v_weights=U_weights[1]
-    )
+    ) 
     one_set = wasserstein_distance(
         U[0], U[1], U_weights[0], U_weights[1], False, False, False
     )
@@ -279,3 +272,14 @@ if __name__ == "__main__":
 # reload(njit_dist_matrix)
 # # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
 # wasserstein_distance = njit_dist_matrix.wasserstein_distance
+
+# settings = {
+#     "INLINE": "never",
+#     "FASTMATH": True,
+#     "COLUMNS": cols,
+#     "USE_64": False,
+#     "TARGET": "cuda",
+# }
+
+# with open("dist_matrix_settings.json", "w") as f:
+#     json.dump(settings, f)

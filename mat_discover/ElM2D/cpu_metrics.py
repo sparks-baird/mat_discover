@@ -1,5 +1,5 @@
 """Metrics file specific to njit / CPU implementations."""
-import json
+import os
 from math import sqrt
 import numpy as np
 
@@ -7,13 +7,11 @@ from . import cpu_helper as hp
 
 from numba import njit
 
-with open("dist_matrix_settings.json", "r") as f:
-    settings = json.load(f)
-inline = settings.get("INLINE", "never")
-fastmath = settings.get("FASTMATH", True)
-cols = settings.get("COLUMNS")
-USE_64 = settings.get("USE_64", "0")
-target = settings.get("TARGET", "cuda")
+inline = os.environ.get("INLINE", "never")
+fastmath = bool(os.environ.get("FASTMATH", "1"))
+cols = os.environ.get("COLUMNS")
+USE_64 = bool(os.environ.get("USE_64", "0"))
+target = os.environ.get("TARGET", "cuda")
 
 debug = False
 

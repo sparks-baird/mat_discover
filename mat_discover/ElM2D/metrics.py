@@ -6,7 +6,7 @@ Created on Wed Sep  8 14:47:43 2021
 @author: sterg
 """
 # from unittest.mock import patch
-import json
+import os
 import numpy as np
 from . import helper as hp
 from math import sqrt
@@ -15,13 +15,11 @@ from numba.types import int32, float32, int64, float64  # noqa
 
 from numba import cuda  # noqa
 
-with open("dist_matrix_settings.json", "r") as f:
-    settings = json.load(f)
-inline = settings.get("INLINE", "never")
-fastmath = settings.get("FASTMATH", True)
-cols = settings.get("COLUMNS")
-USE_64 = settings.get("USE_64", "0")
-target = settings.get("TARGET", "cuda")
+inline = os.environ.get("INLINE", "never")
+fastmath = bool(os.environ.get("FASTMATH", "1"))
+cols = os.environ.get("COLUMNS")
+USE_64 = bool(os.environ.get("USE_64", "0"))
+target = os.environ.get("TARGET", "cuda")
 
 # if target == "cuda":
 

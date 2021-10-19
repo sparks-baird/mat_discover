@@ -14,19 +14,11 @@ from numba.types import int32, float32, int64, float64
 # from mat_discover.ElM2D.metrics import euclidean_distance
 from mat_discover.ElM2D.cpu_metrics import wasserstein_distance, euclidean_distance
 
-# inline = os.environ.get("INLINE", "never")
-# fastmath = bool(os.environ.get("FASTMATH", "1"))
-# cols = os.environ.get("COLUMNS")  # 121 for ElM2D repo
-# USE_64 = bool(os.environ.get("USE_64", "0"))
-# target = os.environ.get("TARGET", "cuda")
-
-with open("dist_matrix_settings.json", "r") as f:
-    settings = json.load(f)
-inline = settings.get("INLINE", "never")
-fastmath = settings.get("FASTMATH", True)
-cols = settings.get("COLUMNS")
-USE_64 = settings.get("USE_64", "0")
-# target = settings.get("TARGET", "cuda")
+# settings
+inline = os.environ.get("INLINE", "never")
+fastmath = bool(os.environ.get("FASTMATH", "1"))
+cols = os.environ.get("COLUMNS")
+USE_64 = bool(os.environ.get("USE_64", "0"))
 target = "cpu"
 
 if USE_64:
@@ -536,3 +528,21 @@ def dist_matrix(
 
 # %% Code Graveyard
 # from Lib import inspect
+
+# with open("dist_matrix_settings.json", "r") as f:
+#     settings = json.load(f)
+# inline = settings.get("INLINE", "never")
+# fastmath = settings.get("FASTMATH", True)
+# cols = settings.get("COLUMNS")
+# USE_64 = settings.get("USE_64", False)
+
+
+# settings = {
+#     "INLINE": "never",
+#     "FASTMATH": True,
+#     "COLUMNS": None,
+#     "USE_64": False,
+# }
+# inline, fastmath, cols, USE_64 = [
+#     settings.get(key, value) for key, value in settings.items()
+# ]

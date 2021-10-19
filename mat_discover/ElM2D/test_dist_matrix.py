@@ -1,5 +1,5 @@
 """Test distance matrix calculations using CUDA/Numba."""
-import json
+import os
 from importlib import reload
 
 from numpy.testing import assert_allclose
@@ -15,16 +15,11 @@ from ElMD import ElMD
 
 cols = len(ElMD(metric="mod_petti").periodic_tab)
 
-settings = {
-    "INLINE": "never",
-    "FASTMATH": True,
-    "COLUMNS": cols,
-    "USE_64": False,
-    "TARGET": "cuda",
-}
-
-with open("dist_matrix_settings.json", "w") as f:
-    json.dump(settings, f)
+os.environ["COLUMNS"] = str(cols)
+os.environ["USE_64"] = "0"
+os.environ["INLINE"] = "never"
+os.environ["FASTMATH"] = "1"
+os.environ["TARGET"] = "cuda"
 
 from mat_discover.ElM2D import cuda_dist_matrix  # noqa
 
@@ -305,18 +300,20 @@ if __name__ == "__main__":
 #     np.allclose(two_set_sparse, two_sparse_check)
 #     ]
 
-# number of columns of U and V must be set as env var before import dist_matrix
-# os.environ["COLUMNS"] = str(cols)
-
-# # other environment variables (set before importing dist_matrix)
-# os.environ["USE_64"] = "0"
-# os.environ["INLINE"] = "never"
-# os.environ["FASTMATH"] = "1"
-# os.environ["TARGET"] = "cuda"
-
 # from numba import cuda
 
 # os.environ["NUMBA_DISABLE_JIT"] = "1"
 
 # use_cuda = cuda.is_available()
 # if use_cuda:
+
+# settings = {
+#     "INLINE": "never",
+#     "FASTMATH": True,
+#     "COLUMNS": cols,
+#     "USE_64": False,
+#     "TARGET": "cuda",
+# }
+
+# with open("dist_matrix_settings.json", "w") as f:
+#     json.dump(settings, f)

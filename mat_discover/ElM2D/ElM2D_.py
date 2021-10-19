@@ -30,11 +30,13 @@ https://networkx.github.io/documentation/networkx-1.10/_modules/networkx/algorit
 Requires umap which may be installed via:
     conda install -c conda-forge umap-learn
 """
-# import os
+import os
+
 # from warnings import warn
 from operator import attrgetter
 from importlib import reload
-import json
+
+# import json
 
 # from typing import Optional
 # from types import ModuleType
@@ -62,15 +64,13 @@ from ElMD import ElMD, EMD
 
 n_elements = len(ElMD(metric="mod_petti").periodic_tab)
 
-# # number of columns of U and V must be set as env var before import
-# # HACK: define a wrapper to ElMD() so that you can use a different scale than mod_petti with cuda_dist_matrix
-# os.environ["COLUMNS"] = str(n_elements)
-
-# # other environment variables (set before importing cuda_dist_matrix)
-# os.environ["USE_64"] = "0"
-# os.environ["INLINE"] = "never"
-# os.environ["FASTMATH"] = "1"
-# os.environ["TARGET"] = "cuda"
+# number of columns of U and V and other env vars must be set as env var before import
+# HACK: define a wrapper to ElMD() so that you can use a different scale than mod_petti with cuda_dist_matrix
+os.environ["COLUMNS"] = str(n_elements)
+os.environ["USE_64"] = "0"
+os.environ["INLINE"] = "never"
+os.environ["FASTMATH"] = "1"
+os.environ["TARGET"] = "cuda"
 
 # overriden by ElM2D class if self.target is not None
 use_cuda = cuda.is_available()
@@ -81,16 +81,8 @@ else:
 
 # warn("target: " + target)
 
-settings = {
-    "INLINE": "never",
-    "FASTMATH": True,
-    "COLUMNS": n_elements,
-    "USE_64": False,
-    "TARGET": target,
-}
-
-with open("dist_matrix_settings.json", "w") as f:
-    json.dump(settings, f)
+# with open("dist_matrix_settings.json", "w") as f:
+#     json.dump(settings, f)
 
 
 from mat_discover.ElM2D import njit_dist_matrix  # noqa
@@ -983,3 +975,14 @@ class ElM2D:
 if __name__ == "__main__":
     freeze_support()
     main()
+
+# %%
+# settings = {
+#     "INLINE": "never",
+#     "FASTMATH": "1",
+#     "COLUMNS": str(n_elements),
+#     "USE_64": "0",
+#     "TARGET": target,
+# }
+
+# os.environ.update(settings)
