@@ -318,5 +318,5 @@ if __name__ == "__main__":
 
 # os.environ["NUMBA_DISABLE_JIT"] = "1"
 
-# if use_cuda:
 # use_cuda = cuda.is_available()
+# if use_cuda:
