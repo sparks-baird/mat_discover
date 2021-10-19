@@ -158,7 +158,7 @@ class TestDistMat(CUDATestCase):
             if testQ:
                 rows = 6
             else:
-                rows = 1000
+                rows = 100
             print("====[PARTIAL TEST WITH {} ROWS]====".format(rows))
             U, V, U_weights, V_weights = test_data(rows, cols)
             Utest, Vtest, Uwtest, Vwtest = [
