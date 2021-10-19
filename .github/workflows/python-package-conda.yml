@@ -63,8 +63,8 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
-        pip install flit
-        pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
+        pip install flit torch
+        # pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
         # flit install --deps production --extras test
         flit install
     - name: Test with pytest
