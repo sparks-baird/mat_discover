@@ -30,7 +30,7 @@ np.random.seed(42)
 rows = 10
 
 [U, V, U_weights, V_weights] = [
-    10 * np.random.rand(rows, cols).astype(np.float32) for _ in range(4)
+    np.random.rand(rows, cols).astype(np.float32) for _ in range(4)
 ]
 
 # %% unit tests
@@ -40,7 +40,7 @@ tol = 1e-4
 def test_one_set():
     one_set_check = scipy_wasserstein_distance(
         U[0], U[1], u_weights=U_weights[0], v_weights=U_weights[1]
-    ) 
+    )
     one_set = wasserstein_distance(
         U[0], U[1], U_weights[0], U_weights[1], False, False, False
     )
