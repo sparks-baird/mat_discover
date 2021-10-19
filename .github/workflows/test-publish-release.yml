@@ -1,0 +1,65 @@
+name: Test, Publish, and Release
+
+on: 
+  push:
+    tags:
+    - "v*.*.*"
+
+# on:
+#   release:
+#     types: [published]
+
+jobs:
+  flit-publish-gh-release:
+    name: Test, Publish to PyPI, and Release on GitHub
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+        
+    - name: Install dependencies
+      run: |
+        pip install flit torch # torch is CPU version
+        flit install
+        
+    - name: Pytest
+      shell: bash -l {0}
+      run: |
+        export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
+        python -m pytest
+        
+    - name: Build and publish
+      run: |
+        flit publish
+      env:
+        FLIT_USERNAME: __token__
+        FLIT_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        
+    - name: "Build Changelog" # https://github.com/marketplace/actions/release-changelog-builder
+      id: build_changelog
+      uses: mikepenz/release-changelog-builder-action@{latest-release}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create Release # https://github.com/softprops/action-gh-release
+      uses: softprops/action-gh-release@v1
+      with:
+        body: ${{steps.build_changelog.outputs.changelog}}
+        files: |
+          **/*.py
+          **/*.csv
+          **/*.md
+          **/*.yml
+          **/*.toml
+          **/*.txt
+          **/*.ipynb
+          **/*.html
+          **/*.png
+          LICENSE
+
