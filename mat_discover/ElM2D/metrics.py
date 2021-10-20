@@ -60,8 +60,13 @@ else:
         'via e.g. `os.environ["COLUMNS"] = "100"`.'
     )
 
-# TODO: explicit signature? Possibly faster
-@cuda.jit(device=True, inline=inline)
+@cuda.jit(
+    "float{0}(float{0}[:], float{0}[:], float{0}[:], float{0}[:], int{0}, boolean, boolean, boolean)".format(
+        bits
+    ),
+    device=True,
+    inline=inline,
+)
 def cdf_distance(
     u, v, u_weights, v_weights, p, presorted, cumweighted, prepended
 ):  # noqa
@@ -229,8 +234,13 @@ def cdf_distance(
     return out
 
 
-# TODO: explicit signature?
-@cuda.jit(device=True, inline=inline)
+@cuda.jit(
+    "float{0}(float{0}[:], float{0}[:], float{0}[:], float{0}[:], boolean, boolean, boolean)".format(
+        bits
+    ),
+    device=True,
+    inline=inline,
+)
 def wasserstein_distance(
     u, v, u_weights, v_weights, presorted, cumweighted, prepended
 ):  # noqa
@@ -282,7 +292,11 @@ def wasserstein_distance(
 
 
 # TODO: explicit signature?
-@cuda.jit(device=True, inline=inline)
+@cuda.jit(
+    "float{0}(float{0}[:], float{0}[:])".format(bits),
+    device=True,
+    inline=inline,
+)
 def euclidean_distance(a, b):
     """
     Calculate Euclidean distance between vectors a and b.
