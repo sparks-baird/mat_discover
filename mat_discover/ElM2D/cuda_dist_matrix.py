@@ -61,7 +61,11 @@ else:
 TPB = 16
 
 # TODO: explicit signature?
-@cuda.jit(device=True, inline=inline)
+@cuda.jit(
+    "float{0}(float{0}[:], float{0}[:], float{0}[:], float{0}[:], int{0})".format(bits),
+    device=True,
+    inline=inline,
+)
 def compute_distance(u, v, u_weights, v_weights, metric_num):
     """
     Calculate weighted distance between two vectors, u and v.
@@ -105,8 +109,9 @@ def compute_distance(u, v, u_weights, v_weights, metric_num):
 
 
 @cuda.jit(
-    "void(float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], "
-    "int{0}[:,:], float{0}[:], int{0})".format(bits),
+    "void(float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], int{0}[:,:], float{0}[:], int{0})".format(
+        bits
+    ),
     fastmath=fastmath,
 )
 def sparse_distance_matrix(U, V, U_weights, V_weights, pairs, out, metric_num):
@@ -192,8 +197,9 @@ def one_set_distance_matrix(U, U_weights, out, metric_num):
 
 # faster compilation *and* runtimes with explicit signature
 @cuda.jit(
-    "void(float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], "
-    "float{0}[:,:], int{0})".format(bits),
+    "void(float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], int{0})".format(
+        bits
+    ),
     fastmath=fastmath,
 )
 def two_set_distance_matrix(U, V, U_weights, V_weights, out, metric_num):
