@@ -22,7 +22,7 @@ dependencies = [
     "matplotlib>=3.4.3",
     "joblib",
     "pqdm",
-    "ElMD==0.4.3",
+    "ElMD==0.4.8",
     "psutil",
     "scikit_learn",
     "umap-learn",
@@ -34,7 +34,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest",
-    "ElM2D==0.4.0",
+    "ElM2D==0.4.1",
     "pytest-cov",
 ]
 # gpu = ["torch==1.9.1+cu111"]
