@@ -17,6 +17,7 @@ dependencies:
   - numba
   - seaborn
   - tqdm
+  - python-kaleido
   - umap-learn
   - numpy
   - scikit-learn
