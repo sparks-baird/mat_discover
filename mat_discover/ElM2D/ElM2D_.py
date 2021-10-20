@@ -30,13 +30,11 @@ https://networkx.github.io/documentation/networkx-1.10/_modules/networkx/algorit
 Requires umap which may be installed via:
     conda install -c conda-forge umap-learn
 """
-import os
-
-# from warnings import warn
-from operator import attrgetter
-from importlib import reload
-
+# import os
 # import json
+# from warnings import warn
+# from importlib import reload
+from operator import attrgetter
 
 # from typing import Optional
 # from types import ModuleType
@@ -56,21 +54,11 @@ import umap
 import plotly.express as px
 import plotly.io as pio
 
-from tqdm import tqdm
-
-# from tqdm.contrib.concurrent import process_map
+# from tqdm import tqdm
+from pqdm.processes import pqdm
 
 from ElMD import ElMD, EMD
-
-n_elements = len(ElMD(metric="mod_petti").periodic_tab)
-
-# number of columns of U and V and other env vars must be set as env var before import
-# HACK: define a wrapper to ElMD() so that you can use a different scale than mod_petti with cuda_dist_matrix
-os.environ["COLUMNS"] = str(n_elements)
-os.environ["USE_64"] = "0"
-os.environ["INLINE"] = "never"
-os.environ["FASTMATH"] = "1"
-os.environ["TARGET"] = "cuda"
+from mat_discover.ElM2D.njit_dist_matrix_full import dist_matrix as cpu_dist_matrix
 
 # overriden by ElM2D class if self.target is not None
 use_cuda = cuda.is_available()
@@ -85,20 +73,21 @@ else:
 #     json.dump(settings, f)
 
 
-from mat_discover.ElM2D import njit_dist_matrix  # noqa
+# from mat_discover.ElM2D import njit_dist_matrix  # noqa
 
-reload(njit_dist_matrix)
-# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
-cpu_dist_matrix = njit_dist_matrix.dist_matrix
+# reload(njit_dist_matrix)
+# # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+# cpu_dist_matrix = njit_dist_matrix.dist_matrix
 
 # REVIEW: why is it slower now?
 # cuda_dist_matrix: Optional[ModuleType]
 if use_cuda:
-    from mat_discover.ElM2D import cuda_dist_matrix  # noqa
+    # from mat_discover.ElM2D import cuda_dist_matrix  # noqa
 
-    # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
-    reload(cuda_dist_matrix)
-    gpu_dist_matrix = cuda_dist_matrix.dist_matrix
+    # # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+    # reload(cuda_dist_matrix)
+    # gpu_dist_matrix = cuda_dist_matrix.dist_matrix
+    from mat_discover.ElM2D.cuda_dist_matrix_full import dist_matrix as gpu_dist_matrix
 else:
     gpu_dist_matrix = None
 
@@ -377,7 +366,7 @@ class ElM2D:
             # Do this on a single core for smaller datasets
             distances = []
             print("Small dataset, using single CPU")
-            for i in tqdm(range(n - 1)):
+            for i in pqdm(range(n - 1)):
                 x = ElMD(X[i], metric=self.metric)
                 for j in range(i + 1, n):
                     distances.append(x.elmd(X[j]))
@@ -612,7 +601,7 @@ class ElM2D:
 
         if self.verbose:
             print("Parsing Formula")
-            for i, formula in tqdm(list(enumerate(formula_list))):
+            for i, formula in pqdm(list(enumerate(formula_list))):
                 self.input_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
         else:
             for i, formula in enumerate(formula_list):
@@ -621,7 +610,7 @@ class ElM2D:
         # Create input pairings
         if self.verbose:
             print("Constructing joint compositional pairings")
-            for i in tqdm(range(len(formula_list) - 1)):
+            for i in pqdm(range(len(formula_list) - 1)):
                 sublist = [(i, j) for j in range(i + 1, len(formula_list))]
                 pool_list.append(sublist)
         else:
@@ -718,7 +707,7 @@ class ElM2D:
 
         # decide whether to use cpu or cuda version
         if target is None:
-            if self.target is None or not cuda.is_available():
+            if (self.target is None or not cuda.is_available()) or self.target == "cpu":
                 target = "cpu"
             elif self.target == "cuda" or cuda.is_available():
                 target = "cuda"
@@ -938,18 +927,18 @@ class ElM2D:
 
         if self.verbose:
             print("Parsing X Formula")
-        for i, formula in tqdm(list(enumerate(X))):
+        for i, formula in pqdm(list(enumerate(X))):
             X_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
 
         if self.verbose:
             print("Parsing Y Formula")
-        for i, formula in tqdm(list(enumerate(y))):
+        for i, formula in pqdm(list(enumerate(y))):
             y_mat[i] = ElMD(formula, metric=self.metric).ratio_vector
 
         # Create input pairings
         if self.verbose:
             print("Constructing joint compositional pairings")
-        for y in tqdm(range(len(y_mat))):
+        for y in pqdm(range(len(y_mat))):
             sublist = [(y, x) for x in range(len(X_mat))]
             pool_list.append(sublist)
 
@@ -986,3 +975,14 @@ if __name__ == "__main__":
 # }
 
 # os.environ.update(settings)
+
+# from tqdm.contrib.concurrent import process_map
+# n_elements = len(ElMD(metric="mod_petti").periodic_tab)
+
+# # number of columns of U and V and other env vars must be set as env var before import
+# # HACK: define a wrapper to ElMD() so that you can use a different scale than mod_petti with cuda_dist_matrix
+# os.environ["COLUMNS"] = str(n_elements)
+# os.environ["USE_64"] = "0"
+# os.environ["INLINE"] = "never"
+# os.environ["FASTMATH"] = "1"
+# os.environ["TARGET"] = "cuda"
