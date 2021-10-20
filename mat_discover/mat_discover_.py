@@ -121,6 +121,7 @@ class Discover:
         table_path="tables",
         groupby_filter="max",
         pred_weight=1,
+        target="cuda",
     ):
         if timed:
             self.Timer = Timer
@@ -139,8 +140,14 @@ class Discover:
         self.figure_path = figure_path
         self.table_path = table_path
         self.pred_weight = pred_weight
+        self.target = target
 
-        self.mapper = ElM2D(target="cuda")  # type: ignore
+        if self.target == "cpu":
+            self.force_cpu = True
+        else:
+            self.force_cpu = False
+
+        self.mapper = ElM2D(target=self.target)  # type: ignore
         self.dm = None
         # self.formula = None
         # self.target = None
@@ -179,6 +186,7 @@ class Discover:
                 mat_prop=self.mat_prop_name,
                 train_df=train_df,
                 learningcurve=False,
+                force_cpu=self.force_cpu,
             )
 
         # TODO: UMAP on new data (i.e. add metric != "precomputed" functionality)
@@ -618,6 +626,7 @@ class Discover:
             val_df=val_df,
             learningcurve=False,
             verbose=False,
+            force_cpu=self.force_cpu,
         )
 
         # CrabNet predict output format: (act, pred, formulae, uncert)
