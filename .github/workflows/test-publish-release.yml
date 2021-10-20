@@ -47,19 +47,32 @@ jobs:
       uses: mikepenz/release-changelog-builder-action@v2.4.3
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Create Release # https://github.com/softprops/action-gh-release
-      uses: softprops/action-gh-release@v1
+        
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
       with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
         body: ${{steps.build_changelog.outputs.changelog}}
-        files: |
-          **/*.py
-          **/*.csv
-          **/*.md
-          **/*.yml
-          **/*.toml
-          **/*.txt
-          **/*.ipynb
-          **/*.html
-          **/*.png
-          LICENSE
+          
+        draft: false
+        prerelease: false
+
+#     - name: Create Release # https://github.com/softprops/action-gh-release
+#       uses: softprops/action-gh-release@v1
+#       with:
+#         body: ${{steps.build_changelog.outputs.changelog}}
+#         files: |
+#           **/*.py
+#           **/*.csv
+#           **/*.md
+#           **/*.yml
+#           **/*.toml
+#           **/*.txt
+#           **/*.ipynb
+#           **/*.html
+#           **/*.png
+#           LICENSE
