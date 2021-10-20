@@ -1,6 +1,6 @@
 """Test distance matrix calculations using CUDA/Numba."""
-import os
-from importlib import reload
+# import os
+# from importlib import reload
 
 from numpy.testing import assert_allclose
 import numpy as np
@@ -13,25 +13,28 @@ from numba.cuda.testing import unittest, CUDATestCase
 
 from ElMD import ElMD
 
-cols = len(ElMD(metric="mod_petti").periodic_tab)
+from mat_discover.ElM2D.njit_dist_matrix_full import dist_matrix as cpu_dist_matrix
+from mat_discover.ElM2D.cuda_dist_matrix_full import dist_matrix as gpu_dist_matrix
 
-os.environ["COLUMNS"] = str(cols)
-os.environ["USE_64"] = "0"
-os.environ["INLINE"] = "never"
-os.environ["FASTMATH"] = "1"
-os.environ["TARGET"] = "cuda"
+# os.environ["COLUMNS"] = str(cols)
+# os.environ["USE_64"] = "0"
+# os.environ["INLINE"] = "never"
+# os.environ["FASTMATH"] = "1"
+# os.environ["TARGET"] = "cuda"
 
-from mat_discover.ElM2D import cuda_dist_matrix  # noqa
+# from mat_discover.ElM2D import cuda_dist_matrix  # noqa
 
-# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
-reload(cuda_dist_matrix)
-gpu_dist_matrix = cuda_dist_matrix.dist_matrix
+# # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+# reload(cuda_dist_matrix)
+# gpu_dist_matrix = cuda_dist_matrix.dist_matrix
 # else:
-from mat_discover.ElM2D import njit_dist_matrix  # noqa
+# from mat_discover.ElM2D import njit_dist_matrix  # noqa
 
-# to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
-reload(njit_dist_matrix)
-cpu_dist_matrix = njit_dist_matrix.dist_matrix
+# # to overwrite env vars (source: https://stackoverflow.com/a/1254379/13697228)
+# reload(njit_dist_matrix)
+# cpu_dist_matrix = njit_dist_matrix.dist_matrix
+
+cols = len(ElMD(metric="mod_petti").periodic_tab)  # just for generating test data
 
 verbose_test = True
 
