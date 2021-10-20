@@ -10,13 +10,13 @@ from numba import njit
 inline = os.environ.get("INLINE", "never")
 fastmath = bool(os.environ.get("FASTMATH", "1"))
 cols = os.environ.get("COLUMNS")
-USE_64 = bool(os.environ.get("USE_64", "0"))
+# USE_64 = bool(os.environ.get("USE_64", "0"))
 target = os.environ.get("TARGET", "cuda")
 
 debug = False
 
-if USE_64 is None:
-    USE_64 = False
+USE_64 = False
+
 if USE_64:
     bits = 64
     np_float = np.float64
@@ -27,7 +27,7 @@ else:
     np_int = np.int32
 
 if cols is not None:
-    cols = int(cols)
+    cols = np_int(cols)
     cols_plus_1 = cols + 1
     tot_cols = cols * 2
     tot_cols_minus_1 = tot_cols - 1
@@ -42,7 +42,7 @@ else:
 
 # @njit(fastmath=fastmath, debug=debug)
 @njit(
-    "float{0}(float{0}[:], float{0}[:], float{0}[:], float{0}[:,:],int{0}, boolean, boolean, boolean)".format(
+    "float{0}(float{0}[:], float{0}[:], float{0}[:], float{0}[:],int{0}, boolean, boolean, boolean)".format(
         bits
     ),
     fastmath=fastmath,
@@ -215,14 +215,14 @@ def cdf_distance(
     return out
 
 
-# @njit(fastmath=fastmath, debug=debug)
-@njit(
-    "float{0}(float{0}[:], float{0}[:], float{0}[:], float{0}[:,:], boolean, boolean, boolean)".format(
-        bits
-    ),
-    fastmath=fastmath,
-    debug=debug,
-)
+# @njit(
+#     "float{0}(float{0}[:], float{0}[:], float{0}[:], float{0}[:], boolean, boolean, boolean)".format(
+#         bits
+#     ),
+#     fastmath=fastmath,
+#     debug=debug,
+# )
+@njit(fastmath=fastmath, debug=debug)
 def wasserstein_distance(
     u, v, u_weights, v_weights, presorted, cumweighted, prepended
 ):  # noqa
@@ -273,8 +273,12 @@ def wasserstein_distance(
     )  # noqa
 
 
-# TODO: explicit signature?
-@njit(fastmath=fastmath, debug=debug)
+# @njit(fastmath=fastmath, debug=debug)
+@njit(
+    "float{0}(float{0}[:], float{0}[:])".format(bits),
+    fastmath=fastmath,
+    debug=debug,
+)
 def euclidean_distance(a, b):
     """
     Calculate Euclidean distance between vectors a and b.
