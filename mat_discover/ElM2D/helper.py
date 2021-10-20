@@ -6,6 +6,7 @@ from numba import cuda
 inline = os.environ.get("INLINE", "never")
 
 
+# TODO: explicit signatures?
 @cuda.jit(device=True, inline=inline)
 def copy(a, out):
     """
