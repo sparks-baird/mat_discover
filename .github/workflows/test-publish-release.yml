@@ -29,11 +29,11 @@ jobs:
         pip install flit torch # torch is CPU version
         flit install
         
-    # - name: Pytest
-    #   shell: bash -l {0}
-    #   run: |
-    #     export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
-    #     python -m pytest
+    - name: Pytest
+      shell: bash -l {0}
+      run: |
+        export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
+        python -m pytest
         
     - name: Build and publish
       run: |
@@ -41,11 +41,17 @@ jobs:
       env:
         FLIT_USERNAME: __token__
         FLIT_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        
+
+    - name: "Build Changelog" # https://github.com/marketplace/actions/release-changelog-builder
+      id: build_changelog
+      uses: mikepenz/release-changelog-builder-action@v2.4.3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Create Release # https://github.com/softprops/action-gh-release
       uses: softprops/action-gh-release@v1
       with:
-#         body: ${{steps.build_changelog.outputs.changelog}}
+        body: ${{steps.build_changelog.outputs.changelog}}
         files: |
           **/*.py
           **/*.csv
@@ -57,13 +63,3 @@ jobs:
           **/*.html
           **/*.png
           LICENSE
-
-#     - name: "Build Changelog" # https://github.com/marketplace/actions/release-changelog-builder
-#       id: build_changelog
-#       uses: mikepenz/release-changelog-builder-action@{v2.4.3}
-#       env:
-#         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-# <later>
-#       with:
-#         body: ${{steps.build_changelog.outputs.changelog}}
