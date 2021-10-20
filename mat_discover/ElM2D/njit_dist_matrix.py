@@ -4,7 +4,8 @@ Nopython version of dist_matrix.
 Author: Sterling Baird
 """
 import os
-import json
+
+# import json
 import numpy as np
 
 from numba import prange, njit
@@ -263,7 +264,12 @@ debug = False
 #     return d
 
 
-@njit(fastmath=fastmath, debug=debug)
+# @njit(fastmath=fastmath, debug=debug)
+@njit(
+    "float{0}(float{0}[:], float{0}[:], float{0}[:], float{0}[:], int{0})".format(bits),
+    fastmath=fastmath,
+    debug=debug,
+)
 def compute_distance(u, v, u_weights, v_weights, metric_num):
     """
     Calculate weighted distance between two vectors, u and v.
@@ -312,7 +318,7 @@ def compute_distance(u, v, u_weights, v_weights, metric_num):
 
 # @njit(fastmath=fastmath, parallel=parallel, debug=debug)
 @njit(
-    "void(float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], int{0})".format(
+    "void(float{0}[:,:], float{0}[:,:], float{0}[:,:], float{0}[:,:], int{0}[:,:], float{0}[:], int{0})".format(
         bits
     ),
     fastmath=fastmath,
@@ -469,7 +475,7 @@ def dist_matrix(
     pairQ = pairs is not None
 
     # assign metric_num based on specified metric (Numba doesn't support strings)
-    metric_dict = {"euclidean": 0, "wasserstein": 1}
+    metric_dict = {"euclidean": np_int(0), "wasserstein": np_int(1)}
     metric_num = metric_dict[metric]
 
     m = U.shape[0]
