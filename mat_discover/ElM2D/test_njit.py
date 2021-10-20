@@ -1,26 +1,25 @@
 """Test functions for njit wasserstein metric."""
-import os
-from importlib import reload
+# import os
 
 import numpy as np
 from scipy.stats import wasserstein_distance as scipy_wasserstein_distance
 
-# os.environ["NUMBA_DISABLE_JIT"] = "0"
+from mat_discover.ElM2D.njit_dist_matrix_full import dist_matrix
 
-cols = 100
 
-os.environ["COLUMNS"] = str(cols)
-os.environ["USE_64"] = "0"
-os.environ["INLINE"] = "never"
-os.environ["FASTMATH"] = "1"
-os.environ["TARGET"] = "cpu"
+def cpu_wasserstein_distance(u, v, u_weights, v_weights):
+    """
+    DO NOT use this in for loops due to large overhead. Just for testing.
+    """
+    d = dist_matrix(
+        np.array([u]),
+        V=np.array([v]),
+        U_weights=np.array([u_weights]),
+        V_weights=np.array([v_weights]),
+        metric="wasserstein",
+    )
+    return d
 
-from mat_discover.ElM2D import cpu_metrics, njit_dist_matrix  # noqa
-
-reload(cpu_metrics)
-reload(njit_dist_matrix)
-
-wasserstein_distance = cpu_metrics.wasserstein_distance
 
 # slower
 # wasserstein_distance = njit_dist_matrix.wasserstein_distance
@@ -28,6 +27,7 @@ wasserstein_distance = cpu_metrics.wasserstein_distance
 # generate test data
 np.random.seed(42)
 rows = 10
+cols = 100
 
 [U, V, U_weights, V_weights] = [
     np.random.rand(rows, cols).astype(np.float32) for _ in range(4)
@@ -41,9 +41,7 @@ def test_one_set():
     one_set_check = scipy_wasserstein_distance(
         U[0], U[1], u_weights=U_weights[0], v_weights=U_weights[1]
     )
-    one_set = wasserstein_distance(
-        U[0], U[1], U_weights[0], U_weights[1], False, False, False
-    )
+    one_set = cpu_wasserstein_distance(U[0], U[1], U_weights[0], U_weights[1])
     assert abs(one_set - one_set_check) < tol, "one set discrepancy"
 
 
@@ -51,9 +49,7 @@ def test_two_set():
     two_set_check = scipy_wasserstein_distance(
         U[0], V[0], u_weights=U_weights[0], v_weights=V_weights[0]
     )
-    two_set = wasserstein_distance(
-        U[0], V[0], U_weights[0], V_weights[0], False, False, False
-    )
+    two_set = cpu_wasserstein_distance(U[0], V[0], U_weights[0], V_weights[0])
     assert abs(two_set - two_set_check) < tol, "two set discrepancy"
 
 
@@ -61,9 +57,7 @@ def test_one_set_sparse():
     one_sparse_check = scipy_wasserstein_distance(
         U[1], U[2], u_weights=U_weights[1], v_weights=U_weights[2]
     )
-    one_set_sparse = wasserstein_distance(
-        U[1], U[2], U_weights[1], U_weights[2], False, False, False
-    )
+    one_set_sparse = cpu_wasserstein_distance(U[1], U[2], U_weights[1], U_weights[2])
     assert abs(one_set_sparse - one_sparse_check) < tol, "one set sparse discrepancy"
 
 
@@ -71,9 +65,7 @@ def test_two_set_sparse():
     two_sparse_check = scipy_wasserstein_distance(
         U[1], V[2], u_weights=U_weights[1], v_weights=V_weights[2]
     )
-    two_set_sparse = wasserstein_distance(
-        U[1], V[2], U_weights[1], V_weights[2], False, False, False
-    )
+    two_set_sparse = cpu_wasserstein_distance(U[1], V[2], U_weights[1], V_weights[2])
     assert abs(two_set_sparse - two_sparse_check) < tol, "two set sparse discrepancy"
 
 
@@ -283,3 +275,8 @@ if __name__ == "__main__":
 
 # with open("dist_matrix_settings.json", "w") as f:
 #     json.dump(settings, f)
+
+# os.environ["USE_64"] = "0"
+# os.environ["INLINE"] = "never"
+# os.environ["FASTMATH"] = "1"
+# os.environ["TARGET"] = "cpu"
