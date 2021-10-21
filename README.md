@@ -1,35 +1,9 @@
 # DiSCoVeR
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
-## Installation
-Updates coming soon, including a PyPI distribution. Anaconda distribution to follow.
-
-The current instructions are:
-```bash
-conda install flit # or `pip install flit`
-git clone --recurse-submodules https://github.com/sparks-baird/mat_discover.git
-cd mat_discover
-flit install
-```
-
-## Usage
-The basic usage is:
-```python
-from mat_discover.discover_ import Discover
-disc = Discover()
-disc.fit(train_df) # DataFrames should have at minimum "formula" and "target" columns
-scores = disc.predict(val_df)
-disc.plot()
-disc.save()
-print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
-```
-
-See [mat_discover_example.py](mat_discover_example.py).
-
 ## Citing
-The preprint is hosted on ChemRxiv:
-
-> Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8). This content is a preprint and has not been peer-reviewed.
+The preprint is hosted on ChemRxiv:  
+> Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8-v2](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8). This content is a preprint and has not been peer-reviewed.
 
 The BibTeX citation is as follows:
 ```bib
@@ -43,6 +17,101 @@ author={Baird, Sterling and Diep, Tran and Sparks, Taylor},
 year={2021}
 }
 ```
+
+## Installation
+You can install via pip or from source. `conda install` coming soon.
+### Pip
+You need to update pip, install the appropriate version of PyTorch, and then install `mat_discover`.
+#### Update pip
+```python
+pip install -U pip
+```
+#### Install PyTorch
+Due to limitations of PyPI distributions of CUDA/PyTorch, you will need to install PyTorch separately via the command that's most relevant to you ([PyTorch Getting Started](https://pytorch.org/get-started/locally/)). For example, for Stable (1.9.1)/Windows/Conda/Python/CUDA 11.1:
+```python
+conda install pytorch cudatoolkit=11.1 -c pytorch -c conda-forge
+```
+#### Install `mat_discover`
+```python
+pip install mat_discover
+```
+### Anaconda
+Anaconda distribution coming soon.
+
+### From Source
+```bash
+conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/
+git clone --recurse-submodules https://github.com/sparks-baird/mat_discover.git
+cd mat_discover
+pip install -e .
+```
+
+## Basic Usage
+### Fit/Predict
+```python
+from mat_discover.mat_discover_ import Discover
+disc = Discover()
+disc.fit(train_df) # DataFrames should have at minimum "formula" and "target" columns
+scores = disc.predict(val_df)
+disc.plot()
+disc.save()
+print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
+```
+See [mat_discover_example.py](mat_discover_example.py).
+### Load Data
+If you're using your own dataset, you will need to supply a Pandas DataFrame that contains `formula` and `target` columns. If you have a `train.csv` file (located in current working directory) with these two columns, this can be converted to a DataFrame via:
+```python
+import pandas as pd
+df = pd.read_csv("train.csv")
+```
+Note that you can load any of the datasets within `CrabNet/data/`, which includes `matbench` data, other datasets from the CrabNet paper, and a recent (as of Oct 2021) snapshot of `K_VRH` bulk modulus data from Materials Project. For example, to load the bulk modulus snapshot:
+```python
+from mat_discover.CrabNet.data.materials_data import elasticity
+train_df, val_df = disc.data(elasticity, "train.csv") # note that `val.csv` within `elasticity` is every other Materials Project compound (i.e. "target" column filled with zeros)
+```
+The built-in data directories are as follows:
+> ```python
+> {'benchmark_data',
+>  'benchmark_data.CritExam__Ed',
+>  'benchmark_data.CritExam__Ef',
+>  'benchmark_data.OQMD_Bandgap',
+>  'benchmark_data.OQMD_Energy_per_atom',
+>  'benchmark_data.OQMD_Formation_Enthalpy',
+>  'benchmark_data.OQMD_Volume_per_atom',
+>  'benchmark_data.aflow__Egap',
+>  'benchmark_data.aflow__ael_bulk_modulus_vrh',
+>  'benchmark_data.aflow__ael_debye_temperature',
+>  'benchmark_data.aflow__ael_shear_modulus_vrh',
+>  'benchmark_data.aflow__agl_thermal_conductivity_300K',
+>  'benchmark_data.aflow__agl_thermal_expansion_300K',
+>  'benchmark_data.aflow__energy_atom',
+>  'benchmark_data.mp_bulk_modulus',
+>  'benchmark_data.mp_e_hull',
+>  'benchmark_data.mp_elastic_anisotropy',
+>  'benchmark_data.mp_mu_b',
+>  'benchmark_data.mp_shear_modulus',
+>  'element_properties',
+>  'matbench',
+>  'materials_data',
+>  'materials_data.elasticity',
+>  'materials_data.example_materials_property'}
+```
+To see what `.csv` files are available (e.g. `train.csv`), you will probably need to navigate to [CrabNet/data/](https://github.com/sgbaird/CrabNet/tree/master/data) and explore.
+
+Finally, to download data from Materials Project directly, see [generate_elasticity_data.py](https://github.com/sparks-baird/mat_discover/blob/main/generate_elasticity_data.py).
+
+## Developing
+This project was developed primarily in VS Code (and Python extension) using `black`, `mypy`, `pydocstyle`, other tools, and various community extensions. Some other notable tools are:
+- `pipreqs` was used as a starting point for `requirements.txt`
+- `flit` is used to create `pyproject.toml` and publish to PyPI
+- `conda env export --from-history -f environment.yml` was used as a starting point for `environment.yml`
+- `grayskull` is used to generate `meta.yaml` for publishing to `conda-forge`
+- `conda-smithy` is used to create a feedstock for `conda-forge`
+- A variety of GitHub actions are used (see [workflows](.github/workflows))
+- `pytest` is used for testing
+- `numba` is used to accelerate the Wasserstein distance matrix computations via CPU or GPU
+
+Note that when using a `conda` environment (recommended), it's important to open VS Code by opening an Anaconda command prompt and entering the command `code` until the VS Code devs fix some of the issues associated with opening it normally.
 
 <!---
 Recommended installation through `pip` with python 3.7.
