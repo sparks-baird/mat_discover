@@ -23,11 +23,13 @@ dependencies:
   - scikit-learn
   - hdbscan
   - pymatgen
+  - pytest
   - pip
   - pip:
     # core:
-    - elmd==0.4.8*
-    - pqdm==0.*
+    - pqdm
+    - elmd==0.4.8
+    - ElM2D==0.4.1
   # optional: #TODO: flag/command to use optional or not?
   # - ipykernel
   # - nbformat>=4.2.0
