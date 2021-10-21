@@ -70,6 +70,7 @@ Note that you can load any of the datasets within `CrabNet/data/`, which include
 from mat_discover.CrabNet.data.materials_data import elasticity
 train_df, val_df = disc.data(elasticity, "train.csv") # note that `val.csv` within `elasticity` is every other Materials Project compound (i.e. "target" column filled with zeros)
 ```
+
 The built-in data directories are as follows:
 > ```python
 > {'benchmark_data',
@@ -96,7 +97,8 @@ The built-in data directories are as follows:
 >  'materials_data',
 >  'materials_data.elasticity',
 >  'materials_data.example_materials_property'}
-```
+> ```
+
 To see what `.csv` files are available (e.g. `train.csv`), you will probably need to navigate to [CrabNet/data/](https://github.com/sgbaird/CrabNet/tree/master/data) and explore.
 
 Finally, to download data from Materials Project directly, see [generate_elasticity_data.py](https://github.com/sparks-baird/mat_discover/blob/main/generate_elasticity_data.py).
