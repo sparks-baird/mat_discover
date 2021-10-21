@@ -146,4 +146,8 @@ data/all_struct_dicts.pkl
 data/elast_results.pkl
 data/elast_struct_dicts.pkl
 models/trained_models/example_materials_property.pth
-models/trained_models/test-property.pth
+models/trained_models/test-property.pth# conda smithy ci-skeleton start
+*.pyc
+
+build_artifacts
+# conda smithy ci-skeleton end

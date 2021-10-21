@@ -7,14 +7,14 @@ channels:
   - defaults
 dependencies:
   # core:
-  - matplotlib
+  - matplotlib>=3.4.3
   - pandas
-  - pytorch=1.9
+  - pytorch==1.9
   - plotly
-  - python=3.8
+  - python==3.8
   - scipy
-  - cudatoolkit=11
-  - numba
+  - cudatoolkit==11
+  - numba>=0.53.1
   - seaborn
   - tqdm
   - python-kaleido
@@ -26,7 +26,7 @@ dependencies:
   - pip
   - pip:
     # core:
-    - elmd==0.*
+    - elmd==0.4.8*
     - pqdm==0.*
   # optional: #TODO: flag/command to use optional or not?
   # - ipykernel
@@ -37,10 +37,9 @@ dependencies:
   # - flit
   # - pipreqs
   # - black
-  # - flake8
+  # - flake8 # probably taken care of already by others (dep)
   # - mypy
   # - mypy_extensions
   # - pydocstyle
-  # - grayskull
-  # - conda-smithy
+  # - grayskull # maybe not grayskull, since conda smithy ci-skeleton seems to work better with conda-smithy
 prefix: C:\Users\sterg\anaconda3\envs\mat_discover

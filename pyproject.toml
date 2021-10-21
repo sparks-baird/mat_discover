@@ -11,6 +11,7 @@ dynamic = ["version", "description"]
 
 dependencies = [
     "tqdm",
+    "pqdm",
     "seaborn",
     "pymatgen",
     "scipy",
@@ -21,7 +22,6 @@ dependencies = [
     "pandas",
     "matplotlib>=3.4.3",
     "joblib",
-    "pqdm",
     "ElMD==0.4.8",
     "psutil",
     "scikit_learn",
