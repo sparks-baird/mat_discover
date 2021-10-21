@@ -72,9 +72,10 @@ jobs:
       run: |
         export NUMBA_ENABLE_CUDASIM="1"
         python -m pytest
-    - name: publish-to-conda
-      uses: fcakyon/conda-publish-action@v1.3
-      with:
-        subdir: 'conda'
-        anacondatoken: ${{ secrets.ANACONDA_TOKEN }}
-        platforms: 'win osx linux'
+        
+#     - name: publish-to-conda # requires setup.py file
+#       uses: fcakyon/conda-publish-action@v1.3
+#       with:
+#         subdir: 'conda'
+#         anacondatoken: ${{ secrets.ANACONDA_TOKEN }}
+#         platforms: 'win osx linux'
