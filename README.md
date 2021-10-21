@@ -19,7 +19,7 @@ year={2021}
 ```
 
 ## Installation
-You can install via pip or from source. `conda install` coming soon.
+I recommend that you run `mat_discover` in a separate conda environment. You can install via pip or from source. `conda install` coming soon.
 ### Pip
 You need to update pip, install the appropriate version of PyTorch, and then install `mat_discover`.
 #### Update pip
@@ -43,7 +43,7 @@ Anaconda distribution coming soon.
 conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/
 git clone --recurse-submodules https://github.com/sparks-baird/mat_discover.git
 cd mat_discover
-pip install -e .
+pip install -e . # or `conda env create --file environment.yml` or `flit install` (after installing `flit` via `conda install flit`)
 ```
 
 ## Basic Usage
@@ -57,6 +57,7 @@ disc.plot()
 disc.save()
 print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
 ```
+
 See [mat_discover_example.py](mat_discover_example.py).
 ### Load Data
 If you're using your own dataset, you will need to supply a Pandas DataFrame that contains `formula` and `target` columns. If you have a `train.csv` file (located in current working directory) with these two columns, this can be converted to a DataFrame via:
