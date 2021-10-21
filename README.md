@@ -27,7 +27,7 @@ You need to update pip, install the appropriate version of PyTorch, and then ins
 pip install -U pip
 ```
 #### Install PyTorch
-Due to limitations of PyPI distributions of CUDA/PyTorch, you will need to install PyTorch separately via the command that's most relevant to you ([PyTorch Getting Started](https://pytorch.org/get-started/locally/)). For example, for Stable (1.9.1)/Windows/Conda/Python/CUDA 11.1:
+Due to limitations of PyPI distributions of CUDA/PyTorch, you will need to install PyTorch separately via the command that's most relevant to you ([PyTorch Getting Started](https://pytorch.org/get-started/locally/)). For example, for Stable/Windows/Conda/Python/CUDA-11.1:
 ```python
 conda install pytorch cudatoolkit=11.1 -c pytorch -c conda-forge
 ```
