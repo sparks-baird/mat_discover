@@ -10,7 +10,7 @@ The BibTeX citation is as follows:
 @article{baird_diep_sparks_2021,
 place={Cambridge},
 title={DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions},
-DOI={10.33774/chemrxiv-2021-5l2f8},
+DOI={10.33774/chemrxiv-2021-5l2f8-v2},
 journal={ChemRxiv},
 publisher={Cambridge Open Engage},
 author={Baird, Sterling and Diep, Tran and Sparks, Taylor},
