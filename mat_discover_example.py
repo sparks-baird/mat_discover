@@ -6,7 +6,7 @@ from mat_discover.mat_discover_ import Discover
 
 # %% setup
 dummy = False  # set to True for a quicker run --> small dataset, MDS instead of UMAP
-disc = Discover(dummy_run=dummy)
+disc = Discover(dummy_run=dummy, target="cuda")
 train_df, val_df = disc.data(elasticity, "train.csv", dummy=dummy)
 cat_df = pd.concat((train_df, val_df), axis=0)
 
