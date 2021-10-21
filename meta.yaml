@@ -47,7 +47,7 @@ test:
     - mat_discover.ElM2D
   commands:
     - pip check
-    - pytest
+    - pytest # --pyargs mat_discover
   requires:
     - pip
     - pytest
