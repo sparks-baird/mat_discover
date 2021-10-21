@@ -1,0 +1,64 @@
+{% set name = "mat_discover" %}
+{% set version = "1.2.0" %}
+
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/mat_discover-{{ version }}.tar.gz
+  sha256: 5c8728a97526b60c96f14fcef7e4847e76eecb517378c05c07709e0aa3c2536e
+
+build:
+  number: 0
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv
+
+requirements:
+  host:
+    - pip
+    - python
+  run:
+    - elmd ==0.4.8
+    - hdbscan
+    - joblib
+    - python-kaleido
+    - matplotlib-base >=3.4.3
+    - numba >=0.53.1
+    - pandas
+    - plotly
+    - psutil
+    - pymatgen
+    - python
+    - scikit-learn
+    - scipy
+    - seaborn
+    - tqdm
+    - umap-learn
+    - pytorch >=1.9
+    - cudatoolkit >=10
+    - pqdm
+
+test:
+  imports:
+    - mat_discover
+    - mat_discover.CrabNet
+    - mat_discover.ElM2D
+  commands:
+    - pip check
+    - pytest
+  requires:
+    - pip
+    - pytest
+
+about:
+  home: https://pypi.org/project/mat_discover/
+  summary: Data-driven materials discovery based on composition.
+  dev_url: https://github.com/sparks-baird/mat_discover
+  license: GPL-3.0
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - sgbaird
