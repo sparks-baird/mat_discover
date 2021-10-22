@@ -1,6 +1,12 @@
-[![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
 <!-- TODO: add buttons for code coverage, black code style, binder, Zenodo DOI, and maybe Google Colab-->
 # DiSCoVeR
+[![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
+[![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/version.svg)](https://anaconda.org/sgbaird/mat_discover)
+[![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg)](https://anaconda.org/sgbaird/mat_discover)
+[![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/platforms.svg)](https://anaconda.org/sgbaird/mat_discover)
+[![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/latest_release_relative_date.svg)](https://anaconda.org/sgbaird/mat_discover)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
 ## Citing
