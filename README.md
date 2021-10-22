@@ -19,7 +19,7 @@ year={2021}
 ```
 
 ## Installation
-I recommend that you run `mat_discover` in a separate conda environment via, e.g.:
+I recommend that you run `mat_discover` in a separate conda environment. After installing [Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html), you can [create a new environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) via:
 ```python
 conda create --name mat_discover
 ```
@@ -110,7 +110,8 @@ To see what `.csv` files are available (e.g. `train.csv`), you will probably nee
 Finally, to download data from Materials Project directly, see [generate_elasticity_data.py](https://github.com/sparks-baird/mat_discover/blob/main/generate_elasticity_data.py).
 
 ## Developing
-This project was developed primarily in VS Code (and Python extension) using `black`, `mypy`, `pydocstyle`, other tools, and various community extensions. Some other notable tools are:
+This project was developed primarily in "Python in Visual Studio Code" using `black`, `mypy`, `pydocstyle`, other tools, and various community extensions. Some other notable tools used in this project are:
+- Miniconda
 - `pipreqs` was used as a starting point for `requirements.txt`
 - `flit` is used to create `pyproject.toml` and publish to PyPI
 - `conda env export --from-history -f environment.yml` was used as a starting point for `environment.yml`
@@ -120,7 +121,7 @@ This project was developed primarily in VS Code (and Python extension) using `bl
 - `pytest` is used for testing
 - `numba` is used to accelerate the Wasserstein distance matrix computations via CPU or GPU
 
-Note that when using a `conda` environment (recommended), I think you may avoid future issues by opening VS Code via an Anaconda command prompt and entering the command `code` (at least until the VS Code devs fix some of the issues associated with opening it "normally").
+Note that when using a `conda` environment (recommended), you may avoid certain issues down the road by opening VS Code via an Anaconda command prompt and entering the command `code` (at least until the VS Code devs fix some of the issues associated with opening it "normally"). For example, in Windows, press the "Windows" key, type "anaconda", and open "Anaconda Powershell Prompt (miniconda3)" or similar. Then type `code` and press enter.
 
 ## Bugs, Questions, and Suggestions
 If you find a bug or have suggestions for documentation please [open an issue](https://github.com/sparks-baird/mat_discover/issues/new/choose). If you're reporting a bug, please include a simplified reproducer. If you have questions, have feature suggestions/requests, or are interested in extending/improving `mat_discover` and would like to discuss, please use the Discussions tab and use the appropriate category ("Ideas", "Q&A", etc.). Pull requests are welcome and encouraged.
