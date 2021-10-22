@@ -13,9 +13,13 @@ name: "CodeQL"
 
 on:
   push:
+    paths:
+      - '**.py' # only run workflow when source files changed
     branches: [ main ]
   pull_request:
     # The branches below must be a subset of the branches above
+    paths:
+      - '**.py' # only run workflow when source files changed
     branches: [ main ]
   schedule:
     - cron: '19 11 * * 1'
