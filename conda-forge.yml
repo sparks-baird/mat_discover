@@ -11,3 +11,13 @@ skip_render:
   - .github/ISSUE_TEMPLATE.md
   - .github/PULL_REQUEST_TEMPLATE.md
   - .github/workflows
+  - .github/modules
+
+channels:
+  # sources selects the channels to pull packages from, in order.
+  sources:
+    - conda-forge
+    - pytorch
+    - numba/label/ci_llvmlite_0.38
+    - numba
+    - defaults
