@@ -20,7 +20,16 @@ year={2021}
 ```
 
 ## Installation
-I recommend that you run `mat_discover` in a separate conda environment. You can install via pip or from source. `conda install` coming soon.
+I recommend that you run `mat_discover` in a separate conda environment. After installing [Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html), you can [create a new environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) via:
+```python
+conda create --name mat_discover
+```
+You can install via conda, pip, or from source.
+### Anaconda
+The Anaconda `mat_discover` package is hosted on the [@sgbaird channel](https://anaconda.org/sgbaird/repo) and can be installed via:
+```python
+conda install -c sgbaird mat_discover
+```
 ### Pip
 You need to update pip, install the appropriate version of PyTorch, and then install `mat_discover`.
 #### Update pip
@@ -36,9 +45,6 @@ conda install pytorch cudatoolkit=11.1 -c pytorch -c conda-forge
 ```python
 pip install mat_discover
 ```
-### Anaconda
-Anaconda distribution coming soon.
-
 ### From Source
 ```bash
 conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/
@@ -105,7 +111,8 @@ To see what `.csv` files are available (e.g. `train.csv`), you will probably nee
 Finally, to download data from Materials Project directly, see [generate_elasticity_data.py](https://github.com/sparks-baird/mat_discover/blob/main/generate_elasticity_data.py).
 
 ## Developing
-This project was developed primarily in VS Code (and Python extension) using `black`, `mypy`, `pydocstyle`, `kite`, other tools, and various community extensions. Some other notable tools are:
+This project was developed primarily in "Python in Visual Studio Code" using `black`, `mypy`, `pydocstyle`, `kite`, other tools, and various community extensions. Some other notable tools used in this project are:
+- Miniconda
 - `pipreqs` was used as a starting point for `requirements.txt`
 - `flit` is used to create `pyproject.toml` and publish to PyPI
 - `conda env export --from-history -f environment.yml` was used as a starting point for `environment.yml`
@@ -115,7 +122,10 @@ This project was developed primarily in VS Code (and Python extension) using `bl
 - `pytest` is used for testing
 - `numba` is used to accelerate the Wasserstein distance matrix computations via CPU or GPU
 
-Note that when using a `conda` environment (recommended), it's important to open VS Code by opening an Anaconda command prompt and entering the command `code` until the VS Code devs fix some of the issues associated with opening it normally.
+Note that when using a `conda` environment (recommended), you may avoid certain issues down the road by opening VS Code via an Anaconda command prompt and entering the command `code` (at least until the VS Code devs fix some of the issues associated with opening it "normally"). For example, in Windows, press the "Windows" key, type "anaconda", and open "Anaconda Powershell Prompt (miniconda3)" or similar. Then type `code` and press enter.
+
+## Bugs, Questions, and Suggestions
+If you find a bug or have suggestions for documentation please [open an issue](https://github.com/sparks-baird/mat_discover/issues/new/choose). If you're reporting a bug, please include a simplified reproducer. If you have questions, have feature suggestions/requests, or are interested in extending/improving `mat_discover` and would like to discuss, please use the Discussions tab and use the appropriate category ("Ideas", "Q&A", etc.). Pull requests are welcome and encouraged.
 
 <!---
 Recommended installation through `pip` with python 3.7.
@@ -131,7 +141,7 @@ For the background theory, please read our paper ["The Earth Mover’s Distance 
 
 For more interactive examples please see www.elmd.io/plots
 
-## Usage 
+## Usage
 
 ### Computing Distance Matrices
 
@@ -139,7 +149,7 @@ For more interactive examples please see www.elmd.io/plots
 
 ### Embedding
 
-### Saving 
+### Saving
 
 ### Cross Validation
 
@@ -159,10 +169,10 @@ number = {24},
 pages = {10610-10620},
 year = {2020},
 doi = {10.1021/acs.chemmater.0c03381},
-URL = { 
+URL = {
         https://doi.org/10.1021/acs.chemmater.0c03381
 },
-eprint = { 
+eprint = {
         https://doi.org/10.1021/acs.chemmater.0c03381
 }
 }
