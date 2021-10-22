@@ -2,4 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: Discussion
     url: https://github.com/sparks-baird/mat_discover/discussions
-    about: If you have questions or are interested in extending/improving `mat_discover` and would like to discuss, please open a discussion (check for existing ones first) and mark the appropriate category ("Ideas", "Q&A", etc.). Pull requests are welcome and encouraged!
+    about: |
+      For questions, discussing potential pull requests, and other topics
+      please open a discussion (check for existing ones first) and mark the
+      appropriate category ("Ideas", "Q&A", etc.). PRs welcome/encouraged!
