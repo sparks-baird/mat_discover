@@ -1,4 +1,4 @@
-name: Code Coverage
+name: Manual Code Coverage
 
 on: workflow_dispatch
 
