@@ -3,7 +3,7 @@ name: Code Coverage
 on: workflow_dispatch
 
 jobs:
-  Code Coverage:
+  code_coverage:
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
