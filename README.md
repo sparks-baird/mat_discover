@@ -1,3 +1,4 @@
+<!-- TODO: add buttons for code coverage, black code style, binder, Zenodo DOI, and maybe Google Colab-->
 # DiSCoVeR
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
@@ -104,7 +105,7 @@ To see what `.csv` files are available (e.g. `train.csv`), you will probably nee
 Finally, to download data from Materials Project directly, see [generate_elasticity_data.py](https://github.com/sparks-baird/mat_discover/blob/main/generate_elasticity_data.py).
 
 ## Developing
-This project was developed primarily in VS Code (and Python extension) using `black`, `mypy`, `pydocstyle`, other tools, and various community extensions. Some other notable tools are:
+This project was developed primarily in VS Code (and Python extension) using `black`, `mypy`, `pydocstyle`, `kite`, other tools, and various community extensions. Some other notable tools are:
 - `pipreqs` was used as a starting point for `requirements.txt`
 - `flit` is used to create `pyproject.toml` and publish to PyPI
 - `conda env export --from-history -f environment.yml` was used as a starting point for `environment.yml`
