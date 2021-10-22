@@ -25,7 +25,7 @@ conda create --name mat_discover
 ```
 You can install via conda, pip, or from source.
 ### Anaconda
-Anaconda distributions of `mat_discover` are hosted on the @sgbaird channel.
+The Anaconda `mat_discover` package is hosted on the [@sgbaird channel](https://anaconda.org/sgbaird/repo).
 ```python
 conda install -c sgbaird mat_discover
 ```
