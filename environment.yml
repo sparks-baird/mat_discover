@@ -9,11 +9,11 @@ dependencies:
   # core:
   - matplotlib>=3.4.3
   - pandas
-  - pytorch==1.9
+  - pytorch==1.10
   - plotly
   - python==3.8
   - scipy
-  - cudatoolkit==11
+  - cudatoolkit==11.3
   - numba>=0.53.1
   - seaborn
   - tqdm
