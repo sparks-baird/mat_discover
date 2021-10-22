@@ -11,18 +11,19 @@ dynamic = ["version", "description"]
 
 dependencies = [
     "tqdm",
-    "pqdm",
+    "pqdm", #PyPI
     "seaborn",
     "pymatgen",
     "scipy",
     "hdbscan",
+    "cython", # for hdbscan 0.8.27 or similar
     "numba>=0.53.1",
     "plotly",
-    "kaleido",
+    "python-kaleido",
     "pandas",
     "matplotlib>=3.4.3",
     "joblib",
-    "ElMD==0.4.8",
+    "ElMD==0.4.8", #PyPI
     "psutil",
     "scikit_learn",
     "umap-learn",
@@ -34,7 +35,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest",
-    "ElM2D==0.4.1",
+    "ElM2D==0.4.1", #PyPI
     "pytest-cov",
 ]
 # gpu = ["torch==1.9.1+cu111"]
