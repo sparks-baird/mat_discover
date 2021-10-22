@@ -10,8 +10,8 @@
 [![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/platforms.svg)](https://anaconda.org/sgbaird/mat_discover)
 [![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/latest_release_relative_date.svg)](https://anaconda.org/sgbaird/mat_discover)
 
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![Coveralls](https://img.shields.io/coveralls/github/sparks-baird/mat_discover)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) <!-- ![Coveralls](https://img.shields.io/coveralls/github/sparks-baird/mat_discover) -->
+[![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?branch=main)](https://coveralls.io/github/sparks-baird/mat_discover?branch=main)
 ![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)
 
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
