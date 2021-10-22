@@ -60,6 +60,10 @@ jobs:
           
         draft: false
         prerelease: false
+    
+    - name: Coveralls GitHub Action
+      uses: coverallsapp/github-action@1.1.3
+
 
 #     - name: Create Release # https://github.com/softprops/action-gh-release
 #       uses: softprops/action-gh-release@v1
