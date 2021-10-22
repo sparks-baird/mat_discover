@@ -1,3 +1,4 @@
+[![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
 <!-- TODO: add buttons for code coverage, black code style, binder, Zenodo DOI, and maybe Google Colab-->
 # DiSCoVeR
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
