@@ -61,8 +61,10 @@ jobs:
         draft: false
         prerelease: false
     
-    - name: Coveralls GitHub Action
-      uses: coverallsapp/github-action@1.1.3
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
 
 #     - name: Create Release # https://github.com/softprops/action-gh-release
