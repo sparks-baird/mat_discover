@@ -1,11 +1,18 @@
-<!-- TODO: add buttons for code coverage, black code style, binder, Zenodo DOI, and maybe Google Colab-->
+<!-- TODO: add buttons for binder and Zenodo DOI-->
 # DiSCoVeR
 [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
-[![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/version.svg)](https://anaconda.org/sgbaird/mat_discover)
-[![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg)](https://anaconda.org/sgbaird/mat_discover)
+
+[![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/mat_discover?label=PyPI%20downloads)
+
+[![Anaconda-Server Version](https://anaconda.org/sgbaird/mat_discover/badges/version.svg)](https://anaconda.org/sgbaird/mat_discover)
+[![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg)](https://anaconda.org/sgbaird/mat_discover)
 [![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/platforms.svg)](https://anaconda.org/sgbaird/mat_discover)
 [![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/latest_release_relative_date.svg)](https://anaconda.org/sgbaird/mat_discover)
+
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![Coveralls](https://img.shields.io/coveralls/github/sparks-baird/mat_discover)
+![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)
 
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
