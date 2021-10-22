@@ -38,7 +38,7 @@ I recommend that you run `mat_discover` in a separate conda environment. After i
 ```python
 conda create --name mat_discover
 ```
-You can install via conda, pip, or from source.
+There are three ways to install `mat_discover`: Anaconda, PyPI (pip), and from source.
 ### Anaconda
 The Anaconda `mat_discover` package is hosted on the [@sgbaird channel](https://anaconda.org/sgbaird/repo) and can be installed via:
 ```python
@@ -64,7 +64,7 @@ pip install mat_discover
 conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/
 git clone --recurse-submodules https://github.com/sparks-baird/mat_discover.git
 cd mat_discover
-pip install -e . # or `conda env create --file environment.yml` or `flit install` (after installing `flit` via `conda install flit`)
+pip install -e . # or `conda env create --file environment.yml` or `flit install` (after installing `flit` via e.g. `conda install flit`)
 ```
 
 ## Basic Usage
@@ -79,7 +79,7 @@ disc.save()
 print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
 ```
 
-See [mat_discover_example.py](mat_discover_example.py).
+See [mat_discover_example.py](mat_discover_example.py) or [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
 ### Load Data
 If you're using your own dataset, you will need to supply a Pandas DataFrame that contains `formula` and `target` columns. If you have a `train.csv` file (located in current working directory) with these two columns, this can be converted to a DataFrame via:
 ```python
