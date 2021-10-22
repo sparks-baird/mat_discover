@@ -19,7 +19,16 @@ year={2021}
 ```
 
 ## Installation
-I recommend that you run `mat_discover` in a separate conda environment. You can install via pip or from source. `conda install` coming soon.
+I recommend that you run `mat_discover` in a separate conda environment via, e.g.:
+```python
+conda create --name mat_discover
+```
+You can install via conda, pip, or from source.
+### Anaconda
+Anaconda distributions of `mat_discover` are hosted on the @sgbaird channel.
+```python
+conda install -c sgbaird mat_discover
+```
 ### Pip
 You need to update pip, install the appropriate version of PyTorch, and then install `mat_discover`.
 #### Update pip
@@ -35,9 +44,6 @@ conda install pytorch cudatoolkit=11.1 -c pytorch -c conda-forge
 ```python
 pip install mat_discover
 ```
-### Anaconda
-Anaconda distribution coming soon.
-
 ### From Source
 ```bash
 conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/
@@ -114,7 +120,10 @@ This project was developed primarily in VS Code (and Python extension) using `bl
 - `pytest` is used for testing
 - `numba` is used to accelerate the Wasserstein distance matrix computations via CPU or GPU
 
-Note that when using a `conda` environment (recommended), it's important to open VS Code by opening an Anaconda command prompt and entering the command `code` until the VS Code devs fix some of the issues associated with opening it normally.
+Note that when using a `conda` environment (recommended), I think you may avoid future issues by opening VS Code via an Anaconda command prompt and entering the command `code` (at least until the VS Code devs fix some of the issues associated with opening it "normally").
+
+## Bugs, Questions, and Suggestions
+If you find a bug or have suggestions for documentation please [open an issue](https://github.com/sparks-baird/mat_discover/issues/new/choose). If you're reporting a bug, please include a simplified reproducer. If you have questions, have feature suggestions/requests, or are interested in extending/improving `mat_discover` and would like to discuss, please use the Discussions tab and use the appropriate category ("Ideas", "Q&A", etc.). Pull requests are welcome and encouraged.
 
 <!---
 Recommended installation through `pip` with python 3.7.
