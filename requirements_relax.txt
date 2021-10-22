@@ -9,7 +9,7 @@ pandas
 matplotlib
 joblib
 pqdm
-ElMD==0.4.3
+ElMD==0.4.8
 psutil
 PyQt5
 scikit_learn
