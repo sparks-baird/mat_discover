@@ -13,3 +13,4 @@ hdbscan==0.8.27
 ElMD==0.4.8
 scikit_learn==1.0
 umap==0.1.1
+dill==0.3.4

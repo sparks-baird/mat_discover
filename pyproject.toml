@@ -27,6 +27,7 @@ dependencies = [
     "psutil",
     "scikit_learn",
     "umap-learn",
+    "dill",
     # for torch, run "set PIP_FIND_LINKS=https://download.pytorch.org/whl/torch_stable.html" before "flit install"
     # see also: https://github.com/takluyver/flit/issues/369
     # "torch==1.9.1+cu111", # e.g "1.9.1+cu111" or "1.7.1+cu110"

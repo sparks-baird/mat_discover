@@ -24,6 +24,7 @@ dependencies:
   - hdbscan
   - pymatgen
   - pytest
+  - dill
   - pip
   - pip:
     # core:

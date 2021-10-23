@@ -14,7 +14,7 @@ Created on Mon Sep  6 23:15:27 2021.
 
 @author: sterg
 """
-import pickle
+import dill as pickle
 from pathlib import Path
 from os.path import join
 
@@ -904,7 +904,7 @@ class Discover:
 
     # TODO: write function to visualize Wasserstein metric (barchart with height = color)
 
-    def save(self, fpath="disc.pkl"):
+    def save(self, fpath="disc.pkl", dummy=False):
         """Save Discover() model.
 
         Parameters
@@ -912,6 +912,10 @@ class Discover:
         fpath : str, optional
             Filepath to which to save, by default "disc.pkl"
         """
+        if dummy is True:
+            warn("Dummy flag set to True. Overwriting fpath to dummy_disc.pkl")
+            fpath = "dummy_disc.pkl"
+
         with open(fpath, "wb") as f:
             pickle.dump(self, f)
 
