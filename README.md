@@ -39,7 +39,7 @@ I recommend that you run `mat_discover` in a separate conda environment. After i
 ```python
 conda create --name mat_discover
 ```
-There are three ways to install `mat_discover`: Anaconda, PyPI (pip), and from source.
+There are three ways to install `mat_discover`: Anaconda (`conda`), PyPI (`pip`), and from source.
 ### Anaconda
 The Anaconda `mat_discover` package is hosted on the [@sgbaird channel](https://anaconda.org/sgbaird/repo) and can be installed via:
 ```python
