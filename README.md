@@ -80,7 +80,7 @@ disc.save()
 print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
 ```
 
-See [mat_discover_example.py](mat_discover_example.py) or [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
+See [mat_discover_example.py](mat_discover_example.py), [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing), or [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?urlpath=https%3A%2F%2Fgithub.com%2Fsparks-baird%2Fmat_discover%2Fblob%2Fmain%2Fmat_discover_pypi.ipynb)
 ### Load Data
 If you're using your own dataset, you will need to supply a Pandas DataFrame that contains `formula` and `target` columns. If you have a `train.csv` file (located in current working directory) with these two columns, this can be converted to a DataFrame via:
 ```python
