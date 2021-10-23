@@ -14,6 +14,7 @@ Created on Mon Sep  6 23:15:27 2021.
 
 @author: sterg
 """
+# saving class objects: https://stackoverflow.com/a/37076668/13697228
 import dill as pickle
 from pathlib import Path
 from os.path import join
