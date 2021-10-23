@@ -6,9 +6,9 @@ from mat_discover.mat_discover_ import Discover
 
 # %% setup
 # set dummy to True for a quicker run --> small dataset, MDS instead of UMAP
-dummy = True
+dummy = False
 # set gcv to False for a quicker run --> group-cross validation can take a while
-gcv = False
+gcv = True
 disc = Discover(dummy_run=dummy, target="cuda")
 train_df, val_df = disc.data(elasticity, "train.csv", dummy=dummy)
 cat_df = pd.concat((train_df, val_df), axis=0)
