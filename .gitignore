@@ -151,3 +151,4 @@ models/trained_models/test-property.pth# conda smithy ci-skeleton start
 
 build_artifacts
 # conda smithy ci-skeleton end
+models/trained_models/test-property.pth
