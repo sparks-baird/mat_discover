@@ -25,17 +25,19 @@ jobs:
         python-version: 3.8
         
     - name: Install dependencies
+      shell: bash -l {0}
       run: |
-        pip install flit torch # torch is CPU version
+        pip install flit torch coveralls pytest # torch is CPU version
         flit install
-        
+
     - name: Pytest
       shell: bash -l {0}
       run: |
         export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
-        python -m pytest
+        coverage run --source=mat_discover -m pytest # python -m pytest
         
-    - name: Build and publish
+    - name: Publish to PyPI
+      shell: bash -l {0}
       run: |
         flit publish
       env:
@@ -66,19 +68,29 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Setup Miniconda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: "latest"
+        activate-environment: mat_discover
+    
+    - name: Install dependencies
+      shell: bash -l {0}
+      run: |    
+        conda install git conda-build anaconda-client
+        conda install  -c conda-forge grayskull flit
+        conda install -c sgbaird pqdm elmd
+        
+    - name: Build and publish
+      shell: bash -l {0}
+      env:
+        ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
+      run: |
+        grayskull pypi mat_discover
+        conda config --set anaconda_upload yes
+        conda build mat_discover
 
 #     - name: Create Release # https://github.com/softprops/action-gh-release
 #       uses: softprops/action-gh-release@v1
 #       with:
 #         body: ${{steps.build_changelog.outputs.changelog}}
-#         files: |
-#           **/*.py
-#           **/*.csv
-#           **/*.md
-#           **/*.yml
-#           **/*.toml
-#           **/*.txt
-#           **/*.ipynb
-#           **/*.html
-#           **/*.png
-#           LICENSE
