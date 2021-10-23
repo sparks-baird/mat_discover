@@ -39,7 +39,7 @@ dependencies:
   - flit
   - pipreqs
   - black
-  - precommit
+  - pre_commit
   - flake8 # probably taken care of already by others (dep)
   - mypy
   - mypy_extensions

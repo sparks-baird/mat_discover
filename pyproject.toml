@@ -38,6 +38,7 @@ test = [
     "pytest",
     "ElM2D==0.4.1", #PyPI
     "pytest-cov",
+    "pre-commit",
 ]
 # gpu = ["torch==1.9.1+cu111"]
 # cpu = ["torch"]
