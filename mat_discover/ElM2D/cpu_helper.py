@@ -5,6 +5,7 @@ from numba import jit
 
 inline = os.environ.get("INLINE", "never")
 
+
 @jit(inline=inline)
 def copy(a, out):
     """
