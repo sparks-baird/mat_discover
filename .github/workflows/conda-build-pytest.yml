@@ -37,6 +37,7 @@ jobs:
         
     - name: Miniconda build
       shell: bash -l {0}
+      run : |
         grayskull pypi mat_discover
         conda config --set anaconda_upload no
         conda build mat_discover
