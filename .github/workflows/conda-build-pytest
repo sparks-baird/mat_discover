@@ -1,0 +1,48 @@
+name: Python Package using Conda
+
+on:
+  push:
+    paths:
+    - '**.py' # only run workflow when source files changed
+
+jobs:
+  linux-pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+      
+    - uses: psf/black@stable #https://black.readthedocs.io/en/stable/integrations/github_actions.html
+        
+    - name: Setup Miniconda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: "latest"
+        activate-environment: mat_discover
+    
+    - name: Install dependencies
+      shell: bash -l {0}
+      run: |
+        conda install git conda-build anaconda-client pytest
+        conda install  -c conda-forge grayskull flit
+        conda install -c sgbaird pqdm elmd
+        
+    - name: Miniconda build
+      shell: bash -l {0}
+        grayskull pypi mat_discover
+        conda config --set anaconda_upload no
+        conda build mat_discover
+    
+    - name: Pytest
+      shell: bash -l {0}
+      run: |
+        export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
+        python -m pytest
