@@ -1,4 +1,4 @@
-<!-- TODO: add buttons for code ocean and Zenodo DOI-->
+<!-- TODO: add buttons for code ocean and Zenodo DOI [![Open in Code Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://codeocean.com/capsule/3904426/tree)-->
 # DiSCoVeR
 [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?urlpath=https%3A%2F%2Fgithub.com%2Fsparks-baird%2Fmat_discover%2Fblob%2Fmain%2Fmat_discover_pypi.ipynb)
