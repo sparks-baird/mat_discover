@@ -5,8 +5,10 @@ from mat_discover.CrabNet.data.materials_data import elasticity
 from mat_discover.mat_discover_ import Discover
 
 # %% setup
-dummy = True  # set to True for a quicker run --> small dataset, MDS instead of UMAP
-gcv = True  # set to False for a quicker run, group-cross validation can take a while
+# set dummy to True for a quicker run --> small dataset, MDS instead of UMAP
+dummy = True
+# set gcv to False for a quicker run --> group-cross validation can take a while
+gcv = False
 disc = Discover(dummy_run=dummy, target="cuda")
 train_df, val_df = disc.data(elasticity, "train.csv", dummy=dummy)
 cat_df = pd.concat((train_df, val_df), axis=0)
