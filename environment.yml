@@ -9,11 +9,11 @@ dependencies:
   # core:
   - matplotlib>=3.4.3
   - pandas
-  - pytorch>=1.10
+  - pytorch==1.10.*
   - plotly
-  - python==3.8
+  - python>=3.7
   - scipy
-  - cudatoolkit>=11.3.0
+  - cudatoolkit==11.3.*
   - numba>=0.53.1
   - seaborn
   - tqdm
@@ -28,21 +28,21 @@ dependencies:
   - pip
   - pip:
     # core:
-    - pqdm
+    - pqdm==0.1.0
     - elmd==0.4.8
     - ElM2D==0.4.1
-  # optional: #TODO: flag/command to use optional or not?
-  # - ipykernel
-  # - nbformat>=4.2.0
-  # - notebook
+  # optional:
+  - ipykernel
+  - nbformat>=4.2.0
+  - notebook
+  - flit
+  - pipreqs
+  - black
+  - flake8 # probably taken care of already by others (dep)
+  - mypy
+  - mypy_extensions
+  - pydocstyle
+  - grayskull # maybe not grayskull, since conda smithy ci-skeleton seems to work better with conda-smithy
   # - graphviz
   # - python-graphviz
-  # - flit
-  # - pipreqs
-  # - black
-  # - flake8 # probably taken care of already by others (dep)
-  # - mypy
-  # - mypy_extensions
-  # - pydocstyle
-  # - grayskull # maybe not grayskull, since conda smithy ci-skeleton seems to work better with conda-smithy
 prefix: C:\Users\sterg\anaconda3\envs\mat_discover
