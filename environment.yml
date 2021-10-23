@@ -4,6 +4,7 @@ channels:
   - pytorch
   - numba/label/ci_llvmlite_0.38
   - numba
+  - sgbaird
   - defaults
 dependencies:
   # core:
@@ -26,10 +27,10 @@ dependencies:
   - pytest
   - dill
   - pip
+  - pqdm==0.1.0 #sgbaird
+  - elmd==0.4.8 #sgbaird
   - pip:
     # core:
-    - pqdm==0.1.0
-    - elmd==0.4.8
     - ElM2D==0.4.1
   # optional:
   - ipykernel
@@ -38,6 +39,7 @@ dependencies:
   - flit
   - pipreqs
   - black
+  - precommit
   - flake8 # probably taken care of already by others (dep)
   - mypy
   - mypy_extensions

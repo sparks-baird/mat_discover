@@ -60,6 +60,7 @@ else:
         'via e.g. `os.environ["COLUMNS"] = "100"`.'
     )
 
+
 @cuda.jit(
     "float{0}(float{0}[:], float{0}[:], float{0}[:], float{0}[:], int{0}, boolean, boolean, boolean)".format(
         bits
