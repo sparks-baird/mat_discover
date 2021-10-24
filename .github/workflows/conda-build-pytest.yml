@@ -3,7 +3,8 @@ name: Build with Miniconda and test
 on:
   push:
     paths:
-    - '**.py' # only run workflow when source files changed
+    - '**.py'
+    - 'pyproject.toml'
 
 jobs:
   linux-pytest:
