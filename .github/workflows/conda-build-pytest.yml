@@ -33,15 +33,19 @@ jobs:
       shell: bash -l {0}
       run: |
         conda install git conda-build anaconda-client pytest
-        conda install  -c conda-forge grayskull flit
-        conda install -c sgbaird pqdm elmd
+        conda install  -c conda-forge flit # grayskull
+        # conda install -c sgbaird pqdm elmd
         
     - name: Miniconda build
       shell: bash -l {0}
       run : |
-        grayskull pypi mat_discover
+        # grayskull pypi mat_discover
         conda config --set anaconda_upload no
-        conda build mat_discover
+        mkdir scratch
+        cp LICENSE meta.yaml scratch/
+        cd scratch
+        conda build .
+        cd ..
     
     - name: Pytest
       shell: bash -l {0}
