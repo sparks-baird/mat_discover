@@ -40,6 +40,8 @@ jobs:
       shell: bash -l {0}
       run : |
         # grayskull pypi mat_discover
+        conda config --append channels conda-forge
+        conda config --append channels sgbaird
         conda config --set anaconda_upload no
         mkdir scratch
         cp LICENSE meta.yaml scratch/
