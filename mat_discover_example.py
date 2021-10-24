@@ -19,7 +19,6 @@ disc.fit(train_df)
 # %% predict
 score = disc.predict(val_df, umap_random_state=42)
 
-
 # %% leave-one-cluster-out cross-validation
 if gcv:
     disc.group_cross_val(cat_df, umap_random_state=42)
