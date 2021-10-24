@@ -12,6 +12,7 @@ source:
 
 build:
   number: 0
+  noarch: python
   script: {{ PYTHON }} -m pip install . -vv
 
 requirements:
@@ -20,29 +21,33 @@ requirements:
     - python
     - flit
   run:
-    - cython
-    - dill
-    - elmd ==0.4.8
+    - elmd ==0.4.8 #pip --> sgbaird conda channel
     - hdbscan
+    - cython # for hdbscan 0.8.27 (or similar?)
     - joblib
     - python-kaleido
-    - matplotlib-base >=3.4.3
+    - matplotlib >=3.4.3
     - numba >=0.53.1
     - pandas
     - plotly
-    - pqdm
+    - tqdm
+    - pqdm ==0.1.0 #pip --> sgbaird conda channel
     - psutil
     - pymatgen
     - python
     - scikit-learn
     - scipy
     - seaborn
-    - tqdm
     - umap-learn
+    - pytorch >=1.9.1 #==1.9.1
+    - cudatoolkit >=11.3
+    - dill
 
 test:
   imports:
     - mat_discover
+    - mat_discover.CrabNet
+    - mat_discover.ElM2D
   commands:
     - pip check
   requires:
