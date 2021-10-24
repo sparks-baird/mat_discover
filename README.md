@@ -18,7 +18,7 @@
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
 ## Citing
-The preprint is hosted on ChemRxiv:  
+The preprint is hosted on ChemRxiv:
 > Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8-v2](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8). This content is a preprint and has not been peer-reviewed.
 
 The BibTeX citation is as follows:
@@ -124,6 +124,9 @@ The built-in data directories are as follows:
 To see what `.csv` files are available (e.g. `train.csv`), you will probably need to navigate to [CrabNet/data/](https://github.com/sgbaird/CrabNet/tree/master/data) and explore.
 
 Finally, to download data from Materials Project directly, see [generate_elasticity_data.py](https://github.com/sparks-baird/mat_discover/blob/main/generate_elasticity_data.py).
+
+## Interactive Plots
+Interactive plots for several types of Pareto front plots can be found [here](figures/).
 
 ## Developing
 This project was developed primarily in "Python in Visual Studio Code" using `black`, `mypy`, `pydocstyle`, `kite`, other tools, and various community extensions. Some other notable tools used in this project are:
