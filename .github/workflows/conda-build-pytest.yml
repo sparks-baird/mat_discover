@@ -4,7 +4,6 @@ on:
   push:
     paths:
     - '**.py'
-    - 'pyproject.toml'
 
 jobs:
   linux-pytest:
