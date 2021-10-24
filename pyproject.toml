@@ -19,7 +19,7 @@ dependencies = [
     "cython", # for hdbscan 0.8.27 or similar
     "numba>=0.53.1",
     "plotly",
-    "kaleido",
+    "python-kaleido",
     "pandas",
     "matplotlib>=3.4.3",
     "joblib",
