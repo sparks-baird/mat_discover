@@ -44,20 +44,20 @@ conda create --name mat_discover
 ```
 There are three ways to install `mat_discover`: Anaconda (`conda`), PyPI (`pip`), and from source. Anaconda is the preferred method.
 ### Anaconda
+To install `mat_discover` using `conda`, first, update `conda` via:
+```python
+conda update conda
+```
 The Anaconda `mat_discover` package is hosted on the [@sgbaird channel](https://anaconda.org/sgbaird/repo) and can be installed via:
 ```python
 conda install -c sgbaird mat_discover
 ```
 ### Pip
-To install via pip, you need to:
-- update pip
-- install the appropriate version of PyTorch
-- install `mat_discover`
-#### Update pip
+To install via `pip`, first update `pip` via:
 ```python
 pip install -U pip
 ```
-#### Install PyTorch
+
 Due to limitations of PyPI distributions of CUDA/PyTorch, you will need to install PyTorch separately via the command that's most relevant to you ([PyTorch Getting Started](https://pytorch.org/get-started/locally/)). For example, for Stable/Windows/Pip/Python/CUDA-11.3:
 ```python
 pip3 install torch==1.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
@@ -65,21 +65,20 @@ pip3 install torch==1.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch
 <!--- ```python
 conda install pytorch cudatoolkit=11.1 -c pytorch -c conda-forge
 ``` --->
-#### Install `mat_discover`
+
+Finally, install `mat_discover`:
 ```python
 pip install mat_discover
 ```
 ### From Source
-To install from source:
-- clone the directory
-- install locally
-#### Clone
+To install from source, clone the `mat_discover` repository:
+
 ```python
 git clone --recurse-submodules https://github.com/sparks-baird/mat_discover.git
 cd mat_discover
 ```
-#### Local Install
-You can use `pip`, `conda`, or `flit`.
+
+To perform the local installation, you can use `pip`, `conda`, or `flit`:
 | **pip**            | **conda**                                 | **flit**                           |
 | ------------------ | ----------------------------------------- | ---------------------------------- |
 | `pip install -e .` | `conda env create --file environment.yml` | `conda install flit; flit install` |
