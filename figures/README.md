@@ -5,7 +5,7 @@ Various figures, both interactive and non-interactive, related to the DiSCoVeR a
 Compound-wise and cluster-wise interactive figures produced via [Plotly](https://plotly.com/python/).
 
 ### Instructions
-1. Navigate to [https://sparks-baird.github.io/mat_discover/figures](https://sparks-baird.github.io/mat_discover/figures)
+1. Navigate to [https://sparks-baird.github.io/mat_discover/figures](https://sparks-baird.github.io/mat_discover/figures) (if not already there)
 2. Click the corresponding **title** above each image
 3. Hover your mouse over datapoints to see more information (e.g. composition, bulk modulus, cluster ID)
 
