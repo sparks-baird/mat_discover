@@ -2,9 +2,8 @@ name: Build with Miniconda and test
 
 on:
   push:
-    paths:
-    - '**.py'
-    - '*.yml'
+#     paths:
+#     - '**.py'
 #     - 'pyproject.toml'
 
 jobs:
