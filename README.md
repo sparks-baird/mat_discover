@@ -6,14 +6,17 @@
 [![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/mat_discover?label=PyPI%20downloads)
 
-[![Anaconda-Server Version](https://anaconda.org/sgbaird/mat_discover/badges/version.svg)](https://anaconda.org/sgbaird/mat_discover)
+![Conda](https://img.shields.io/conda/v/sgbaird/mat_discover)
+![Conda](https://img.shields.io/conda/pn/sgbaird/mat_discover)
 [![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg)](https://anaconda.org/sgbaird/mat_discover)
-[![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/platforms.svg)](https://anaconda.org/sgbaird/mat_discover)
 [![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/latest_release_relative_date.svg)](https://anaconda.org/sgbaird/mat_discover)
+<!-- ![Conda](https://img.shields.io/conda/dn/sgbaird/mat_discover) -->
+<!-- [![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg)](https://anaconda.org/sgbaird/mat_discover) -->
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) <!-- ![Coveralls](https://img.shields.io/coveralls/github/sparks-baird/mat_discover) -->
 [![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?branch=main)](https://coveralls.io/github/sparks-baird/mat_discover?branch=main)
 ![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)
+![PyPI - License](https://img.shields.io/pypi/l/mat_discover)
 
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 

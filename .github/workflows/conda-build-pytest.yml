@@ -42,6 +42,7 @@ jobs:
     - name: Miniconda build
       shell: bash -l {0}
       run : |
+        sed -i 's/- kaleido/- python-kaleido/g' meta.yaml
         conda config --append channels conda-forge
         conda config --append channels sgbaird
         conda config --set anaconda_upload no
