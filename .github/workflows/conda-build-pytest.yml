@@ -47,7 +47,8 @@ jobs:
         cp LICENSE meta.yaml scratch/
         cd scratch
         conda build .
-        conda install --use-local .
+        cd ..
+        conda install --use-local mat_discover
     
     - name: Pytest
       shell: bash -l {0}
