@@ -6,7 +6,13 @@ Click on either the image or the corresponding title to navigate to the HTML ver
 
 ### Compound-Wise
 #### Pareto Front Training Contribution to Validation Log Density Proxy  
-<a href=https://sparks-baird.github.io/mat_discover/figures/pf-train-contrib-proxy.html> <img src="https://sparks-baird.github.io/mat_discover/figures/pf-train-contrib-proxy.png" alt="Pareto Front Training Contribution to Validation Log Density Proxy" width=350> </a>
+<html>
+   <body>
+   <a href=https://sparks-baird.github.io/mat_discover/figures/pf-train-contrib-proxy.html>
+      <img src="https://sparks-baird.github.io/mat_discover/figures/pf-train-contrib-proxy.png" alt="Pareto Front Training Contribution to Validation Log Density Proxy" width=350>
+   </a>
+   </body>
+</html>
 
 #### [Pareto Front k-Nearest Neighbor Average Proxy](pf-peak-proxy.html)  
 <img alt="Pareto Front k-Nearest Neighbor Average Proxy" src=https://sparks-baird.github.io/mat_discover/figures/pf-peak-proxy.png width=350>
