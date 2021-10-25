@@ -1,4 +1,4 @@
-name: Python Package using Conda
+name: Install with flit and test via Pytest
 
 on:
   push:
