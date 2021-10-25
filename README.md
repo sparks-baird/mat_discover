@@ -77,8 +77,8 @@ cd mat_discover
 ```
 #### Local Install
 You can use `pip`, `conda`, or `flit`.
-| **pip** | **conda** | **flit** |
-| --- | --- | --- |
+| **pip**            | **conda**                                 | **flit**                           |
+| ------------------ | ----------------------------------------- | ---------------------------------- |
 | `pip install -e .` | `conda env create --file environment.yml` | `conda install flit; flit install` |
 
 <!-- conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/ -->
@@ -155,7 +155,7 @@ This project was developed primarily in "Python in Visual Studio Code" using `bl
 - `pytest` is used for testing
 - `numba` is used to accelerate the Wasserstein distance matrix computations via CPU or GPU
 
-Note that when using a `conda` environment (recommended), you may avoid certain issues down the road by opening VS Code via an Anaconda command prompt and entering the command `code` (at least until the VS Code devs fix some of the issues associated with opening it "normally"). For example, in Windows, press the "Windows" key, type "anaconda", and open "Anaconda Powershell Prompt (miniconda3)" or similar. Then type `code` and press enter.
+To help with development, you will need to [install from source](README.md#from-source). Note that when using a `conda` environment (recommended), you may avoid certain issues down the road by opening VS Code via an Anaconda command prompt and entering the command `code` (at least until the VS Code devs fix some of the issues associated with opening it "normally"). For example, in Windows, press the "Windows" key, type "anaconda", and open "Anaconda Powershell Prompt (miniconda3)" or similar. Then type `code` and press enter.
 
 ## Bugs, Questions, and Suggestions
 If you find a bug or have suggestions for documentation please [open an issue](https://github.com/sparks-baird/mat_discover/issues/new/choose). If you're reporting a bug, please include a simplified reproducer. If you have questions, have feature suggestions/requests, or are interested in extending/improving `mat_discover` and would like to discuss, please use the Discussions tab and use the appropriate category ("Ideas", "Q&A", etc.). Pull requests are welcome and encouraged.
