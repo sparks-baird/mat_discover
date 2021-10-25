@@ -2,7 +2,8 @@ name: Build with Miniconda and test
 
 on:
   push:
-#     paths:
+    paths:
+      - '!**.md'
 #     - '**.py'
 #     - 'pyproject.toml'
 
