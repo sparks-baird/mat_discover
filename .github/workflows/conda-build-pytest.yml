@@ -2,10 +2,10 @@ name: Build with Miniconda and test
 
 on:
   push:
-#     paths:
-#       - '!**/*.md'
-#     - '**.py'
+    paths:
+    - '**.py'
 #     - 'pyproject.toml'
+#       - '!**/*.md'
 
 jobs:
   linux-pytest:
