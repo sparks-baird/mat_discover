@@ -39,8 +39,8 @@ requirements:
     - scipy
     - seaborn
     - umap-learn
-    - pytorch ==1.10.* #==1.9.1
-    - cudatoolkit ==11.3.* 
+    - pytorch >=1.9.* #==1.9.1
+    - cudatoolkit ==11.3.*
     - dill
 
 test:
