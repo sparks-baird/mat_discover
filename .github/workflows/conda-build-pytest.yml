@@ -50,6 +50,7 @@ jobs:
         cd scratch
         conda build .
         cd ..
+        conda install dill # remove this later
         conda install --use-local mat_discover
     
     - name: Pytest
