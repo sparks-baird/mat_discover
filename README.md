@@ -80,7 +80,7 @@ You can use `pip`, `conda`, or `flit`.
 | **pip** | **conda** | **flit** |
 | --- | --- | --- |
 | `pip install -e .` | `conda env create --file environment.yml` | `conda install flit; flit install` |
-```
+
 <!-- conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/ -->
 
 ## Basic Usage
