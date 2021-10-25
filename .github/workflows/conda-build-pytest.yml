@@ -27,6 +27,7 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2
       with:
         miniconda-version: "latest"
+        auto-update-conda: true
         activate-environment: mat_discover
     
     - name: Install dependencies
@@ -39,7 +40,6 @@ jobs:
     - name: Miniconda build
       shell: bash -l {0}
       run : |
-        # grayskull pypi mat_discover
         conda config --append channels conda-forge
         conda config --append channels sgbaird
         conda config --set anaconda_upload no
@@ -54,3 +54,5 @@ jobs:
       run: |
         export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
         python -m pytest
+        
+# grayskull pypi mat_discover # manual editing required when dependencies change
