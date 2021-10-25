@@ -36,6 +36,7 @@ jobs:
       run: |
         conda install git conda-build conda-verify anaconda-client pytest
         conda install  -c conda-forge flit # grayskull
+        pip install ElM2D==0.4.1
         # conda install -c sgbaird pqdm elmd
         
     - name: Miniconda build
