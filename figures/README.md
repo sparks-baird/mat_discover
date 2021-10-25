@@ -2,28 +2,29 @@
 Various figures, both interactive and non-interactive, related to the DiSCoVeR algorithm as applied to compounds and clusters. For more details, see [the ChemRXiv paper](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8).
 
 ## Interactive Figures
-Click on either the image or the corresponding title to navigate to the HTML version. If you are on the GitHub page (i.e. [https://github.com/sparks-baird/mat_discover/figures](https://github.com/sparks-baird/mat_discover/figures)) and would like to view the interactive figures without downloading the HTML files, please first navigate to [https://sparks-baird.github.io/mat_discover/figures/](https://sparks-baird.github.io/mat_discover/figures/) and then click the image you want to view.
+Click the corresponding title above each image to navigate to an HTML version. This will redirect you to the corresponding page on [https://sparks-baird.github.io/mat_discover](https://sparks-baird.github.io/mat_discover). Alternatively, you can download the `html` file and open it in your browser of choice.
 
 ### Compound-Wise
 #### [Pareto Front Training Contribution to Validation Log Density Proxy](pf-train-contrib-proxy.html)  
 <img src="https://sparks-baird.github.io/mat_discover/figures/pf-train-contrib-proxy.png" alt="Pareto Front Training Contribution to Validation Log Density Proxy" width=350>
+<hr>
 
 #### [Pareto Front k-Nearest Neighbor Average Proxy](pf-peak-proxy.html)  
 <img src="https://sparks-baird.github.io/mat_discover/figures/pf-peak-proxy.png" alt="Pareto Front k-Nearest Neighbor Average Proxy" width=350>
-
+<hr>
 
 #### [Pareto Front Density Proxy (Train and Validation Points)](pf-dens-proxy.html)  
 <img src="https://sparks-baird.github.io/mat_discover/figures/pf-dens-proxy.png" alt="Pareto Front Density Proxy (Train and Validation Points)" width=350>
-
+<hr>
 
 ### Cluster-Wise
 #### [Pareto Front Validation Fraction](pf-frac-proxy.html)  
 <img src="https://sparks-baird.github.io/mat_discover/figures/pf-frac-proxy.png" alt="Pareto Front Validation Fraction" width=350>
-
+<hr>
 
 #### [Leave-one-cluster-out Cross-validation k-Nearest Neighbor Average Parity Plot](gcv-pareto.html)  
 <img src="https://sparks-baird.github.io/mat_discover/figures/gcv-pareto.png" alt="Leave-one-cluster-out Cross-validation k-Nearest Neighbor Average Parity Plot" width=350>
-
+<hr>
 
 ## Non-interactive Figures
 The following are non-interactive figures focused on cluster properties and density/target characteristics within DensMAP embedding space.
@@ -31,18 +32,20 @@ The following are non-interactive figures focused on cluster properties and dens
 ### Cluster Properties
 [Cluster Count Histogram](cluster-count-hist.png)  
 <img src="https://sparks-baird.github.io/mat_discover/figures/cluster-count-hist.png" alt="Cluster Count Histogram" width=350>
-
+<hr>
    
 [DensMAP Embeddings Colored by Cluster](umap-cluster-scatter.png)  
 <img src="https://sparks-baird.github.io/mat_discover/figures/umap-cluster-scatter.png" alt="DensMAP Embeddings Colored by Cluster" width=350>
-
+<hr>
    
 ### Density and Target Characteristics
 [Density Scatter Plot of 2D DensMAP Embeddings](dens-scatter.png)  
 <img src="https://sparks-baird.github.io/mat_discover/figures/dens-scatter.png" alt="Density Scatter Plot of 2D DensMAP Embeddings" width=350>
-   
+<hr>
+
 [Density Scatter Plot with Bulk Modulus Overlay in 2D DensMAP Embedding Space](dens-targ-scatter.png)  
 <img src="https://sparks-baird.github.io/mat_discover/figures/dens-targ-scatter.png" alt="Density Scatter Plot with Bulk Modulus Overlay in 2D DensMAP Embedding Space" width=350>
+<hr>
 
 <!-- 
 # Code Graveyard
@@ -73,3 +76,5 @@ The following are non-interactive figures focused on cluster properties and dens
       <img alt="Pareto Front Training Contribution to Validation Log Density Proxy" src=pf-train-contrib-proxy.png width=350>
    </a>
 </body> -->
+
+<!-- If you are on the GitHub page (i.e. [https://github.com/sparks-baird/mat_discover/figures](https://github.com/sparks-baird/mat_discover/figures)) and would like to view the interactive figures without downloading the HTML files, please first navigate to [https://sparks-baird.github.io/mat_discover/figures/](https://sparks-baird.github.io/mat_discover/figures/) and then click the image you want to view. -->
