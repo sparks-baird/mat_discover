@@ -35,38 +35,53 @@ year={2021}
 ```
 
 ## Installation
-I recommend that you run `mat_discover` in a separate conda environment. After installing [Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html), you can [create a new environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) via:
+I recommend that you run `mat_discover` in a separate conda environment, at least for initial testing. After installing [Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html), you can [create a new environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) via:
 ```python
 conda create --name mat_discover
 ```
-There are three ways to install `mat_discover`: Anaconda (`conda`), PyPI (`pip`), and from source.
+There are three ways to install `mat_discover`: Anaconda (`conda`), PyPI (`pip`), and from source. Anaconda is the preferred method.
 ### Anaconda
 The Anaconda `mat_discover` package is hosted on the [@sgbaird channel](https://anaconda.org/sgbaird/repo) and can be installed via:
 ```python
 conda install -c sgbaird mat_discover
 ```
 ### Pip
-You need to update pip, install the appropriate version of PyTorch, and then install `mat_discover`.
+To install via pip, you need to:
+- update pip
+- install the appropriate version of PyTorch
+- install `mat_discover`
 #### Update pip
 ```python
 pip install -U pip
 ```
 #### Install PyTorch
-Due to limitations of PyPI distributions of CUDA/PyTorch, you will need to install PyTorch separately via the command that's most relevant to you ([PyTorch Getting Started](https://pytorch.org/get-started/locally/)). For example, for Stable/Windows/Conda/Python/CUDA-11.1:
+Due to limitations of PyPI distributions of CUDA/PyTorch, you will need to install PyTorch separately via the command that's most relevant to you ([PyTorch Getting Started](https://pytorch.org/get-started/locally/)). For example, for Stable/Windows/Pip/Python/CUDA-11.3:
 ```python
-conda install pytorch cudatoolkit=11.1 -c pytorch -c conda-forge
+pip3 install torch==1.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
 ```
+<!--- ```python
+conda install pytorch cudatoolkit=11.1 -c pytorch -c conda-forge
+``` --->
 #### Install `mat_discover`
 ```python
 pip install mat_discover
 ```
 ### From Source
-```bash
-conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/
+To install from source:
+- clone the directory
+- install locally
+#### Clone
+```python
 git clone --recurse-submodules https://github.com/sparks-baird/mat_discover.git
 cd mat_discover
-pip install -e . # or `conda env create --file environment.yml` or `flit install` (after installing `flit` via e.g. `conda install flit`)
 ```
+#### Local Install
+You can use `pip`, `conda`, or `flit`.
+| **pip** | **conda** | **flit** |
+| --- | --- | --- |
+| `pip install -e .` | `conda env create --file environment.yml` | `conda install flit; flit install` |
+
+<!-- conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/ -->
 
 ## Basic Usage
 ### Fit/Predict
