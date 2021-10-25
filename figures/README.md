@@ -2,7 +2,14 @@
 Various figures, both interactive and non-interactive, related to the DiSCoVeR algorithm as applied to compounds and clusters. For more details, see [the ChemRXiv paper](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8).
 
 ## Interactive Figures
-Click the corresponding title above each image to navigate to an HTML version. This will redirect you to the corresponding page on [https://sparks-baird.github.io/mat_discover](https://sparks-baird.github.io/mat_discover). Alternatively, you can download the `html` file and open it in your browser of choice.
+Compound-wise and cluster-wise interactive figures produced via [Plotly](https://plotly.com/python/).
+
+### Instructions
+1. Navigate to [https://sparks-baird.github.io/mat_discover/figures](https://sparks-baird.github.io/mat_discover/figures)
+2. Click the corresponding **title** above each image
+3. Hover your mouse over datapoints to see more information (e.g. composition, bulk modulus, cluster ID)
+
+Alternatively, you can download the `html` file at [https://github.com/sparks-baird/mat_discover/figures](https://github.com/sparks-baird/mat_discover/figures) and open it in your browser of choice.
 
 ### Compound-Wise
 #### [Pareto Front Training Contribution to Validation Log Density Proxy](pf-train-contrib-proxy.html)  
@@ -41,6 +48,10 @@ The following are non-interactive figures focused on cluster properties and dens
 ### Density and Target Characteristics
 [Density Scatter Plot of 2D DensMAP Embeddings](dens-scatter.png)  
 <img src="https://sparks-baird.github.io/mat_discover/figures/dens-scatter.png" alt="Density Scatter Plot of 2D DensMAP Embeddings" width=350>
+<hr>
+
+[Target Scatter Plot of 2D DensMAP Embeddings](target-scatter.png)  
+<img src="https://sparks-baird.github.io/mat_discover/figures/target-scatter.png" alt="Density Scatter Plot of 2D DensMAP Embeddings" width=350>
 <hr>
 
 [Density Scatter Plot with Bulk Modulus Overlay in 2D DensMAP Embedding Space](dens-targ-scatter.png)  
