@@ -6,6 +6,13 @@ Click on either the image or the corresponding title to navigate to the HTML ver
 
 ### Compound-Wise
 #### [Pareto Front Training Contribution to Validation Log Density Proxy](pf-train-contrib-proxy.html)  
+
+<figure>
+    <img src="pf-train-contrib-proxy.html"
+         alt="Pareto Front Training Contribution to Validation Log Density Proxy">
+    <figcaption>Pareto Front Training Contribution to Validation Log Density Proxy</figcaption>
+</figure>
+
 <body>
    <a href=pf-train-contrib-proxy.html>
       <img alt="Pareto Front Training Contribution to Validation Log Density Proxy" src=pf-train-contrib-proxy.png width=350>
