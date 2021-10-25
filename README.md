@@ -1,7 +1,7 @@
 <!-- TODO: add buttons for code ocean and Zenodo DOI [![Open in Code Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://codeocean.com/capsule/3904426/tree)-->
 # DiSCoVeR
 [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?urlpath=https%3A%2F%2Fgithub.com%2Fsparks-baird%2Fmat_discover%2Fblob%2Fmain%2Fmat_discover_pypi.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=mat_discover_pypi.ipynb)
 
 [![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/mat_discover?label=PyPI%20downloads)
@@ -97,7 +97,7 @@ disc.save()
 print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
 ```
 
-See [mat_discover_example.py](mat_discover_example.py), [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing), or [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?urlpath=https%3A%2F%2Fgithub.com%2Fsparks-baird%2Fmat_discover%2Fblob%2Fmain%2Fmat_discover_pypi.ipynb). On Google Colab and Binder, this may take a few minutes to install and load, respectively.
+See [mat_discover_example.py](mat_discover_example.py), [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing), or [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=mat_discover_pypi.ipynb). On Google Colab and Binder, this may take a few minutes to install and load, respectively.
 ### Load Data
 If you're using your own dataset, you will need to supply a Pandas DataFrame that contains `formula` and `target` columns. If you have a `train.csv` file (located in current working directory) with these two columns, this can be converted to a DataFrame via:
 ```python
