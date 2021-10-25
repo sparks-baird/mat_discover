@@ -144,7 +144,7 @@ To see what `.csv` files are available (e.g. `train.csv`), you will probably nee
 Finally, to download data from Materials Project directly, see [generate_elasticity_data.py](https://github.com/sparks-baird/mat_discover/blob/main/generate_elasticity_data.py).
 
 ## Interactive Plots
-Interactive plots for several types of Pareto front plots can be found [here](figures/).
+Interactive plots for several types of Pareto front plots can be found [here](https://sparks-baird.github.io/mat_discover/figures/).
 
 ## Developing
 This project was developed primarily in "Python in Visual Studio Code" using `black`, `mypy`, `pydocstyle`, `kite`, other tools, and various community extensions. Some other notable tools used in this project are:
