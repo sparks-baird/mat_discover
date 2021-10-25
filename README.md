@@ -1,7 +1,7 @@
 <!-- TODO: add buttons for code ocean and Zenodo DOI [![Open in Code Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://codeocean.com/capsule/3904426/tree)-->
 # DiSCoVeR
 [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?urlpath=https%3A%2F%2Fgithub.com%2Fsparks-baird%2Fmat_discover%2Fblob%2Fmain%2Fmat_discover_pypi.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=mat_discover_pypi.ipynb)
 
 [![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/mat_discover?label=PyPI%20downloads)
@@ -44,20 +44,20 @@ conda create --name mat_discover
 ```
 There are three ways to install `mat_discover`: Anaconda (`conda`), PyPI (`pip`), and from source. Anaconda is the preferred method.
 ### Anaconda
+To install `mat_discover` using `conda`, first, update `conda` via:
+```python
+conda update conda
+```
 The Anaconda `mat_discover` package is hosted on the [@sgbaird channel](https://anaconda.org/sgbaird/repo) and can be installed via:
 ```python
 conda install -c sgbaird mat_discover
 ```
 ### Pip
-To install via pip, you need to:
-- update pip
-- install the appropriate version of PyTorch
-- install `mat_discover`
-#### Update pip
+To install via `pip`, first update `pip` via:
 ```python
 pip install -U pip
 ```
-#### Install PyTorch
+
 Due to limitations of PyPI distributions of CUDA/PyTorch, you will need to install PyTorch separately via the command that's most relevant to you ([PyTorch Getting Started](https://pytorch.org/get-started/locally/)). For example, for Stable/Windows/Pip/Python/CUDA-11.3:
 ```python
 pip3 install torch==1.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
@@ -65,21 +65,20 @@ pip3 install torch==1.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch
 <!--- ```python
 conda install pytorch cudatoolkit=11.1 -c pytorch -c conda-forge
 ``` --->
-#### Install `mat_discover`
+
+Finally, install `mat_discover`:
 ```python
 pip install mat_discover
 ```
 ### From Source
-To install from source:
-- clone the directory
-- install locally
-#### Clone
+To install from source, clone the `mat_discover` repository:
+
 ```python
 git clone --recurse-submodules https://github.com/sparks-baird/mat_discover.git
 cd mat_discover
 ```
-#### Local Install
-You can use `pip`, `conda`, or `flit`.
+
+To perform the local installation, you can use `pip`, `conda`, or `flit`:
 | **pip**            | **conda**                                 | **flit**                           |
 | ------------------ | ----------------------------------------- | ---------------------------------- |
 | `pip install -e .` | `conda env create --file environment.yml` | `conda install flit; flit install` |
@@ -98,7 +97,8 @@ disc.save()
 print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
 ```
 
-See [mat_discover_example.py](mat_discover_example.py), [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing), or [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?urlpath=https%3A%2F%2Fgithub.com%2Fsparks-baird%2Fmat_discover%2Fblob%2Fmain%2Fmat_discover_pypi.ipynb). On Google Colab and Binder, this may take a few minutes to install and load, respectively.
+See [mat_discover_example.py](mat_discover_example.py), [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing), or [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=mat_discover_pypi.ipynb). On Google Colab and Binder, this may take a few minutes to install and load, respectively. During training and prediction, Google Colab will be faster than Binder since Google Colab has access to a GPU while Binder does not.
+
 ### Load Data
 If you're using your own dataset, you will need to supply a Pandas DataFrame that contains `formula` and `target` columns. If you have a `train.csv` file (located in current working directory) with these two columns, this can be converted to a DataFrame via:
 ```python
@@ -144,7 +144,7 @@ To see what `.csv` files are available (e.g. `train.csv`), you will probably nee
 Finally, to download data from Materials Project directly, see [generate_elasticity_data.py](https://github.com/sparks-baird/mat_discover/blob/main/generate_elasticity_data.py).
 
 ## Interactive Plots
-Interactive plots for several types of Pareto front plots can be found [here](figures/).
+Interactive plots for several types of Pareto front plots can be found [here](https://sparks-baird.github.io/mat_discover/figures/).
 
 ## Developing
 This project was developed primarily in "Python in Visual Studio Code" using `black`, `mypy`, `pydocstyle`, `kite`, other tools, and various community extensions. Some other notable tools used in this project are:
