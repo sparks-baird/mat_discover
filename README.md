@@ -17,6 +17,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?branch=main)](https://coveralls.io/github/sparks-baird/mat_discover?branch=main)
 ![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)
 ![PyPI - License](https://img.shields.io/pypi/l/mat_discover)
+[![DOI](https://zenodo.org/badge/392897894.svg)](https://zenodo.org/badge/latestdoi/392897894)
 
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
