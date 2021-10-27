@@ -15,12 +15,7 @@ def umap_cluster_scatter(std_emb, labels):
     class_ids = labels != -1
     fig = plt.Figure()
     ax = plt.scatter(
-        std_emb[:, 0],
-        std_emb[:, 1],
-        c=labels,
-        s=2,
-        cmap=cmap,
-        label=labels,
+        std_emb[:, 0], std_emb[:, 1], c=labels, s=2, cmap=cmap, label=labels
     )
     unclass_ids = np.invert(class_ids)
     unclass_frac = np.sum(unclass_ids) / len(labels)
@@ -61,7 +56,8 @@ def cluster_count_hist(labels):
     # cmap = sns.color_palette("Spectral", mx + 1, as_cmap=True)
     # color = cmap(scl_vals)
 
-    fig = plt.bar(*np.unique(labels, return_counts=True), color=color)
+    fig = plt.Figure()
+    plt.bar(*np.unique(labels, return_counts=True), color=color)
     plt.xlabel("cluster ID")
     plt.ylabel("number of compounds")
     plt.tight_layout()
@@ -72,7 +68,8 @@ def cluster_count_hist(labels):
 
 def target_scatter(std_emb, target):
     # TODO: change to log colorscale or a higher-contrast
-    fig = plt.scatter(
+    fig = plt.Figure()
+    plt.scatter(
         std_emb[:, 0],
         std_emb[:, 1],
         c=target,
@@ -91,7 +88,8 @@ def target_scatter(std_emb, target):
 
 def dens_scatter(x, y, pdf_sum):
     # TODO: add callouts to specific locations (high-scoring compounds)
-    fig = plt.scatter(x, y, c=pdf_sum)
+    fig = plt.Figure()
+    plt.scatter(x, y, c=pdf_sum)
     plt.axis("off")
     plt.tight_layout()
     plt.colorbar(label="Density", orientation="horizontal")
