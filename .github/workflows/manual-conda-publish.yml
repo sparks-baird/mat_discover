@@ -14,7 +14,7 @@ jobs:
       shell: bash -l {0}
       run: |    
         conda install git conda-build conda-verify anaconda-client
-        conda install  -c conda-forge grayskull flit
+        conda install  -c conda-forge grayskull flit coveralls
         conda install -c sgbaird pqdm elmd
         
     - name: Build and publish
