@@ -74,7 +74,7 @@ jobs:
       shell: bash -l {0}
       run: |    
         conda install git conda-build conda-verify anaconda-client
-        conda install  -c conda-forge grayskull flit
+        conda install  -c conda-forge grayskull flit coveralls
         conda install -c sgbaird pqdm elmd
         
     - name: Build and publish
@@ -92,10 +92,11 @@ jobs:
         conda build .
         cd ..
         
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload to coveralls
+      shell: bash -l {0}
+      run: coveralls --service=github
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
 #        grayskull pypi mat_discover
 
