@@ -62,11 +62,6 @@ jobs:
           
         draft: false
         prerelease: false
-    
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Setup Miniconda
       uses: conda-incubator/setup-miniconda@v2
@@ -96,6 +91,11 @@ jobs:
         cd scratch
         conda build .
         cd ..
+        
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         
 #        grayskull pypi mat_discover
 
