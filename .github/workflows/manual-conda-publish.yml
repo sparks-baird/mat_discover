@@ -31,6 +31,7 @@ jobs:
             conda install git conda-build conda-verify anaconda-client pytest
             conda install  -c conda-forge grayskull flit coveralls
             conda install -c sgbaird pqdm elmd
+            pip install conda-souschef
 
         - name: Build and publish
           shell: bash -l {0}
