@@ -32,6 +32,7 @@ dependencies:
   - pip:
     # core:
     - ElM2D==0.4.1
+    - conda-souschef==0.1.0
   # optional:
   - ipykernel
   - nbformat>=4.2.0
