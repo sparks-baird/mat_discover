@@ -37,7 +37,11 @@ jobs:
           env:
             ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
           run: |
-            sed -i 's/- kaleido/- python-kaleido/g' meta.yaml # find-replace kaleido-->python-kaleido
+            # sed -i 's/- kaleido/- python-kaleido/g' meta.yaml # find-replace kaleido-->python-kaleido
+            cd ..
+            grayskull pypi mat_discover
+            cd mat_discover
+            python fixup_grayskull.py
             conda config --append channels conda-forge
             conda config --append channels sgbaird
             conda config --set anaconda_upload yes
