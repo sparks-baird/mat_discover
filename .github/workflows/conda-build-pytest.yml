@@ -42,7 +42,11 @@ jobs:
     - name: Miniconda build
       shell: bash -l {0}
       run : |
-        sed -i 's/- kaleido/- python-kaleido/g' meta.yaml
+        # sed -i 's/- kaleido/- python-kaleido/g' meta.yaml
+        cd ..
+        grayskull pypi mat_discover
+        cd mat_discover
+        python fixup_grayskull.py
         conda config --append channels conda-forge
         conda config --append channels sgbaird
         conda config --set anaconda_upload no
