@@ -28,7 +28,7 @@ jobs:
         - name: Install dependencies
           shell: bash -l {0}
           run: |    
-            conda install git conda-build conda-verify anaconda-client
+            conda install git conda-build conda-verify anaconda-client pytest
             conda install  -c conda-forge grayskull flit coveralls
             conda install -c sgbaird pqdm elmd
 
@@ -46,6 +46,12 @@ jobs:
             cd scratch
             conda build .
             cd ..
+
+        - name: Pytest
+          shell: bash -l {0}
+          run: |
+            export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
+            coverage run --source=mat_discover -m pytest # python -m pytest
 
         - name: Upload to coveralls
           shell: bash -l {0}
