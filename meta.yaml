@@ -21,6 +21,8 @@ requirements:
     - python
   run:
     - cython
+    - cudatoolkit ==11.3.1
+    - pytorch >=1.9.0
     - python-kaleido
     - dill
     - elmd ==0.4.8
