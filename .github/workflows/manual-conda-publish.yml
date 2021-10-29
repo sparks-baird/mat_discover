@@ -53,6 +53,14 @@ jobs:
             conda install --use-local mat_discover
             cd ..
 
+        - name: Commit and push meta.yaml
+          shell: bash -l {0}
+          run: |
+            git config --global user.name 'Sterling'
+            git config --global user.email 'sgbaird@users.noreply.github.com'
+            git commit -m "update meta.yaml via grayskull and conda-souschef" meta.yaml
+            git push
+
         - name: Pytest
           shell: bash -l {0}
           run: |
