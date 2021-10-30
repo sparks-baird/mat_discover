@@ -44,7 +44,9 @@ requirements:
     - pymatgen
     - dill
     - pqdm ==0.1.0 #sgbaird
-    - elmd ==0.4.8 #sgbaird
+    # - elmd ==0.4.8 #sgbaird
+    - crabnet
+    - chem_wasserstein
 
 test:
   imports:
