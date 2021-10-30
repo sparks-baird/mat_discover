@@ -23,6 +23,8 @@
 
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
+<img src=https://user-images.githubusercontent.com/45469701/139520031-bf4fda18-9be7-4c54-b70b-c9be8e974cea.png width=500>
+
 ## Citing
 The preprint is hosted on ChemRxiv:
 > Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8-v2](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8). This content is a preprint and has not been peer-reviewed.
@@ -39,6 +41,9 @@ author={Baird, Sterling and Diep, Tran and Sparks, Taylor},
 year={2021}
 }
 ```
+
+## DiSCoVeR Workflow
+<img src="https://sparks-baird.github.io/mat_discover/figures/discover-workflow.png" alt="DiSCoVeR Workflow" width=350>
 
 ## Installation
 I recommend that you run `mat_discover` in a separate conda environment, at least for initial testing. After installing [Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html), you can [create a new environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) via:
