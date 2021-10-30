@@ -1,5 +1,5 @@
 {% set name = "mat_discover" %}
-{% set version = "1.2.1" %}
+{% set version = "1.2.3" %}
 
 
 package:
@@ -8,39 +8,43 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/mat_discover-{{ version }}.tar.gz
-  sha256: db4282b19dee8d851edc9dc1fc126aa0e670f0d55f3d4a718f8b23dd5fd273f0
+  sha256: d54943905341f3f67d0b97e6e0a58ba2b34f04d6746425de9114a246d794fc32
+  # git_url: https://github.com/sparks-baird/mat_discover.git
+  # git_rev: {{ version }}
+  # git_depth: 1 # (Defaults to -1/not shallow)
 
 build:
+  noarch: python
   number: 0
-  script: {{ PYTHON }} -m pip install . -vv
+  script: {{ PYTHON }} -m  pip install . -vv
 
 requirements:
   host:
     - pip
     - flit
-    - python
+    - python >=3.7
   run:
-    - cython
-    - cudatoolkit ==11.3.1
-    - pytorch >=1.9.0
-    - python-kaleido
-    - dill
-    - elmd ==0.4.8
-    - hdbscan
-    - joblib
-    - matplotlib-base >=3.4.3
-    - numba >=0.53.1
+    - python >=3.7
+    - matplotlib >=3.4.3
     - pandas
+    - pytorch
     - plotly
-    - pqdm
-    - psutil
-    - pymatgen
-    - python
-    - scikit-learn
     - scipy
+    - cudatoolkit ==11.3.1
+    - numba >=0.53.1
     - seaborn
     - tqdm
+    - python-kaleido
     - umap-learn
+    - psutil
+    - numpy
+    - scikit-learn
+    - cython
+    - hdbscan
+    - pymatgen
+    - dill
+    - pqdm ==0.1.0 #sgbaird
+    - elmd ==0.4.8 #sgbaird
 
 test:
   imports:
