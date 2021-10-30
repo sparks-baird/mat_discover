@@ -28,8 +28,8 @@ dependencies = [
     "scikit_learn",
     "umap-learn",
     "dill",
-    "crabnet",
-    "chem_wasserstein",
+    "crabnet >=1.0.5",
+    "chem_wasserstein >=1.0.2",
     # for torch, run "set PIP_FIND_LINKS=https://download.pytorch.org/whl/torch_stable.html" before "flit install"
     # see also: https://github.com/takluyver/flit/issues/369
     # "torch==1.9.1+cu111", # e.g "1.9.1+cu111" or "1.7.1+cu110"
