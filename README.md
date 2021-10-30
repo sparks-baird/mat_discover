@@ -43,7 +43,9 @@ year={2021}
 ```
 
 ## DiSCoVeR Workflow
-<img src="https://sparks-baird.github.io/mat_discover/figures/discover-workflow.png" alt="DiSCoVeR Workflow" width=350>
+<img src="https://sparks-baird.github.io/mat_discover/figures/discover-workflow.png" alt="DiSCoVeR Workflow" width=600>
+
+_DiSCoVeR workflow to create chemically homogeneous clusters.  (a) Training and validation data.  (b) ElMD pairwise distances.  (c) DensMAP embeddings and DensMAP densities.  (d) Clustering via HDBSCAN*.  (e) Pareto plot and discovery scores.  (f) Pareto plot of cluster properties_
 
 ## Installation
 I recommend that you run `mat_discover` in a separate conda environment, at least for initial testing. After installing [Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html), you can [create a new environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) via:
