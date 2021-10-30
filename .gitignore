@@ -153,3 +153,4 @@ build_artifacts
 # conda smithy ci-skeleton end
 models/trained_models/test-property.pth
 mat_discover-feedstock/
+scratch/
