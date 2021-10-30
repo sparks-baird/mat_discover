@@ -118,7 +118,7 @@ df = pd.read_csv("train.csv")
 ```
 Note that you can load any of the datasets within `CrabNet/data/`, which includes `matbench` data, other datasets from the CrabNet paper, and a recent (as of Oct 2021) snapshot of `K_VRH` bulk modulus data from Materials Project. For example, to load the bulk modulus snapshot:
 ```python
-from mat_discover.CrabNet.data.materials_data import elasticity
+from crabnet.data.materials_data import elasticity
 train_df, val_df = disc.data(elasticity, "train.csv") # note that `val.csv` within `elasticity` is every other Materials Project compound (i.e. "target" column filled with zeros)
 ```
 
