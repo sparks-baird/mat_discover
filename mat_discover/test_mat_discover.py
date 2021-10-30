@@ -32,7 +32,7 @@ for cluster in clusters:
 # %% imports
 import pandas as pd
 
-from mat_discover.CrabNet.data.materials_data import elasticity
+from crabnet.data.materials_data import elasticity
 from mat_discover.mat_discover_ import Discover
 
 # %% Test Functions

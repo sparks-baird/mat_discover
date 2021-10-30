@@ -14,7 +14,7 @@ import pickle
 
 # from tqdm import tqdm
 from pqdm.processes import pqdm
-from mat_discover.ElM2D.utils.Timer import Timer
+from chem_wasserstein.utils.Timer import Timer
 
 import numpy as np
 import pandas as pd

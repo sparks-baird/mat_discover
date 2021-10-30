@@ -952,7 +952,7 @@ class Discover:
         ----------
         module : Module
             The module within mat_discover that contains e.g. "train.csv". For example,
-            from mat_discover.CrabNet.data.materials_data import elasticity
+            from crabnet.data.materials_data import elasticity
         fname : str, optional
             Filename of text file to open.
         dummy : bool, optional
