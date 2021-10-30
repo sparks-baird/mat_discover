@@ -1,5 +1,5 @@
 {% set name = "mat_discover" %}
-{% set version = "1.2.3" %}
+{% set version = "1.2.1" %}
 
 
 package:
@@ -8,7 +8,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/mat_discover-{{ version }}.tar.gz
-  sha256: d54943905341f3f67d0b97e6e0a58ba2b34f04d6746425de9114a246d794fc32
+  sha256: db4282b19dee8d851edc9dc1fc126aa0e670f0d55f3d4a718f8b23dd5fd273f0
 
 build:
   number: 0
