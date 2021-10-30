@@ -24,7 +24,7 @@ from importlib.resources import open_text
 
 from warnings import warn
 from operator import attrgetter
-from mat_discover.ElM2D.utils.Timer import Timer, NoTimer
+from chem_wasserstein.utils.Timer import Timer, NoTimer
 
 import matplotlib.pyplot as plt
 
@@ -43,7 +43,7 @@ from sklearn.metrics import mean_squared_error
 import umap
 import hdbscan
 
-from mat_discover.ElM2D.ElM2D_ import ElM2D
+from chem_wasserstein.ElM2D_ import ElM2D
 
 from mat_discover.utils.nearest_neigh import nearest_neigh_props
 from mat_discover.utils.pareto import pareto_plot, get_pareto_ind
@@ -55,9 +55,7 @@ from mat_discover.utils.plotting import (
     dens_targ_scatter,
 )
 
-import torch
-
-from mat_discover.CrabNet.train_crabnet import get_model
+from crabnet.train_crabnet import get_model
 
 plt.rcParams.update(
     {
