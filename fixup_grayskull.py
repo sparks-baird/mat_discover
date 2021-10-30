@@ -6,7 +6,7 @@ fpath = join("mat_discover", "meta.yaml")
 fpath2 = join("scratch", "meta.yaml")
 my_recipe = Recipe(load_file=fpath)
 my_recipe["requirements"]["host"].append("flit")
-my_recipe["build"].append("noarch: python")
+my_recipe["build"]["noarch"] = "python"
 del my_recipe["requirements"]["build"]
 my_recipe["requirements"]["run"].remove("kaleido")
 my_recipe["requirements"]["run"].append("python-kaleido")
