@@ -1,5 +1,5 @@
 {% set name = "mat_discover" %}
-{% set version = "1.3.1" %}
+{% set version = "1.3.2" %}
 
 
 package:
@@ -8,12 +8,13 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/mat_discover-{{ version }}.tar.gz
-  sha256: 83d5110beb18c40b22a260eb74cfb938aee8f09714f3825792980dfd936ff3e5
+  sha256: 0697039f882e2c3f470fc15e22be49ae9b16f59bfb082614e097b78e67576d45
 
 build:
   number: 0
   script: {{ PYTHON }} -m pip install . -vv
 
+  noarch: python
 requirements:
   host:
     - pip
@@ -28,14 +29,11 @@ requirements:
     - cython
     - dill
     - hdbscan
-    - joblib
     - matplotlib-base >=3.4.3
     - numba >=0.53.1
     - pandas
     - plotly
     - pqdm
-    - psutil
-    - pymatgen
     - python
     - scikit-learn
     - scipy
