@@ -25,3 +25,5 @@ Thanks for opening an issue! Please first ensure that there is no other issue pr
   i.e. it's possible to run as 'python bug.py'.
 
 <!--Please include details of the bug here, including, if applicable, what you expected to happen!-->
+
+<!--Issue template modified from https://github.com/numba/numba-->
