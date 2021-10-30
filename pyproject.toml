@@ -13,23 +13,23 @@ dependencies = [
     "tqdm",
     "pqdm", #PyPI
     "seaborn",
-    "pymatgen",
     "scipy",
     "hdbscan",
     "cython", # for hdbscan 0.8.27 or similar
-    "numba>=0.53.1",
+    "numba >=0.53.1",
     "plotly",
     "kaleido",
     "pandas",
-    "matplotlib>=3.4.3",
-    "joblib",
-    # "ElMD==0.4.8", #PyPI
-    "psutil",
+    "matplotlib >=3.4.3",
     "scikit_learn",
     "umap-learn",
     "dill",
     "crabnet >=1.0.5",
     "chem_wasserstein >=1.0.2",
+    # "pymatgen",
+    # "joblib",
+    # "ElMD==0.4.8", #PyPI
+    # "psutil",
     # for torch, run "set PIP_FIND_LINKS=https://download.pytorch.org/whl/torch_stable.html" before "flit install"
     # see also: https://github.com/takluyver/flit/issues/369
     # "torch==1.9.1+cu111", # e.g "1.9.1+cu111" or "1.7.1+cu110"
