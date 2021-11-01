@@ -8,14 +8,14 @@ channels:
   - defaults
 dependencies:
   # core:
-  - matplotlib>=3.4.3
+  - matplotlib >=3.4.3
   - pandas
-  - pytorch==1.10.*
+  - pytorch >=1.9.0
   - plotly
-  - python>=3.7
+  - python >=3.7,<3.10
   - scipy
-  - cudatoolkit==11.3.*
-  - numba>=0.53.1
+  - cudatoolkit <11.4
+  - numba >=0.53.1
   - seaborn
   - tqdm
   - python-kaleido
@@ -27,15 +27,16 @@ dependencies:
   - pytest
   - dill
   - pip
-  - pqdm==0.1.0 #sgbaird
-  - elmd==0.4.8 #sgbaird
+  - pqdm ==0.1.0 #sgbaird
+  - crabnet
+  - chem_wasserstein >=1.0.6
   - pip:
     # core:
-    - ElM2D==0.4.1
-    - conda-souschef==0.1.0
+    - ElM2D ==0.4.1
+    - conda-souschef ==0.1.0
   # optional:
   - ipykernel
-  - nbformat>=4.2.0
+  - nbformat >=4.2.0
   - notebook
   - flit
   - pipreqs
@@ -48,4 +49,5 @@ dependencies:
   - grayskull # maybe not grayskull, since conda smithy ci-skeleton seems to work better with conda-smithy
   # - graphviz
   # - python-graphviz
+  # - elmd==0.4.8 #sgbaird
 prefix: C:\Users\sterg\anaconda3\envs\mat_discover
