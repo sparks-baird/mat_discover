@@ -91,10 +91,10 @@ git clone --recurse-submodules https://github.com/sparks-baird/mat_discover.git
 cd mat_discover
 ```
 
-To perform the local installation, you can use `pip`, `conda`, or `flit`:
+To perform the local installation, you can use `pip`, `conda`, or `flit`. If using `flit`, make sure to install it first via `conda install flit` or `pip install flit`.
 | **pip**            | **conda**                                 | **flit**                           |
 | ------------------ | ----------------------------------------- | ---------------------------------- |
-| `pip install -e .` | `conda env create --file environment.yml` | `conda install flit; flit install --pth-file` |
+| `pip install -e .` | `conda env create --file environment.yml` | `flit install --pth-file` |
 
 <!-- conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/ -->
 
