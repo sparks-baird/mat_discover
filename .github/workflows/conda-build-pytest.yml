@@ -42,16 +42,15 @@ jobs:
     - name: Miniconda build
       shell: bash -l {0}
       run : |
+        mkdir scratch
+        cp LICENSE scratch/
         python run_grayskull.py
         conda config --append channels conda-forge
         conda config --append channels sgbaird
         conda config --set anaconda_upload no
-        mkdir scratch
-        cp LICENSE meta.yaml scratch/
         cd scratch
         conda build .
         cd ..
-        conda install dill # remove this later
         conda install --use-local mat_discover
     
     - name: Pytest
@@ -59,5 +58,3 @@ jobs:
       run: |
         export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
         python -m pytest
-        
-# grayskull pypi mat_discover # manual editing required when dependencies change
