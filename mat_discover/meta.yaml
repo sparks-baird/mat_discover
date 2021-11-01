@@ -1,5 +1,5 @@
 {% set name = "mat_discover" %}
-{% set version = "1.3.3" %}
+{% set version = "1.3.8" %}
 
 
 package:
@@ -8,7 +8,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/mat_discover-{{ version }}.tar.gz
-  sha256: f9a063fd0dcb40783c8b7401d958a6ebc851f84d4667d0645c2406ac6cf0fc3f
+  sha256: 614d77717876c87a60bb2a40f2031fec6f00f570ca589991ae800242d326ee26
 
 build:
   number: 0
@@ -21,11 +21,11 @@ requirements:
     - flit
     - python
   run:
-    - chem_wasserstein >=1.0.2
+    - chem_wasserstein >=1.0.5
     - cudatoolkit <11.4
     - pytorch >=1.9.0
     - python-kaleido
-    - crabnet >=1.0.5
+    - crabnet >=1.0.6
     - cython
     - dill
     - hdbscan
