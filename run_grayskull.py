@@ -2,15 +2,19 @@
 from souschef.recipe import Recipe
 import os
 from os.path import join
+from pathlib import Path
 import mat_discover
 
 name, version = mat_discover.__name__, mat_discover.__version__
 os.system("grayskull pypi {0}=={1}".format(name, version))
 
+Path("scratch").mkdir(exist_ok=True)
+
 fpath = join("mat_discover", "meta.yaml")
 fpath2 = join("scratch", "meta.yaml")
 my_recipe = Recipe(load_file=fpath)
 my_recipe["requirements"]["host"].append("flit")
+my_recipe["build"].add_section("noarch")
 my_recipe["build"]["noarch"] = "python"
 del my_recipe["requirements"]["build"]
 my_recipe["requirements"]["run"].remove("kaleido")
