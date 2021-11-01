@@ -16,7 +16,7 @@
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg)](https://coveralls.io/github/sparks-baird/mat_discover)
-![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)
+[![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)
 ![GitHub](https://img.shields.io/github/license/sparks-baird/mat_discover)
 [![DOI](https://zenodo.org/badge/392897894.svg)](https://zenodo.org/badge/latestdoi/392897894)
 <!-- ![PyPI - License](https://img.shields.io/pypi/l/mat_discover) -->
