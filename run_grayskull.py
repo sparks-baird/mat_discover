@@ -4,7 +4,8 @@ import os
 from os.path import join
 import mat_discover
 
-os.system("grayskull pypi mat_discover=={}".format(mat_discover.__version__))
+name, version = mat_discover.__name__, mat_discover.__version__
+os.system("grayskull pypi {0}=={1}".format(name, version))
 
 fpath = join("mat_discover", "meta.yaml")
 fpath2 = join("scratch", "meta.yaml")
