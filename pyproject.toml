@@ -24,8 +24,8 @@ dependencies = [
     "scikit_learn",
     "umap-learn",
     "dill",
-    "crabnet >=1.0.5",
-    "chem_wasserstein >=1.0.2",
+    "crabnet >=1.0.6",
+    "chem_wasserstein >=1.0.6",
     # "pymatgen",
     # "joblib",
     # "ElMD==0.4.8", #PyPI
