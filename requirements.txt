@@ -8,5 +8,5 @@ pandas==1.3.4
 pqdm==0.1.0
 chem_wasserstein==1.0.0
 scikit_learn==1.0.1
-souschef==1.3.5
+conda-souschef==0.2.0
 umap==0.1.1

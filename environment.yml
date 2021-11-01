@@ -28,12 +28,12 @@ dependencies:
   - dill
   - pip
   - pqdm ==0.1.0 #sgbaird
-  - crabnet
+  - crabnet >= 1.0.6
   - chem_wasserstein >=1.0.6
   - pip:
     # core:
     - ElM2D ==0.4.1
-    - conda-souschef ==0.1.0
+    - conda-souschef ==0.2.0
   # optional:
   - ipykernel
   - nbformat >=4.2.0
