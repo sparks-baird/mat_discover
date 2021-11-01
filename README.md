@@ -4,17 +4,6 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=mat_discover_pypi.ipynb)
 [![Open in Code Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://doi.org/10.24433/CO.8463578.v1)
 
-[![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/mat_discover?label=PyPI%20downloads)
-
-![Conda](https://img.shields.io/conda/v/sgbaird/mat_discover)
-![Conda](https://img.shields.io/conda/pn/sgbaird/mat_discover)
-[![Conda](https://img.shields.io/conda/dn/sgbaird/mat_discover?service=github)](https://img.shields.io/conda/dn/sgbaird/mat_discover?label=conda%7Cdownloads)
-[![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/latest_release_relative_date.svg?service=github)](https://anaconda.org/sgbaird/mat_discover)
-<!-- ![Conda](https://img.shields.io/conda/dn/sgbaird/mat_discover) -->
-<!-- [![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg)](https://anaconda.org/sgbaird/mat_discover) -->
-[![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg?service=github)](https://anaconda.org/sgbaird/mat_discover)
-
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?service=github)](https://coveralls.io/github/sparks-baird/mat_discover)
 [![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover?service=github)](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)
@@ -23,6 +12,16 @@
 <!-- ![PyPI - License](https://img.shields.io/pypi/l/mat_discover) -->
 <!-- [![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?branch=main)](https://coveralls.io/github/sparks-baird/mat_discover?branch=main) -->
 <!-- ![Coveralls](https://img.shields.io/coveralls/github/sparks-baird/mat_discover) -->
+
+[![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/)
+![Conda](https://img.shields.io/conda/v/sgbaird/mat_discover)
+![Conda](https://img.shields.io/conda/pn/sgbaird/mat_discover)
+[![Conda](https://img.shields.io/conda/dn/sgbaird/mat_discover?label=conda%7Cdownloads)](https://img.shields.io/conda/dn/sgbaird/mat_discover?label=conda%7Cdownloads)
+[![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/latest_release_relative_date.svg?service=github)](https://anaconda.org/sgbaird/mat_discover)
+<!-- ![Conda](https://img.shields.io/conda/dn/sgbaird/mat_discover) -->
+<!-- [![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg)](https://anaconda.org/sgbaird/mat_discover) -->
+<!-- [![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg?service=github)](https://anaconda.org/sgbaird/mat_discover) -->
+<!-- ![PyPI - Downloads](https://img.shields.io/pypi/dm/mat_discover?label=PyPI%20downloads) -->
 
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
