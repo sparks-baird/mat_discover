@@ -45,6 +45,8 @@ year={2021}
 }
 ```
 
+The article is under review at [Digital Discovery](https://www.rsc.org/journals-books-databases/about-journals/digital-discovery/) (2021-11-01).
+
 ## DiSCoVeR Workflow
 <img src="https://sparks-baird.github.io/mat_discover/figures/discover-workflow.png" alt="DiSCoVeR Workflow" width=600>
 
