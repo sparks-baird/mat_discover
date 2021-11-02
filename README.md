@@ -168,11 +168,12 @@ This project was developed primarily in "Python in Visual Studio Code" using `bl
 - `pipreqs` was used as a starting point for `requirements.txt`
 - `flit` is used to create `pyproject.toml` and publish to PyPI
 - `conda env export --from-history -f environment.yml` was used as a starting point for `environment.yml`
-- `grayskull` is used to generate `meta.yaml` for publishing to `conda-forge`
-- `conda-smithy` is used to create a feedstock for `conda-forge`
+- `grayskull` is used to generate `meta.yaml` for publishing to Anaconda
 - A variety of GitHub actions are used (see [workflows](.github/workflows))
 - `pytest` is used for testing
 - `numba` is used to accelerate the Wasserstein distance matrix computations via CPU or GPU
+
+<!-- - `conda-smithy` is used to create a feedstock for `conda-forge` -->
 
 To help with development, you will need to [install from source](README.md#from-source). Note that when using a `conda` environment (recommended), you may avoid certain issues down the road by opening VS Code via an Anaconda command prompt and entering the command `code` (at least until the VS Code devs fix some of the issues associated with opening it "normally"). For example, in Windows, press the "Windows" key, type "anaconda", and open "Anaconda Powershell Prompt (miniconda3)" or similar. Then type `code` and press enter.
 
