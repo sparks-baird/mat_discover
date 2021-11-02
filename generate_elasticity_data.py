@@ -14,7 +14,7 @@ import pickle
 
 # from tqdm import tqdm
 from pqdm.processes import pqdm
-from chem_wasserstein.utils.Timer import Timer
+from mat_discover.utils.Timer import Timer
 
 import numpy as np
 import pandas as pd
@@ -42,7 +42,6 @@ def generate_elasticity_data(download_data=True):
         # download
         props = ["task_id", "pretty_formula", "elasticity", "cif"]
         with MPRester() as m:
-            # TODO: don't download noble gases
             elast_results = m.query(
                 {
                     "e_above_hull": {"$lt": 0.5},
@@ -80,14 +79,12 @@ def generate_elasticity_data(download_data=True):
         with open(all_path, "rb") as f:
             all_results = pickle.load(f)
 
-    crabnet_folder = join(
-        "mat_discover", "CrabNet", "data", "materials_data", "elasticity"
-    )
-    Path(crabnet_folder).mkdir(parents=False, exist_ok=True)
+    folder = join("data", "elasticity")
+    Path(folder).mkdir(parents=True, exist_ok=True)
 
-    def crabnet_path(name):
-        """Return a relative path to a CrabNet data file."""
-        return join(".", crabnet_folder, name)
+    def my_path(name):
+        """Return a relative path to a data file."""
+        return join(".", folder, name)
 
     # %% separate mpids and other properties for elasticity materials
     elast_mpids = [d["task_id"] for d in elast_results]
@@ -124,9 +121,7 @@ def generate_elasticity_data(download_data=True):
         }
     )
 
-    elast_df.to_csv(
-        crabnet_path("train.csv"), columns=["formula", "target"], index=False
-    )
+    elast_df.to_csv(my_path("train.csv"), columns=["formula", "target"], index=False)
 
     # TODO: make separate "prediction" df that doesn't include training data
     # separate mpids and other properties for all data
@@ -153,12 +148,6 @@ def generate_elasticity_data(download_data=True):
                 all_structures = [Structure.from_dict(s) for s in all_struct_dicts]
                 del all_struct_dicts
 
-    # n = 10000
-    # all_comp = all_comp[:n]
-    # all_formulas = all_formulas[:n]
-    # all_mpids = all_mpids[:n]
-    # all_structures = all_structures[:n]
-
     all_df = pd.DataFrame(
         data={
             "composition": all_comp,
@@ -169,8 +158,15 @@ def generate_elasticity_data(download_data=True):
         }
     )
 
-    all_df.to_csv(crabnet_path("val.csv"), columns=["formula", "target"], index=False)
+    all_df.to_csv(my_path("val.csv"), columns=["formula", "target"], index=False)
 
 
 if __name__ == "__main__":
     generate_elasticity_data()
+
+# %% Code Graveyard
+# n = 10000
+# all_comp = all_comp[:n]
+# all_formulas = all_formulas[:n]
+# all_mpids = all_mpids[:n]
+# all_structures = all_structures[:n]
