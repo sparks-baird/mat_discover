@@ -10,7 +10,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?service=github)](https://coveralls.io/github/sparks-baird/mat_discover)
 [![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)
 [![License](https://img.shields.io/github/license/sparks-baird/mat_discover?service=github)](https://img.shields.io/github/license/sparks-baird/mat_discover)
-[![DOI](https://zenodo.org/badge/392897894.svg?service=github)](https://zenodo.org/badge/latestdoi/392897894)
+[![DOI](https://zenodo.org/badge/392897894.svg)](https://zenodo.org/badge/latestdoi/392897894)
 <!-- ![PyPI - License](https://img.shields.io/pypi/l/mat_discover) -->
 <!-- [![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?branch=main)](https://coveralls.io/github/sparks-baird/mat_discover?branch=main) -->
 <!-- ![Coveralls](https://img.shields.io/coveralls/github/sparks-baird/mat_discover) -->
@@ -18,7 +18,7 @@
 ![Conda](https://img.shields.io/conda/v/sgbaird/mat_discover)
 ![Conda](https://img.shields.io/conda/pn/sgbaird/mat_discover)
 [![Conda](https://img.shields.io/conda/dn/sgbaird/mat_discover?label=conda%7Cdownloads)](https://anaconda.org/sgbaird/mat_discover)
-[![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/latest_release_relative_date.svg?service=github)](https://anaconda.org/sgbaird/mat_discover)
+[![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/latest_release_relative_date.svg)](https://anaconda.org/sgbaird/mat_discover)
 <!-- ![Conda](https://img.shields.io/conda/dn/sgbaird/mat_discover) -->
 <!-- [![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg)](https://anaconda.org/sgbaird/mat_discover) -->
 <!-- [![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg?service=github)](https://anaconda.org/sgbaird/mat_discover) -->
