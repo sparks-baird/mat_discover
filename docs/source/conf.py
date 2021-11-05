@@ -56,6 +56,7 @@ extensions = [
     "myst_parser",
     "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
+    "sphinx.ext.githubpages",
     "sphinx_rtd_theme",
 ]
 
