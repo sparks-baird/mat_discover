@@ -18,6 +18,7 @@ from pymatgen.core.composition import Composition
 
 
 def structure_from_cif(cif):
+    """Create `pymatgen` `Structure` from a crystallographic information file str."""
     return Structure.from_str(cif, fmt="cif")
 
 
