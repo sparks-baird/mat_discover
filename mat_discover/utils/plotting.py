@@ -1,3 +1,4 @@
+"""Various plotting functions for cluster properties and UMAP visualization."""
 from os.path import join
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,6 +9,20 @@ from sklearn.preprocessing import MinMaxScaler
 
 # TODO: change to square plots
 def umap_cluster_scatter(std_emb, labels):
+    """Plot UMAP embeddings colored by cluster IDs.
+
+    Parameters
+    ----------
+    std_emb : 2d array
+        UMAP embedded coordinates.
+    labels : 1d array
+        Cluster IDs associated with the UMAP coordinates.
+
+    Returns
+    -------
+    fig : Figure
+        Handle to Matplotlib Figure.
+    """
     # TODO: update plotting commands to have optional arguments (e.g. std_emb and labels)
     cmap = plt.cm.nipy_spectral
     mx = np.max(labels)
@@ -47,6 +62,18 @@ def umap_cluster_scatter(std_emb, labels):
 
 
 def cluster_count_hist(labels):
+    """Plot histogram of cluster counts, colored by cluster IDs.
+
+    Parameters
+    ----------
+    labels : 1d array
+        Cluster IDs.
+
+    Returns
+    -------
+    fig : Figure
+        Handle to Matplotlib Figure.
+    """
     col_scl = MinMaxScaler()
     unique_labels = np.unique(labels)
     col_trans = col_scl.fit(unique_labels.reshape(-1, 1))
@@ -67,6 +94,20 @@ def cluster_count_hist(labels):
 
 
 def target_scatter(std_emb, target):
+    """Plot UMAP embedding locations colored by target values.
+
+    Parameters
+    ----------
+    std_emb : 2d array
+        UMAP embedding coordinates.
+    target : 1d array
+        Target properties corresponding to `std_emb`.
+
+    Returns
+    -------
+    fig : Figure
+        Handle to Matplotlib Figure.
+    """
     # TODO: change to log colorscale or a higher-contrast
     fig = plt.Figure()
     plt.scatter(
@@ -87,6 +128,26 @@ def target_scatter(std_emb, target):
 
 
 def dens_scatter(x, y, pdf_sum):
+    """Plot DensMAP densities at the `x` and `y` embedding coordinates.
+
+    Parameters
+    ----------
+    x : 1d array
+        x-coordinates
+    y : 1d array
+        y-coordinates
+    pdf_sum : 1d array
+        probabilities evaluated at each of the `x` and `y` coordinate pairs.
+
+    Returns
+    -------
+    fig : Figure
+        Handle to Matplotlib Figure.
+
+    See Also
+    --------
+    mat_discover_.mvn_prob_sum : used to obtain `x`, `y`, and `pdf_sum`
+    """
     # TODO: add callouts to specific locations (high-scoring compounds)
     fig = plt.Figure()
     plt.scatter(x, y, c=pdf_sum)
@@ -100,6 +161,31 @@ def dens_scatter(x, y, pdf_sum):
 
 
 def dens_targ_scatter(std_emb, target, x, y, pdf_sum):
+    """Plot overlay of density scatter and target scatter plots.
+
+    Parameters
+    ----------
+    std_emb : 2d array
+        UMAP embedding coordinates.
+    target : 1d array
+        Target properties corresponding to `std_emb`.
+    x : 1d array
+        x-coordinates
+    y : 1d array
+        y-coordinates
+    pdf_sum : 1d array
+        probabilities evaluated at each of the `x` and `y` coordinate pairs.
+
+    Returns
+    -------
+    fig : Figure
+        Handle to Matplotlib Figure.
+
+    See Also
+    --------
+    dens_scatter : density scatter plot
+    targ_scatter : target scatter plot
+    """
     fig = plt.Figure()
     plt.scatter(x, y, c=pdf_sum)
     plt.scatter(
@@ -120,6 +206,22 @@ def dens_targ_scatter(std_emb, target, x, y, pdf_sum):
 
 
 def group_cv_parity(ytrue, ypred, labels):
+    """Leave-one-cluster-out cross-validation parity plot colored by `labels`.
+
+    Parameters
+    ----------
+    ytrue : 1d array
+        True target values.
+    ypred : 1d array
+        Predicted target values.
+    labels : 1d array
+        Cluster IDs.
+
+    Returns
+    -------
+    fig : Figure
+        Handle to Matplotlib Figure.
+    """
     labels = np.array(labels)
     col_scl = MinMaxScaler()
     col_trans = col_scl.fit(labels.reshape(-1, 1))

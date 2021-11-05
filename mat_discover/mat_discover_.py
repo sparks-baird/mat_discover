@@ -1,5 +1,4 @@
-"""
-Materials discovery using Earth Mover's Distance, densMAP embeddings, and HDBSCAN*.
+"""Materials discovery using Earth Mover's Distance, DensMAP embeddings, and HDBSCAN*.
 
 - create distance matrix
 - apply densMAP
@@ -7,12 +6,6 @@ Materials discovery using Earth Mover's Distance, densMAP embeddings, and HDBSCA
 - search for interesting materials, for example:
      - high-target/low-density
      - materials with high-target surrounded by materials with low targets
-
-Run using elm2d_ environment.
-
-Created on Mon Sep  6 23:15:27 2021.
-
-@author: sterg
 """
 # saving class objects: https://stackoverflow.com/a/37076668/13697228
 import dill as pickle
@@ -46,7 +39,7 @@ import hdbscan
 from chem_wasserstein.ElM2D_ import ElM2D
 
 from mat_discover.utils.nearest_neigh import nearest_neigh_props
-from mat_discover.utils.pareto import pareto_plot, get_pareto_ind
+from mat_discover.utils.pareto import pareto_plot  # , get_pareto_ind
 from mat_discover.utils.plotting import (
     umap_cluster_scatter,
     cluster_count_hist,
@@ -65,10 +58,6 @@ plt.rcParams.update(
         "xtick.direction": "in",
     }
 )
-
-# use_cuda = torch.cuda.is_available()
-
-# plt.rcParams["text.usetex"] = True
 
 
 def my_mvn(mu_x, mu_y, r):
@@ -103,7 +92,13 @@ def groupby_formula(df, how="max"):
 
 
 class Discover:
-    """Class for ElM2D, dimensionality reduction, clustering, and plotting."""
+    """
+    A Materials Discovery class.
+
+    Uses chemical-based distances, dimensionality reduction, clustering,
+    and plotting to search for high performing, chemically unique compounds
+    relative to training data.
+    """
 
     def __init__(
         self,
@@ -115,13 +110,69 @@ class Discover:
         verbose: bool = True,
         mat_prop_name="test-property",
         dummy_run=False,
-        Scaler=RobustScaler,  # MinMaxScaler, Standard Scaler
-        figure_path="figures",
+        Scaler=RobustScaler,
+        figure_dir="figures",
         table_path="tables",
         groupby_filter="max",
         pred_weight=1,
-        target="cuda",
+        device="cuda",
     ):
+        """Initialize a Discover() class.
+
+        Parameters
+        ----------
+        timed : bool, optional
+            Whether or not timing is reported, by default True
+
+        dens_lambda : float, optional
+            "Controls the regularization weight of the density correlation term in
+            densMAP. Higher values prioritize density preservation over the UMAP
+            objective, and vice versa for values closer to zero. Setting this parameter
+            to zero is equivalent to running the original UMAP algorithm." Source:
+            https://umap-learn.readthedocs.io/en/latest/api.html, by default 1.0
+
+        plotting : bool, optional
+            Whether to create and save various compound-wise and cluster-wise figures,
+            by default False
+
+        pdf : bool, optional
+            Whether or not probability density function values are computed, by default
+            True
+
+        n_neighbors : int, optional
+            Number of neighbors to consider when computing k_neigh_avg (i.e. peak
+            proxy), by default 10
+
+        verbose : bool, optional
+            Whether to print verbose information, by default True
+
+        mat_prop_name : str, optional
+            A name that helps identify the training target property, by default
+            "test-property"
+
+        dummy_run : bool, optional
+            Whether to use MDS instead of UMAP to run quickly for small datasets. Note
+            that MDS takes longer for UMAP for large datasets, by default False
+
+        Scaler : str or class, optional
+            Scaler to use for weighted_score (i.e. weighted score of target and proxy
+            values) Target and proxy are separately scaled using Scaler before taking
+            the weighted sum. Possible values are "MinMaxScaler", "StandardScaler",
+            "RobustScaler", or an sklearn.preprocessing scaler class, by default RobustScaler.
+
+        figure_dir, table_path : str, optional
+            Relative or absolute path to directory at which to save figures or tables,
+            by default "figures" and "tables", respectively. The directory will be
+            created if it does not exist already.
+
+        pred_weight : int, optional
+            Weighting applied to the predicted target values, by default 1 (i.e. equal
+            weighting between predictions and proxies). For example, to weight the
+            predicted targets at twice that of the proxy values, set to 2.
+
+        device : str, optional
+            Which device to perform the computation on. Possible values are "cpu" and "cuda", by default "cuda".
+        """
         if timed:
             self.Timer = Timer
         else:
@@ -134,19 +185,27 @@ class Discover:
         self.verbose = verbose
         self.mat_prop_name = mat_prop_name
         self.dummy_run = dummy_run
-        self.Scaler = Scaler
-        self.groupby_filter = groupby_filter
-        self.figure_path = figure_path
+        self.figure_dir = figure_dir
         self.table_path = table_path
         self.pred_weight = pred_weight
-        self.target = target
+        self.device = device
 
-        if self.target == "cpu":
+        if type(Scaler) is str:
+            scalers = {
+                "MinMaxScaler": MinMaxScaler,
+                "StandardScaler": StandardScaler,
+                "RobustScaler": RobustScaler,
+            }
+            self.Scaler = scalers[Scaler]
+        else:
+            self.Scaler = Scaler
+
+        if self.device == "cpu":
             self.force_cpu = True
         else:
             self.force_cpu = False
 
-        self.mapper = ElM2D(target=self.target)  # type: ignore
+        self.mapper = ElM2D(target=self.device)  # type: ignore
         self.dm = None
         # self.formula = None
         # self.target = None
@@ -159,7 +218,7 @@ class Discover:
         self.train_avg_targ = None
 
         # create dirs https://stackoverflow.com/a/273227/13697228
-        Path(figure_path).mkdir(parents=True, exist_ok=True)
+        Path(figure_dir).mkdir(parents=True, exist_ok=True)
         Path(table_path).mkdir(parents=True, exist_ok=True)
 
     def fit(self, train_df):
@@ -170,9 +229,6 @@ class Discover:
         train_df : DataFrame
             Should contain "formula" and "target" columns.
         """
-        # collapse identical compositions
-        # train_df = groupby_formula(train_df, how=self.groupby_filter)
-
         # unpack
         self.train_df = train_df
         self.train_formula = train_df["formula"]
@@ -203,26 +259,27 @@ class Discover:
         Parameters
         ----------
         val_df : DataFrame
-            Validation dataset containing "formula" and "target" (populate with 0's if not available).
+            Validation dataset containing "formula" and "target" (populate with 0's if
+            not available).
         plotting : bool, optional
             Whether to plot, by default None
         umap_random_state : int or None, optional
             The random seed to use for UMAP, by default None
         pred_weight : int, optional
             The weight to assign to the predictions (proxy_weight is 1 by default), by default None.
+
             If neither pred_weight nor self.pred_weight is specified, it defaults to 1.
             When specified, pred_weight takes precedence over self.pred_weight.
         dummy_run : bool, optional
             Whether to use MDS in place of the (typically more expensive) DensMAP, by default None.
-            If neither dummy_run nor self.dummy_run is specified, it defaults to (effectively) being False.
-            When specified, dummy_run takes precedence over self.dummy_run.
+
+            If neither dummy_run nor self.dummy_run is specified, it defaults to (effectively) being False. When specified, dummy_run takes precedence over self.dummy_run.
 
         Returns
         -------
         dens_score, peak_score
             Scaled discovery scores for density and peak proxies.
         """
-        # val_df = groupby_formula(val_df, how=self.groupby_filter)
         self.val_df = val_df
 
         # CrabNet
@@ -482,8 +539,11 @@ class Discover:
         ValueError
             Needs to have at least one cluster. It is assumed that there will always be a non-cluster
             (i.e. unclassified points) if there is only 1 cluster.
-        """ """"""
 
+        Notes
+        -----
+        TODO: highest mean vs. highest single target value
+        """
         # TODO: remind people in documentation to use a separate Discover() instance if they wish to access fit *and* gcv attributes
         self.all_formula = df["formula"]
         self.all_target = df["target"]
@@ -673,6 +733,26 @@ class Discover:
         return true_avg_targ, pred_avg_targ, train_avg_targ
 
     def cluster(self, umap_emb, min_cluster_size=50, min_samples=5):
+        """Cluster using HDBSCAN*.
+
+        Parameters
+        ----------
+        umap_emb : nD Array
+            DensMAP embedding coordinates.
+        min_cluster_size : int, optional
+            "The minimum size of clusters; single linkage splits that contain fewer
+            points than this will be considered points "falling out" of a cluster rather
+            than a cluster splitting into two new clusters." (source: HDBSCAN* docs), by
+            default 50
+        min_samples : int, optional
+            "The number of samples in a neighbourhood for a point to be considered a
+            core point." (source: HDBSCAN* docs), by default 5
+
+        Returns
+        -------
+        [type]
+            [description]
+        """
         with self.Timer("HDBSCAN*"):
             clusterer = hdbscan.HDBSCAN(
                 min_samples=min_samples,
@@ -683,10 +763,53 @@ class Discover:
         return clusterer
 
     def extract_labels_probs(self, clusterer):
+        """Extract cluster IDs (`labels`) and `probabilities` from HDBSCAN* `clusterer`.
+
+        Parameters
+        ----------
+        clusterer : HDBSCAN class
+            Instantiated HDBSCAN* class for clustering.
+
+        Returns
+        -------
+        labels_ : ndarray, shape (n_samples, )
+            "Cluster labels for each point in the dataset given to fit(). Noisy samples
+            are given the label -1." (source: HDBSCAN* docs)
+
+        probabilities_ : ndarray, shape (n_samples, )
+            "The strength with which each sample is a member of its assigned cluster.
+            Noise points have probability zero; points in clusters have values assigned
+            proportional to the degree that they persist as part of the cluster." (source: HDBSCAN* docs)
+        """
         labels, probabilities = attrgetter("labels_", "probabilities_")(clusterer)
         return labels, probabilities
 
     def umap_fit_cluster(self, dm, random_state=None):
+        """Perform DensMAP fitting for clustering.
+
+        See https://umap-learn.readthedocs.io/en/latest/clustering.html.
+
+        Parameters
+        ----------
+        dm : ndarray
+            Pairwise Element Mover's Distance (`ElMD`) matrix within a single set of
+            points.
+
+        random_state: int, RandomState instance or None, optional (default: None)
+            "If int, random_state is the seed used by the random number generator; If
+            RandomState instance, random_state is the random number generator; If None,
+            the random number generator is the RandomState instance used by
+            `np.random`." (source: UMAP docs)
+
+        Returns
+        -------
+        umap_trans : UMAP class
+            A UMAP class fitted to `dm`.
+
+        See Also
+        --------
+        umap.UMAP : UMAP class.
+        """
         with self.Timer("fit-UMAP"):
             umap_trans = umap.UMAP(
                 densmap=True,
@@ -700,7 +823,32 @@ class Discover:
             ).fit(dm)
         return umap_trans
 
-    def umap_fit_vis(self, X, random_state=None):
+    def umap_fit_vis(self, dm, random_state=None):
+        """Perform DensMAP fitting for visualization.
+
+        See https://umap-learn.readthedocs.io/en/latest/clustering.html.
+
+        Parameters
+        ----------
+        dm : ndarray
+            Pairwise Element Mover's Distance (`ElMD`) matrix within a single set of
+            points.
+
+        random_state: int, RandomState instance or None, optional (default: None)
+            "If int, random_state is the seed used by the random number generator; If
+            RandomState instance, random_state is the random number generator; If None,
+            the random number generator is the RandomState instance used by
+            `np.random`." (source: UMAP docs)
+
+        Returns
+        -------
+        std_trans : UMAP class
+            A UMAP class fitted to `dm`.
+
+        See Also
+        --------
+        umap.UMAP : UMAP class.
+        """
         with self.Timer("fit-vis-UMAP"):
             std_trans = umap.UMAP(
                 densmap=True,
@@ -708,7 +856,7 @@ class Discover:
                 dens_lambda=self.dens_lambda,
                 metric="precomputed",
                 random_state=random_state,
-            ).fit(X)
+            ).fit(dm)
         return std_trans
 
     def extract_emb_rad(self, trans):
@@ -721,12 +869,16 @@ class Discover:
 
         Returns
         -------
-        emb
+        emb :
             UMAP embedding
         r_orig
             original radii
         r_emb
             embedded radii
+
+        See Also
+        --------
+        umap.UMAP : UMAP class.
         """
         emb, r_orig_log, r_emb_log = attrgetter("embedding_", "rad_orig_", "rad_emb_")(
             trans
@@ -735,27 +887,76 @@ class Discover:
         r_emb = np.exp(r_emb_log)
         return emb, r_orig, r_emb
 
-    def mvn_prob_sum(self, std_emb, r_orig, n=100):
+    def mvn_prob_sum(self, emb, r_orig, n=100):
+        """Gridded multivariate normal probability summation.
+
+        Parameters
+        ----------
+        emb : ndarray
+            Clustering embedding.
+        r_orig : 1d array
+            Original DensMAP radii.
+        n : int, optional
+            Number of points along the x and y axes (total grid points = n^2), by default 100
+
+        Returns
+        -------
+        x : 1d array
+            x-coordinates
+        y : 1d array
+            y-coordinates
+        pdf_sum : 1d array
+            summed densities at the (`x`, `y`) locations
+        """
         # multivariate normal probability summation
-        mn = np.amin(std_emb, axis=0)
-        mx = np.amax(std_emb, axis=0)
+        mn = np.amin(emb, axis=0)
+        mx = np.amax(emb, axis=0)
         x, y = np.mgrid[mn[0] : mx[0] : n * 1j, mn[1] : mx[1] : n * 1j]  # type: ignore
         pos = np.dstack((x, y))
 
         with self.Timer("pdf-summation"):
-            mvn_list = list(map(my_mvn, std_emb[:, 0], std_emb[:, 1], r_orig))
+            mvn_list = list(map(my_mvn, emb[:, 0], emb[:, 1], r_orig))
             pdf_list = [mvn.pdf(pos) for mvn in mvn_list]
             pdf_sum = np.sum(pdf_list, axis=0)
         return x, y, pdf_sum
 
-    def compute_log_density(self, std_r_orig=None):
-        if std_r_orig is None:
-            std_r_orig = self.std_r_orig
-        self.dens = 1 / std_r_orig
+    def compute_log_density(self, r_orig=None):
+        """Compute the log density based on the radii.
+
+        Parameters
+        ----------
+        r_orig : 1d array, optional
+            The original radii associated with the fitted DensMAP, by default None. If
+            None, then defaults to self.std_r_orig.
+
+        Returns
+        -------
+        self.dens, self.log_dens : 1d array
+            Densities and log densities associated with the original radii, respectively.
+
+        Notes
+        -----
+        Density is approximated as 1/r_orig
+        """
+        if r_orig is None:
+            r_orig = self.std_r_orig
+        self.dens = 1 / r_orig
         self.log_dens = np.log(self.dens)
         return self.dens, self.log_dens
 
     def plot(self, return_pareto_ind=False):
+        """Plot and save various cluster and Pareto front figures.
+
+        Parameters
+        ----------
+        return_pareto_ind : bool, optional
+            Whether to return the pareto front indices, by default False
+
+        Returns
+        -------
+        pk_pareto_ind, dens_pareto_ind : tuple of int
+            Pareto front indices for the peak and density proxies, respectively.
+        """
         # peak pareto plot setup
         x = str(self.n_neighbors) + "_neigh_avg_targ (GPa)"
         y = "target (GPa)"
@@ -776,7 +977,7 @@ class Discover:
             x=x,
             y=y,
             color="cluster ID",
-            fpath=join(self.figure_path, "pf-peak-proxy"),
+            fpath=join(self.figure_dir, "pf-peak-proxy"),
             pareto_front=True,
         )
 
@@ -797,7 +998,7 @@ class Discover:
             x=x,
             y=y,
             color="cluster ID",
-            fpath=join(self.figure_path, "pf-train-contrib-proxy"),
+            fpath=join(self.figure_dir, "pf-train-contrib-proxy"),
             pareto_front=True,
             parity_type=None,
         )
@@ -839,7 +1040,7 @@ class Discover:
             dens_df,
             x=x,
             y=y,
-            fpath=join(self.figure_path, "pf-dens-proxy"),
+            fpath=join(self.figure_dir, "pf-dens-proxy"),
             parity_type=None,
             color="cluster ID",
             pareto_front=True,
@@ -861,7 +1062,7 @@ class Discover:
             y=y,
             hover_data=None,
             color="cluster ID",
-            fpath=join(self.figure_path, "pf-frac-proxy"),
+            fpath=join(self.figure_dir, "pf-frac-proxy"),
             pareto_front=True,
             reverse_x=False,
             parity_type=None,
@@ -886,7 +1087,7 @@ class Discover:
                 gcv_df,
                 x=x,
                 y=y,
-                fpath=join(self.figure_path, "gcv-pareto"),
+                fpath=join(self.figure_dir, "gcv-pareto"),
                 parity_type="max-of-both",
                 color="cluster ID",
                 pareto_front=False,
@@ -904,12 +1105,16 @@ class Discover:
     # TODO: write function to visualize Wasserstein metric (barchart with height = color)
 
     def save(self, fpath="disc.pkl", dummy=False):
-        """Save Discover() model.
+        """Save Discover model.
 
         Parameters
         ----------
         fpath : str, optional
             Filepath to which to save, by default "disc.pkl"
+
+        See Also
+        --------
+        load : load a Discover model.
         """
         if dummy is True:
             warn("Dummy flag set to True. Overwriting fpath to dummy_disc.pkl")
@@ -919,7 +1124,7 @@ class Discover:
             pickle.dump(self, f)
 
     def load(self, fpath="disc.pkl"):
-        """Load Discover() model.
+        """Load Discover model.
 
         Parameters
         ----------
@@ -979,7 +1184,6 @@ class Discover:
         DataFrame, DataFrame, DataFrame
             If test_size > 0 and split==True, then training, validation, and test DataFrames are returned.
         """
-
         train_csv = open_text(module, fname)
         df = pd.read_csv(train_csv)
 
@@ -1111,3 +1315,7 @@ class Discover:
 # pred_targ = np.concatenate((train_pred, val_pred), axis=0)
 
 # from CrabNet.train_crabnet import main as crabnet_main
+
+# use_cuda = torch.cuda.is_available()
+
+# plt.rcParams["text.usetex"] = True
