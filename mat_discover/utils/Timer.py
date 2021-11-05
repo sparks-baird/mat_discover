@@ -14,6 +14,7 @@ class Timer(object):
     """
 
     def __init__(self, name=None):
+        """Assign name for Timer object."""
         self.name = name
 
     def __enter__(self):

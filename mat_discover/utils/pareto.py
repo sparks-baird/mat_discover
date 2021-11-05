@@ -34,6 +34,23 @@ def is_pareto_efficient_simple(costs):
 
 
 def get_pareto_ind(proxy, target, reverse_x=True):
+    """Get Pareto front indices.
+
+    Parameters
+    ----------
+    proxy : 1d array
+        Chemical uniqueness proxy values (x-axis).
+    target : 1d array
+        Target property (i.e. performance) values (y-axis).
+    reverse_x : bool, optional
+        Whether to flip the x direction (i.e. Pareto front seeks maximization of target
+        and *minimization* of proxy), by default True
+
+    Returns
+    -------
+    pareto_ind : 2d array
+        Pareto front indices.
+    """
     # use reverse_x if using "peak"
     if reverse_x:
         inpt = [proxy, -target]
