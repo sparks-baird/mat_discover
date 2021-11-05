@@ -27,8 +27,8 @@ def nearest_neigh_props(
         The radius within which to consider nearest neighbors, by default None
     n_neighbors : int, optional
         The number of nearest neighbors (kNNs) to consider for computing `k_neigh_avg_targ`, by default 10.
-    "metric : str or callable
-        The distance metric to use for the tree. The default metric is minkowski, and
+    metric : str or callable
+        "The distance metric to use for the tree. The default metric is minkowski, and
         with p=2 is equivalent to the standard Euclidean metric. See the documentation
         of DistanceMetric for a list of available metrics. If metric is "precomputed", X
         is assumed to be a distance matrix and must be square during fit. X may be a
