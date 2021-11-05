@@ -28,6 +28,7 @@
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
 <img src=https://user-images.githubusercontent.com/45469701/139520031-bf4fda18-9be7-4c54-b70b-c9be8e974cea.png width=500>  
+
 <sup>Bulk modulus values overlaid on DensMAP densities (cropped).</sup>
 
 ## Citing
