@@ -1,5 +1,4 @@
-"""
-Materials discovery using Earth Mover's Distance, densMAP embeddings, and HDBSCAN*.
+"""Materials discovery using Earth Mover's Distance, DensMAP embeddings, and HDBSCAN*.
 
 - create distance matrix
 - apply densMAP
@@ -7,12 +6,6 @@ Materials discovery using Earth Mover's Distance, densMAP embeddings, and HDBSCA
 - search for interesting materials, for example:
      - high-target/low-density
      - materials with high-target surrounded by materials with low targets
-
-Run using elm2d_ environment.
-
-Created on Mon Sep  6 23:15:27 2021.
-
-@author: sterg
 """
 # saving class objects: https://stackoverflow.com/a/37076668/13697228
 import dill as pickle
@@ -46,7 +39,7 @@ import hdbscan
 from chem_wasserstein.ElM2D_ import ElM2D
 
 from mat_discover.utils.nearest_neigh import nearest_neigh_props
-from mat_discover.utils.pareto import pareto_plot, get_pareto_ind
+from mat_discover.utils.pareto import pareto_plot  # , get_pareto_ind
 from mat_discover.utils.plotting import (
     umap_cluster_scatter,
     cluster_count_hist,
@@ -65,10 +58,6 @@ plt.rcParams.update(
         "xtick.direction": "in",
     }
 )
-
-# use_cuda = torch.cuda.is_available()
-
-# plt.rcParams["text.usetex"] = True
 
 
 def my_mvn(mu_x, mu_y, r):
@@ -103,7 +92,13 @@ def groupby_formula(df, how="max"):
 
 
 class Discover:
-    """Class for ElM2D, dimensionality reduction, clustering, and plotting."""
+    """
+    A Materials Discovery class.
+
+    Uses chemical-based distances, dimensionality reduction, clustering,
+    and plotting to search for high performing, chemically unique compounds
+    relative to training data.
+    """
 
     def __init__(
         self,
@@ -115,13 +110,73 @@ class Discover:
         verbose: bool = True,
         mat_prop_name="test-property",
         dummy_run=False,
-        Scaler=RobustScaler,  # MinMaxScaler, Standard Scaler
-        figure_path="figures",
+        Scaler=RobustScaler,
+        figure_dir="figures",
         table_path="tables",
         groupby_filter="max",
         pred_weight=1,
-        target="cuda",
+        device="cuda",
     ):
+        """Initialize a Discover() class.
+
+        Parameters
+        ----------
+        timed : bool, optional
+            Whether or not timing is reported, by default True
+
+        dens_lambda : float, optional
+            "Controls the regularization weight of the density correlation term in
+            densMAP. Higher values prioritize density preservation over the UMAP
+            objective, and vice versa for values closer to zero. Setting this parameter
+            to zero is equivalent to running the original UMAP algorithm." Source:
+            https://umap-learn.readthedocs.io/en/latest/api.html, by default 1.0
+
+        plotting : bool, optional
+            Whether to create and save various compound-wise and cluster-wise figures,
+            by default False
+
+        pdf : bool, optional
+            Whether or not probability density function values are computed, by default
+            True
+
+        n_neighbors : int, optional
+            Number of neighbors to consider when computing k_neigh_avg (i.e. peak
+            proxy), by default 10
+
+        verbose : bool, optional
+            Whether to print verbose information, by default True
+
+        mat_prop_name : str, optional
+            A name that helps identify the training target property, by default
+            "test-property"
+
+        dummy_run : bool, optional
+            Whether to use MDS instead of UMAP to run quickly for small datasets. Note
+            that MDS takes longer for UMAP for large datasets, by default False
+
+        Scaler : str or class, optional
+            Scaler to use for weighted_score (i.e. weighted score of target and proxy
+            values) Target and proxy are separately scaled using Scaler before taking
+            the weighted sum. Possible values are "MinMaxScaler", "StandardScaler",
+            "RobustScaler", or an sklearn.preprocessing scaler class, by default RobustScaler.
+
+        figure_dir, table_path : str, optional
+            Relative or absolute path to directory at which to save figures or tables,
+            by default "figures" and "tables", respectively. The directory will be
+            created if it does not exist already.
+
+        groupby_filter : str, optional
+            What kind of groupby_filter to use in conjunction with `groupby_formula`.
+            Possible values are "mean" and "max", by default "max".
+
+        pred_weight : int, optional
+            Weighting applied to the predicted target values, by default 1 (i.e. equal
+            weighting between predictions and proxies). For example, to weight the
+            predicted targets at twice that of the proxy values, set to 2.
+
+        device : str, optional
+            Which device to perform the computation on. Possible values are "cpu" and "cuda", by default "cuda".
+        """
         if timed:
             self.Timer = Timer
         else:
@@ -134,19 +189,28 @@ class Discover:
         self.verbose = verbose
         self.mat_prop_name = mat_prop_name
         self.dummy_run = dummy_run
-        self.Scaler = Scaler
         self.groupby_filter = groupby_filter
-        self.figure_path = figure_path
+        self.figure_dir = figure_dir
         self.table_path = table_path
         self.pred_weight = pred_weight
-        self.target = target
+        self.device = device
 
-        if self.target == "cpu":
+        if type(Scaler) is str:
+            scalers = {
+                "MinMaxScaler": MinMaxScaler,
+                "StandardScaler": StandardScaler,
+                "RobustScaler": RobustScaler,
+            }
+            self.Scaler = scalers[Scaler]
+        else:
+            self.Scaler = Scaler
+
+        if self.device == "cpu":
             self.force_cpu = True
         else:
             self.force_cpu = False
 
-        self.mapper = ElM2D(target=self.target)  # type: ignore
+        self.mapper = ElM2D(target=self.device)  # type: ignore
         self.dm = None
         # self.formula = None
         # self.target = None
@@ -159,7 +223,7 @@ class Discover:
         self.train_avg_targ = None
 
         # create dirs https://stackoverflow.com/a/273227/13697228
-        Path(figure_path).mkdir(parents=True, exist_ok=True)
+        Path(figure_dir).mkdir(parents=True, exist_ok=True)
         Path(table_path).mkdir(parents=True, exist_ok=True)
 
     def fit(self, train_df):
@@ -203,19 +267,21 @@ class Discover:
         Parameters
         ----------
         val_df : DataFrame
-            Validation dataset containing "formula" and "target" (populate with 0's if not available).
+            Validation dataset containing "formula" and "target" (populate with 0's if
+            not available).
         plotting : bool, optional
             Whether to plot, by default None
         umap_random_state : int or None, optional
             The random seed to use for UMAP, by default None
         pred_weight : int, optional
             The weight to assign to the predictions (proxy_weight is 1 by default), by default None.
+
             If neither pred_weight nor self.pred_weight is specified, it defaults to 1.
             When specified, pred_weight takes precedence over self.pred_weight.
         dummy_run : bool, optional
             Whether to use MDS in place of the (typically more expensive) DensMAP, by default None.
-            If neither dummy_run nor self.dummy_run is specified, it defaults to (effectively) being False.
-            When specified, dummy_run takes precedence over self.dummy_run.
+
+            If neither dummy_run nor self.dummy_run is specified, it defaults to (effectively) being False. When specified, dummy_run takes precedence over self.dummy_run.
 
         Returns
         -------
@@ -776,7 +842,7 @@ class Discover:
             x=x,
             y=y,
             color="cluster ID",
-            fpath=join(self.figure_path, "pf-peak-proxy"),
+            fpath=join(self.figure_dir, "pf-peak-proxy"),
             pareto_front=True,
         )
 
@@ -797,7 +863,7 @@ class Discover:
             x=x,
             y=y,
             color="cluster ID",
-            fpath=join(self.figure_path, "pf-train-contrib-proxy"),
+            fpath=join(self.figure_dir, "pf-train-contrib-proxy"),
             pareto_front=True,
             parity_type=None,
         )
@@ -839,7 +905,7 @@ class Discover:
             dens_df,
             x=x,
             y=y,
-            fpath=join(self.figure_path, "pf-dens-proxy"),
+            fpath=join(self.figure_dir, "pf-dens-proxy"),
             parity_type=None,
             color="cluster ID",
             pareto_front=True,
@@ -861,7 +927,7 @@ class Discover:
             y=y,
             hover_data=None,
             color="cluster ID",
-            fpath=join(self.figure_path, "pf-frac-proxy"),
+            fpath=join(self.figure_dir, "pf-frac-proxy"),
             pareto_front=True,
             reverse_x=False,
             parity_type=None,
@@ -886,7 +952,7 @@ class Discover:
                 gcv_df,
                 x=x,
                 y=y,
-                fpath=join(self.figure_path, "gcv-pareto"),
+                fpath=join(self.figure_dir, "gcv-pareto"),
                 parity_type="max-of-both",
                 color="cluster ID",
                 pareto_front=False,
@@ -1111,3 +1177,7 @@ class Discover:
 # pred_targ = np.concatenate((train_pred, val_pred), axis=0)
 
 # from CrabNet.train_crabnet import main as crabnet_main
+
+# use_cuda = torch.cuda.is_available()
+
+# plt.rcParams["text.usetex"] = True
