@@ -163,10 +163,3 @@ def generate_elasticity_data(download_data=True):
 
 if __name__ == "__main__":
     generate_elasticity_data()
-
-# %% Code Graveyard
-# n = 10000
-# all_comp = all_comp[:n]
-# all_formulas = all_formulas[:n]
-# all_mpids = all_mpids[:n]
-# all_structures = all_structures[:n]
