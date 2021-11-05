@@ -4,23 +4,26 @@
 [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=mat_discover_pypi.ipynb)
 [![Open in Code Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://doi.org/10.24433/CO.8463578.v1)
-
+[![Interactive Figures](https://img.shields.io/static/v1?message=Open%20interactive%20figures&logo=github&labelColor=5c5c5c&color=blueviolet&logoColor=white&label=%20)](https://sparks-baird.github.io/mat_discover/figures/)
+        
 [![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/mat_discover?label=PyPI%20downloads)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?service=github)](https://coveralls.io/github/sparks-baird/mat_discover)
+[![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)
+[![License](https://img.shields.io/github/license/sparks-baird/mat_discover?service=github)](https://img.shields.io/github/license/sparks-baird/mat_discover)
+[![DOI](https://zenodo.org/badge/392897894.svg?service=github)](https://zenodo.org/badge/latestdoi/392897894)
+<!-- ![PyPI - License](https://img.shields.io/pypi/l/mat_discover) -->
+<!-- [![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?branch=main)](https://coveralls.io/github/sparks-baird/mat_discover?branch=main) -->
+<!-- ![Coveralls](https://img.shields.io/coveralls/github/sparks-baird/mat_discover) -->
 
 ![Conda](https://img.shields.io/conda/v/sgbaird/mat_discover)
 ![Conda](https://img.shields.io/conda/pn/sgbaird/mat_discover)
-[![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg)](https://anaconda.org/sgbaird/mat_discover)
+[![Conda](https://img.shields.io/conda/dn/sgbaird/mat_discover?label=conda%7Cdownloads)](https://anaconda.org/sgbaird/mat_discover)
 [![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/latest_release_relative_date.svg)](https://anaconda.org/sgbaird/mat_discover)
 <!-- ![Conda](https://img.shields.io/conda/dn/sgbaird/mat_discover) -->
 <!-- [![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg)](https://anaconda.org/sgbaird/mat_discover) -->
-
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) <!-- ![Coveralls](https://img.shields.io/coveralls/github/sparks-baird/mat_discover) -->
-[![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?branch=main)](https://coveralls.io/github/sparks-baird/mat_discover?branch=main)
-![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)
-![GitHub](https://img.shields.io/github/license/sparks-baird/mat_discover)
-[![DOI](https://zenodo.org/badge/392897894.svg)](https://zenodo.org/badge/latestdoi/392897894)
-<!-- ![PyPI - License](https://img.shields.io/pypi/l/mat_discover) -->
+<!-- [![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg?service=github)](https://anaconda.org/sgbaird/mat_discover) -->
+<!-- ![PyPI - Downloads](https://img.shields.io/pypi/dm/mat_discover?label=PyPI%20downloads) -->
 
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
@@ -45,6 +48,8 @@ author={Baird, Sterling and Diep, Tran and Sparks, Taylor},
 year={2021}
 }
 ```
+
+The article is under review at [Digital Discovery](https://www.rsc.org/journals-books-databases/about-journals/digital-discovery/) (2021-11-01).
 
 ## DiSCoVeR Workflow
 
@@ -109,10 +114,10 @@ git clone --recurse-submodules https://github.com/sparks-baird/mat_discover.git
 cd mat_discover
 ```
 
-To perform the local installation, you can use `pip`, `conda`, or `flit`:
+To perform the local installation, you can use `pip`, `conda`, or `flit`. If using `flit`, make sure to install it first via `conda install flit` or `pip install flit`.
 | **pip**            | **conda**                                 | **flit**                           |
 | ------------------ | ----------------------------------------- | ---------------------------------- |
-| `pip install -e .` | `conda env create --file environment.yml` | `conda install flit; flit install` |
+| `pip install -e .` | `conda env create --file environment.yml` | `flit install --pth-file` |
 
 <!-- conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/ -->
 
@@ -193,11 +198,12 @@ This project was developed primarily in "Python in Visual Studio Code" using `bl
 - `pipreqs` was used as a starting point for `requirements.txt`
 - `flit` is used to create `pyproject.toml` and publish to PyPI
 - `conda env export --from-history -f environment.yml` was used as a starting point for `environment.yml`
-- `grayskull` is used to generate `meta.yaml` for publishing to `conda-forge`
-- `conda-smithy` is used to create a feedstock for `conda-forge`
+- `grayskull` is used to generate `meta.yaml` for publishing to Anaconda
 - A variety of GitHub actions are used (see [workflows](.github/workflows))
 - `pytest` is used for testing
 - `numba` is used to accelerate the Wasserstein distance matrix computations via CPU or GPU
+
+<!-- - `conda-smithy` is used to create a feedstock for `conda-forge` -->
 
 To help with development, you will need to [install from source](README.md#from-source). Note that when using a `conda` environment (recommended), you may avoid certain issues down the road by opening VS Code via an Anaconda command prompt and entering the command `code` (at least until the VS Code devs fix some of the issues associated with opening it "normally"). For example, in Windows, press the "Windows" key, type "anaconda", and open "Anaconda Powershell Prompt (miniconda3)" or similar. Then type `code` and press enter.
 
