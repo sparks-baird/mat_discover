@@ -748,8 +748,8 @@ class Discover:
 
         Returns
         -------
-        [type]
-            [description]
+        clusterer : HDBSCAN class
+            HDBSCAN clusterer fitted to UMAP embeddings.
         """
         with self.Timer("HDBSCAN*"):
             clusterer = hdbscan.HDBSCAN(
