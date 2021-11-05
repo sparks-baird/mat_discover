@@ -1,5 +1,6 @@
 <!-- TODO: add buttons for code ocean and Zenodo DOI [![Open in Code Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://codeocean.com/capsule/3904426/tree)-->
 # DiSCoVeR
+
 [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=mat_discover_pypi.ipynb)
 [![Open in Code Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://doi.org/10.24433/CO.8463578.v1)
@@ -27,10 +28,12 @@ A materials discovery algorithm geared towards exploring high performance candid
 <sup>Bulk modulus values overlaid on DensMAP densities (cropped).</sup>
 
 ## Citing
+
 The preprint is hosted on ChemRxiv:
 > Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8-v2](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8). This content is a preprint and has not been peer-reviewed.
 
 The BibTeX citation is as follows:
+
 ```bib
 @article{baird_diep_sparks_2021,
 place={Cambridge},
@@ -44,44 +47,61 @@ year={2021}
 ```
 
 ## DiSCoVeR Workflow
+
 <img src="https://sparks-baird.github.io/mat_discover/figures/discover-workflow.png" alt="DiSCoVeR Workflow" width=600>
 
 <sup>Figure 1. DiSCoVeR workflow to create chemically homogeneous clusters.  (a) Training and validation data.  (b) ElMD pairwise distances.  (c) DensMAP embeddings and DensMAP densities.  (d) Clustering via HDBSCAN*.  (e) Pareto plot and discovery scores.  (f) Pareto plot of cluster properties</sup>
 
 ## Installation
+
 I recommend that you run `mat_discover` in a separate conda environment, at least for initial testing. After installing [Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html), you can [create a new environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) via:
+
 ```python
 conda create --name mat_discover
 ```
+
 There are three ways to install `mat_discover`: Anaconda (`conda`), PyPI (`pip`), and from source. Anaconda is the preferred method.
+
 ### Anaconda
+
 To install `mat_discover` using `conda`, first, update `conda` via:
+
 ```python
 conda update conda
 ```
+
 The Anaconda `mat_discover` package is hosted on the [@sgbaird channel](https://anaconda.org/sgbaird/repo) and can be installed via:
+
 ```python
 conda install -c sgbaird mat_discover
 ```
+
 ### Pip
+
 To install via `pip`, first update `pip` via:
+
 ```python
 pip install -U pip
 ```
 
 Due to limitations of PyPI distributions of CUDA/PyTorch, you will need to install PyTorch separately via the command that's most relevant to you ([PyTorch Getting Started](https://pytorch.org/get-started/locally/)). For example, for Stable/Windows/Pip/Python/CUDA-11.3:
+
 ```python
 pip3 install torch==1.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
 ```
+
 <!--- ```python
 conda install pytorch cudatoolkit=11.1 -c pytorch -c conda-forge
 ``` --->
 
 Finally, install `mat_discover`:
+
 ```python
 pip install mat_discover
 ```
+
 ### From Source
+
 To install from source, clone the `mat_discover` repository:
 
 ```python
@@ -97,7 +117,9 @@ To perform the local installation, you can use `pip`, `conda`, or `flit`:
 <!-- conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/ -->
 
 ## Basic Usage
+
 ### Fit/Predict
+
 ```python
 from mat_discover.mat_discover_ import Discover
 disc = Discover()
@@ -111,18 +133,23 @@ print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
 See [mat_discover_example.py](examples/mat_discover_example.py), [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing), or [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=mat_discover_pypi.ipynb). On Google Colab and Binder, this may take a few minutes to install and load, respectively. During training and prediction, Google Colab will be faster than Binder since Google Colab has access to a GPU while Binder does not.
 
 ### Load Data
+
 If you're using your own dataset, you will need to supply a Pandas DataFrame that contains `formula` and `target` columns. If you have a `train.csv` file (located in current working directory) with these two columns, this can be converted to a DataFrame via:
+
 ```python
 import pandas as pd
 df = pd.read_csv("train.csv")
 ```
+
 Note that you can load any of the datasets within `CrabNet/data/`, which includes `matbench` data, other datasets from the CrabNet paper, and a recent (as of Oct 2021) snapshot of `K_VRH` bulk modulus data from Materials Project. For example, to load the bulk modulus snapshot:
+
 ```python
 from crabnet.data.materials_data import elasticity
 train_df, val_df = disc.data(elasticity, "train.csv") # note that `val.csv` within `elasticity` is every other Materials Project compound (i.e. "target" column filled with zeros)
 ```
 
 The built-in data directories are as follows:
+>
 > ```python
 > {'benchmark_data',
 >  'benchmark_data.CritExam__Ed',
@@ -155,10 +182,13 @@ To see what `.csv` files are available (e.g. `train.csv`), you will probably nee
 Finally, to download data from Materials Project directly, see [generate_elasticity_data.py](https://github.com/sparks-baird/mat_discover/blob/main/mat_discover/utils/generate_elasticity_data.py).
 
 ## Interactive Plots
+
 Interactive plots for several types of Pareto front plots can be found [here](https://sparks-baird.github.io/mat_discover/figures/).
 
 ## Developing
+
 This project was developed primarily in "Python in Visual Studio Code" using `black`, `mypy`, `pydocstyle`, `kite`, other tools, and various community extensions. Some other notable tools used in this project are:
+
 - Miniconda
 - `pipreqs` was used as a starting point for `requirements.txt`
 - `flit` is used to create `pyproject.toml` and publish to PyPI
@@ -172,6 +202,7 @@ This project was developed primarily in "Python in Visual Studio Code" using `bl
 To help with development, you will need to [install from source](README.md#from-source). Note that when using a `conda` environment (recommended), you may avoid certain issues down the road by opening VS Code via an Anaconda command prompt and entering the command `code` (at least until the VS Code devs fix some of the issues associated with opening it "normally"). For example, in Windows, press the "Windows" key, type "anaconda", and open "Anaconda Powershell Prompt (miniconda3)" or similar. Then type `code` and press enter.
 
 ## Bugs, Questions, and Suggestions
+
 If you find a bug or have suggestions for documentation please [open an issue](https://github.com/sparks-baird/mat_discover/issues/new/choose). If you're reporting a bug, please include a simplified reproducer. If you have questions, have feature suggestions/requests, or are interested in extending/improving `mat_discover` and would like to discuss, please use the Discussions tab and use the appropriate category ("Ideas", "Q&A", etc.). Pull requests are welcome and encouraged.
 
 <!---
