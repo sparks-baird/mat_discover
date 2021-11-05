@@ -9,3 +9,5 @@ matplotlib==3.4.3
 conda-souschef==0.2.0
 chem_wasserstein==1.0.6
 scikit-learn==1.0.1
+sphinx==4.2.0
+myst-parser==0.15.2
