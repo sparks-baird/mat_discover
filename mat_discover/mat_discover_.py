@@ -165,10 +165,6 @@ class Discover:
             by default "figures" and "tables", respectively. The directory will be
             created if it does not exist already.
 
-        groupby_filter : str, optional
-            What kind of groupby_filter to use in conjunction with `groupby_formula`.
-            Possible values are "mean" and "max", by default "max".
-
         pred_weight : int, optional
             Weighting applied to the predicted target values, by default 1 (i.e. equal
             weighting between predictions and proxies). For example, to weight the
@@ -189,7 +185,6 @@ class Discover:
         self.verbose = verbose
         self.mat_prop_name = mat_prop_name
         self.dummy_run = dummy_run
-        self.groupby_filter = groupby_filter
         self.figure_dir = figure_dir
         self.table_path = table_path
         self.pred_weight = pred_weight
@@ -234,9 +229,6 @@ class Discover:
         train_df : DataFrame
             Should contain "formula" and "target" columns.
         """
-        # collapse identical compositions
-        # train_df = groupby_formula(train_df, how=self.groupby_filter)
-
         # unpack
         self.train_df = train_df
         self.train_formula = train_df["formula"]
@@ -288,7 +280,6 @@ class Discover:
         dens_score, peak_score
             Scaled discovery scores for density and peak proxies.
         """
-        # val_df = groupby_formula(val_df, how=self.groupby_filter)
         self.val_df = val_df
 
         # CrabNet
