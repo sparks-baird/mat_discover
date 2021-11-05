@@ -597,6 +597,9 @@ class Discover:
         # Group Cross Validation
         # for train_index, val_index in logo.split(X_tv, y_tv, self.labels):
         # TODO: group cross-val parity plot
+        if self.verbose:
+            print("Number of iterations (i.e. clusters): ", self.n_clusters)
+
         avg_targ = [
             self.single_group_cross_val(X, y, train_index, val_index, i)
             for i, (train_index, val_index) in enumerate(logo.split(X, y, self.labels))
@@ -641,34 +644,29 @@ class Discover:
         return self.scaled_error
 
     def single_group_cross_val(self, X, y, train_index, val_index, iter):
+        """Perform leave-one-cluster-out cross-validation.
+
+        Parameters
+        ----------
+        X : list of str
+            Chemical formulae.
+        y : 1d array of float
+            Target properties.
+        train_index, val_index : 1d array of int
+            Training and validation indices for a given split, respectively.
+        iter : int
+            Iteration (i.e. how many clusters have been processed so far).
+
+        Returns
+        -------
+        true_avg_targ, pred_avg_targ, train_avg_targ : 1d array of float
+            True, predicted, and training average targets for each of the clusters.
+            average target is used to create a "dummy" measure of performance (i.e. one
+            of the the simplest "models" you can use, the average of the training data).
         """
-        TODO: add proper docstring.
+        if self.verbose:
+            print("Iteration: ", iter)
 
-        how do I capture a "distinct material class of high targets" in a single number?
-
-        Average of the cluster targets vs. average of the cluster densities (or neigh_avg_targ)?
-
-        Except that cluster densities are constant. It seems I really might need to get
-        the forward transform via UMAP.
-        Or I could sum the densities from all the other clusters (i.e. training data)?
-        Or take the neigh_avg_targ from only the training data?
-
-
-        Two questions:
-        How well are the targets predicted for the val cluster?
-        How well did UMAP push the val cluster away from other clusters?
-
-        Then compare the trade-off between these two.
-
-
-        Or just see if the targets are predicted well based on how certain clusters were removed.
-
-        Then maybe just return the true mean of the targets and the predicted mean of the targets?
-
-        This will tell me which clusters are more interesting. Then I can start looking within
-        clusters at the trade-off between high-target and low-proxy to prioritize which materials
-        to look at first.
-        """
         Xn, yn = X.to_numpy(), y.to_numpy()
         X_train, X_val = Xn[train_index], Xn[val_index]
         y_train, y_val = yn[train_index], yn[val_index]
