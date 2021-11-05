@@ -640,34 +640,24 @@ class Discover:
             print("Weighted group cross validation scaled error =", self.scaled_error)
         return self.scaled_error
 
-    def single_group_cross_val(self, X, y, train_index, val_index, iter):
-        """
-        TODO: add proper docstring.
+    def single_group_cross_val(self, X, y, train_index, val_index):
+        """Perform leave-one-cluster-out cross-validation.
 
-        how do I capture a "distinct material class of high targets" in a single number?
+        Parameters
+        ----------
+        X : list of str
+            Chemical formulae.
+        y : 1d array of float
+            Target properties.
+        train_index, val_index : 1d array of int
+            Training and validation indices, respectively.
 
-        Average of the cluster targets vs. average of the cluster densities (or neigh_avg_targ)?
-
-        Except that cluster densities are constant. It seems I really might need to get
-        the forward transform via UMAP.
-        Or I could sum the densities from all the other clusters (i.e. training data)?
-        Or take the neigh_avg_targ from only the training data?
-
-
-        Two questions:
-        How well are the targets predicted for the val cluster?
-        How well did UMAP push the val cluster away from other clusters?
-
-        Then compare the trade-off between these two.
-
-
-        Or just see if the targets are predicted well based on how certain clusters were removed.
-
-        Then maybe just return the true mean of the targets and the predicted mean of the targets?
-
-        This will tell me which clusters are more interesting. Then I can start looking within
-        clusters at the trade-off between high-target and low-proxy to prioritize which materials
-        to look at first.
+        Returns
+        -------
+        true_avg_targ, pred_avg_targ, train_avg_targ : 1d array of float
+            True, predicted, and training average targets for each cluster. Training
+            average target is used to produce a "dummy" measure of performance (i.e.
+            one's simplest guess using only the training data).
         """
         Xn, yn = X.to_numpy(), y.to_numpy()
         X_train, X_val = Xn[train_index], Xn[val_index]
@@ -750,8 +740,8 @@ class Discover:
 
         Returns
         -------
-        [type]
-            [description]
+        clusterer : HDBSCAN class
+            HDBSCAN clusterer fitted to UMAP embeddings.
         """
         with self.Timer("HDBSCAN*"):
             clusterer = hdbscan.HDBSCAN(
