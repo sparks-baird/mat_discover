@@ -5,7 +5,8 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=mat_discover_pypi.ipynb)
 [![Open in Code Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://doi.org/10.24433/CO.8463578.v1)
 [![Interactive Figures](https://img.shields.io/static/v1?message=Open%20interactive%20figures&logo=github&labelColor=5c5c5c&color=blueviolet&logoColor=white&label=%20)](https://sparks-baird.github.io/mat_discover/figures/)
-        
+[![Documentation Status](https://readthedocs.org/projects/mat-discover/badge/?version=latest)](https://mat-discover.readthedocs.io/en/latest/?badge=latest)
+
 [![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?service=github)](https://coveralls.io/github/sparks-baird/mat_discover)
