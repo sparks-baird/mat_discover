@@ -597,6 +597,9 @@ class Discover:
         # Group Cross Validation
         # for train_index, val_index in logo.split(X_tv, y_tv, self.labels):
         # TODO: group cross-val parity plot
+        if self.verbose:
+            print("Number of iterations (i.e. clusters): ", self.n_clusters)
+
         avg_targ = [
             self.single_group_cross_val(X, y, train_index, val_index, i)
             for i, (train_index, val_index) in enumerate(logo.split(X, y, self.labels))
@@ -640,7 +643,7 @@ class Discover:
             print("Weighted group cross validation scaled error =", self.scaled_error)
         return self.scaled_error
 
-    def single_group_cross_val(self, X, y, train_index, val_index):
+    def single_group_cross_val(self, X, y, train_index, val_index, iter):
         """Perform leave-one-cluster-out cross-validation.
 
         Parameters
@@ -650,15 +653,20 @@ class Discover:
         y : 1d array of float
             Target properties.
         train_index, val_index : 1d array of int
-            Training and validation indices, respectively.
+            Training and validation indices for a given split, respectively.
+        iter : int
+            Iteration (i.e. how many clusters have been processed so far).
 
         Returns
         -------
         true_avg_targ, pred_avg_targ, train_avg_targ : 1d array of float
-            True, predicted, and training average targets for each cluster. Training
-            average target is used to produce a "dummy" measure of performance (i.e.
-            one's simplest guess using only the training data).
+            True, predicted, and training average targets for each of the clusters.
+            average target is used to create a "dummy" measure of performance (i.e. one
+            of the the simplest "models" you can use, the average of the training data).
         """
+        if self.verbose:
+            print("Iteration: ", iter)
+
         Xn, yn = X.to_numpy(), y.to_numpy()
         X_train, X_val = Xn[train_index], Xn[val_index]
         y_train, y_val = yn[train_index], yn[val_index]
