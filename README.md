@@ -28,6 +28,7 @@
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
 <img src=https://user-images.githubusercontent.com/45469701/139520031-bf4fda18-9be7-4c54-b70b-c9be8e974cea.png width=500>  
+
 <sup>Bulk modulus values overlaid on DensMAP densities (cropped).</sup>
 
 ## Citing
@@ -115,8 +116,8 @@ cd mat_discover
 ```
 
 To perform the local installation, you can use `pip`, `conda`, or `flit`. If using `flit`, make sure to install it first via `conda install flit` or `pip install flit`.
-| **pip**            | **conda**                                 | **flit**                           |
-| ------------------ | ----------------------------------------- | ---------------------------------- |
+| **pip**            | **conda**                                 | **flit**                  |
+| ------------------ | ----------------------------------------- | ------------------------- |
 | `pip install -e .` | `conda env create --file environment.yml` | `flit install --pth-file` |
 
 <!-- conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/ -->
@@ -135,7 +136,7 @@ disc.save()
 print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
 ```
 
-See [mat_discover_example.py](examples/mat_discover_example.py), [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing), or [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=mat_discover_pypi.ipynb). On Google Colab and Binder, this may take a few minutes to install and load, respectively. During training and prediction, Google Colab will be faster than Binder since Google Colab has access to a GPU while Binder does not.
+See [mat_discover_example.py](https://github.com/sparks-baird/examples/mat_discover_example.py), [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing), or [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=mat_discover_pypi.ipynb). On Google Colab and Binder, this may take a few minutes to install and load, respectively. During training and prediction, Google Colab will be faster than Binder since Google Colab has access to a GPU while Binder does not.
 
 ### Load Data
 
@@ -199,7 +200,7 @@ This project was developed primarily in "Python in Visual Studio Code" using `bl
 - `flit` is used to create `pyproject.toml` and publish to PyPI
 - `conda env export --from-history -f environment.yml` was used as a starting point for `environment.yml`
 - `grayskull` is used to generate `meta.yaml` for publishing to Anaconda
-- A variety of GitHub actions are used (see [workflows](.github/workflows))
+- A variety of GitHub actions are used (see [workflows](https://github.com/sparks-baird/.github/workflows))
 - `pytest` is used for testing
 - `numba` is used to accelerate the Wasserstein distance matrix computations via CPU or GPU
 
