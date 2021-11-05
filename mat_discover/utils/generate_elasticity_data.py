@@ -1,12 +1,4 @@
-"""
-Download and partition elasticity data using Materials Project API.
-
-Use pymatgen environment.
-
-Created on Sat Sep 11 17:02:10 2021
-
-@author: sterg
-"""
+"""Download and partition elasticity data using Materials Project API."""
 from os import cpu_count
 from os.path import join
 from pathlib import Path
@@ -163,10 +155,3 @@ def generate_elasticity_data(download_data=True):
 
 if __name__ == "__main__":
     generate_elasticity_data()
-
-# %% Code Graveyard
-# n = 10000
-# all_comp = all_comp[:n]
-# all_formulas = all_formulas[:n]
-# all_mpids = all_mpids[:n]
-# all_structures = all_structures[:n]
