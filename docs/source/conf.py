@@ -11,15 +11,16 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+from warnings import warn
 from os.path import dirname, abspath, join
 import sys
 import sphinx_rtd_theme  # noqa
 
 try:
-    # Numba is installed
+    # mat_discover is installed
     import mat_discover
 except ImportError:
-    # Numba is run from its source checkout
+    # mat_discover is run from its source checkout
     current_dir = dirname(__file__)
     mypath = abspath(join(current_dir, "..", "..", "mat_discover"))
     mypath2 = abspath(join(current_dir, "..", ".."))
@@ -28,6 +29,11 @@ except ImportError:
     print("path added: ", mypath)
     print("path added: ", mypath2)
     import mat_discover
+
+    # try:
+    #     import mat_discover
+    # except ImportError:
+    #     warn("You might need to run `conda install flit; flit install --pth-file`")
 
 
 # -- Project information -----------------------------------------------------
