@@ -155,3 +155,6 @@ models/trained_models/test-property.pth
 mat_discover-feedstock/
 scratch/
 **/test-property.pth
+mat_discover/data/all_results.pkl
+mat_discover/data/elast_results.pkl
+mat_discover/data/elast_struct_dicts.pkl
