@@ -22,7 +22,7 @@ def structure_from_cif(cif):
     return Structure.from_str(cif, fmt="cif")
 
 
-def generate_elasticity_data(download_data=True):
+def generate_elasticity_data(download_data=True, cif=False):
     """Download (or reload) elasticity data using MPRester."""
     # download and save Materials Project dataset
     data_dir = "data"
@@ -34,6 +34,8 @@ def generate_elasticity_data(download_data=True):
     if download_data:
         # download
         props = ["task_id", "pretty_formula", "elasticity", "cif"]
+        if not cif:
+            props.remove("cif")
         with MPRester() as m:
             elast_results = m.query(
                 {
@@ -47,10 +49,12 @@ def generate_elasticity_data(download_data=True):
             )
 
         props = ["task_id", "pretty_formula", "cif"]
+        if not cif:
+            props.remove("cif")
         with MPRester() as m:
             all_results = m.query(
                 {
-                    "e_above_hull": {"$lt": 0.5},
+                    "e_above_hull": {"$lt": 0.05},
                     "elements": {"$nin": ["Tc", "He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
                     # "pretty_formula": {"$nin": ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
                 },
@@ -82,7 +86,8 @@ def generate_elasticity_data(download_data=True):
     # %% separate mpids and other properties for elasticity materials
     elast_mpids = [d["task_id"] for d in elast_results]
     elast_formulas = [d["pretty_formula"] for d in elast_results]
-    elast_cifs = [d["cif"] for d in elast_results]
+    if cif:
+        elast_cifs = [d["cif"] for d in elast_results]
     elasticity = [d["elasticity"] for d in elast_results]
     K_VRH = [d["K_VRH"] for d in elasticity]
 
@@ -92,66 +97,86 @@ def generate_elasticity_data(download_data=True):
 
     elast_struct_path = join("data", "elast_struct_dicts.pkl")
     if download_data:
-        elast_structures = [Structure.from_str(cif, fmt="cif") for cif in elast_cifs]
-        elast_struct_dicts = [structure.as_dict() for structure in elast_structures]
-        with open(elast_struct_path, "wb") as f:
-            pickle.dump(elast_struct_dicts, f)
+        if cif:
+            elast_structures = [
+                Structure.from_str(cif, fmt="cif") for cif in elast_cifs
+            ]
+            elast_struct_dicts = [structure.as_dict() for structure in elast_structures]
+            with open(elast_struct_path, "wb") as f:
+                pickle.dump(elast_struct_dicts, f)
     else:
         with Timer("elast structures loaded"):
-            with open(elast_struct_path, "rb") as f:
-                elast_struct_dicts = pickle.load(f)
-            elast_structures = [Structure.from_dict(s) for s in elast_struct_dicts]
-            del elast_struct_dicts
+            if cif:
+                with open(elast_struct_path, "rb") as f:
+                    elast_struct_dicts = pickle.load(f)
+                elast_structures = [Structure.from_dict(s) for s in elast_struct_dicts]
+                del elast_struct_dicts
 
-    elast_df = pd.DataFrame(
-        data={
-            "formula": elast_formulas,
-            "composition": elast_comp,
-            "structure": elast_structures,
-            "K_VRH": K_VRH,
-            "task_id": elast_mpids,
-            "target": K_VRH,
-        }
-    )
+    if not cif:
+        elast_structures = []
+    data = {
+        "formula": elast_formulas,
+        "composition": elast_comp,
+        "structure": elast_structures,
+        "K_VRH": K_VRH,
+        "task_id": elast_mpids,
+        "target": K_VRH,
+    }
+    if not cif:
+        data.pop("structure")
+
+    elast_df = pd.DataFrame(data=data)
 
     elast_df.to_csv(my_path("train.csv"), columns=["formula", "target"], index=False)
 
-    # TODO: make separate "prediction" df that doesn't include training data
-    # separate mpids and other properties for all data
-    all_mpids = [d["task_id"] for d in all_results]
-    all_cifs = [d["cif"] for d in all_results]
     all_formulas = [d["pretty_formula"] for d in all_results]
 
-    del all_results
+    # remove rows corresponding to formulas in val_df that overlap with train_df
+    # https://stackoverflow.com/questions/11483863/python-intersection-indices-numpy-array
+    indices = np.invert(np.in1d(all_formulas, elast_formulas))
 
-    all_comp = [Composition(formula) for formula in all_formulas]
+    val_results = [all_results[i] for i in np.nonzero(indices)[0]]
 
-    all_struct_path = join("data", "all_struct_dicts.pkl")
+    val_formulas = [d["pretty_formula"] for d in val_results]
+    val_mpids = [d["task_id"] for d in val_results]
+
+    if cif:
+        val_cifs = [d["cif"] for d in val_results]
+
+    del all_results, val_results
+
+    val_comp = [Composition(formula) for formula in val_formulas]
+
+    val_struct_path = join("data", "all_struct_dicts.pkl")
     if download_data:
-        # TODO: add waitbar for list comp
-
-        all_structures = pqdm(all_cifs, structure_from_cif, n_jobs=cpu_count())
-        all_struct_dicts = [structure.as_dict() for structure in all_structures]
-        with open(all_struct_path, "wb") as f:
-            pickle.dump(all_struct_dicts, f)
+        if cif:
+            val_structures = pqdm(val_cifs, structure_from_cif, n_jobs=cpu_count())
+            val_struct_dicts = [structure.as_dict() for structure in val_structures]
+            with open(val_struct_path, "wb") as f:
+                pickle.dump(val_struct_dicts, f)
     else:
-        with Timer("all-structures-loaded"):
-            with open(all_struct_path, "rb") as f:
-                all_struct_dicts = pickle.load(f)
-                all_structures = [Structure.from_dict(s) for s in all_struct_dicts]
-                del all_struct_dicts
+        with Timer("val-structures-loaded"):
+            if cif:
+                with open(val_struct_path, "rb") as f:
+                    val_struct_dicts = pickle.load(f)
+                    val_structures = [Structure.from_dict(s) for s in val_struct_dicts]
+                    del val_struct_dicts
 
-    all_df = pd.DataFrame(
-        data={
-            "composition": all_comp,
-            "formula": all_formulas,
-            "structure": all_structures,
-            "task_id": all_mpids,
-            "target": np.zeros((len(all_mpids))),
-        }
-    )
+    if not cif:
+        val_structures = []
+    data = {
+        "composition": val_comp,
+        "formula": val_formulas,
+        "structure": val_structures,
+        "task_id": val_mpids,
+        "target": np.zeros((len(val_mpids))),
+    }
+    if not cif:
+        data.pop("structure")
 
-    all_df.to_csv(my_path("val.csv"), columns=["formula", "target"], index=False)
+    val_df = pd.DataFrame(data=data)
+
+    val_df.to_csv(my_path("val.csv"), columns=["formula", "target"], index=False)
 
 
 if __name__ == "__main__":
