@@ -2,7 +2,9 @@
 # %% imports
 from os.path import join
 import numpy as np
-from crabnet.data.materials_data import elasticity
+
+# from crabnet.data.materials_data import elasticity
+from mat_discover.data import elasticity
 from mat_discover.mat_discover_ import Discover
 
 # %% instantiate
