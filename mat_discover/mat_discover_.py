@@ -112,10 +112,11 @@ class Discover:
         dummy_run=False,
         Scaler=RobustScaler,
         figure_dir="figures",
-        table_path="tables",
+        table_dir="tables",
         groupby_filter="max",
         pred_weight=1,
         device="cuda",
+        dist_device=None,
     ):
         """Initialize a Discover() class.
 
@@ -160,7 +161,7 @@ class Discover:
             the weighted sum. Possible values are "MinMaxScaler", "StandardScaler",
             "RobustScaler", or an sklearn.preprocessing scaler class, by default RobustScaler.
 
-        figure_dir, table_path : str, optional
+        figure_dir, table_dir : str, optional
             Relative or absolute path to directory at which to save figures or tables,
             by default "figures" and "tables", respectively. The directory will be
             created if it does not exist already.
@@ -171,7 +172,13 @@ class Discover:
             predicted targets at twice that of the proxy values, set to 2.
 
         device : str, optional
-            Which device to perform the computation on. Possible values are "cpu" and "cuda", by default "cuda".
+            Which device to perform the computation on. Possible values are "cpu" and
+            "cuda", by default "cuda".
+
+        dist_device : str, optional
+            Which device to perform the computation on for the distance computations
+            specifically. Possible values are "cpu", "cuda", and None, by default None.
+            If None, default to `device`.
         """
         if timed:
             self.Timer = Timer
@@ -186,9 +193,13 @@ class Discover:
         self.mat_prop_name = mat_prop_name
         self.dummy_run = dummy_run
         self.figure_dir = figure_dir
-        self.table_path = table_path
+        self.table_dir = table_dir
         self.pred_weight = pred_weight
         self.device = device
+        if dist_device is None:
+            self.dist_device = self.device
+        else:
+            self.dist_device = dist_device
 
         if type(Scaler) is str:
             scalers = {
@@ -205,7 +216,7 @@ class Discover:
         else:
             self.force_cpu = False
 
-        self.mapper = ElM2D(target=self.device)  # type: ignore
+        self.mapper = ElM2D(target=self.dist_device)  # type: ignore
         self.dm = None
         # self.formula = None
         # self.target = None
@@ -216,10 +227,10 @@ class Discover:
         self.true_avg_targ = None
         self.pred_avg_targ = None
         self.train_avg_targ = None
-
-        # create dirs https://stackoverflow.com/a/273227/13697228
-        Path(figure_dir).mkdir(parents=True, exist_ok=True)
-        Path(table_path).mkdir(parents=True, exist_ok=True)
+        
+        # create dir https://stackoverflow.com/a/273227/13697228
+        Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
+        Path(self.table_dir).mkdir(parents=True, exist_ok=True)
 
     def fit(self, train_df):
         """Fit CrabNet model to training data.
@@ -418,6 +429,9 @@ class Discover:
         self.peak_score_df = self.sort(self.peak_score)
         self.dens_score_df = self.sort(self.dens_score)
 
+        # create dir https://stackoverflow.com/a/273227/13697228
+        Path(self.table_dir).mkdir(parents=True, exist_ok=True)
+
         self.merge()
 
         return self.dens_score, self.peak_score
@@ -506,13 +520,13 @@ class Discover:
         self.comb_out_df = comb_score_df[np.isin(comb_score_df.formula, comb_formula)]
 
         self.dens_score_df.head(10).to_csv(
-            join(self.table_path, "dens-score.csv"), index=False, float_format="%.3f"
+            join(self.table_dir, "dens-score.csv"), index=False, float_format="%.3f"
         )
         self.peak_score_df.head(10).to_csv(
-            join(self.table_path, "peak-score.csv"), index=False, float_format="%.3f"
+            join(self.table_dir, "peak-score.csv"), index=False, float_format="%.3f"
         )
         self.comb_out_df.to_csv(
-            join(self.table_path, "comb-score.csv"), index=False, float_format="%.3f"
+            join(self.table_dir, "comb-score.csv"), index=False, float_format="%.3f"
         )
 
         return self.comb_out_df
@@ -955,6 +969,9 @@ class Discover:
         pk_pareto_ind, dens_pareto_ind : tuple of int
             Pareto front indices for the peak and density proxies, respectively.
         """
+        # create dir https://stackoverflow.com/a/273227/13697228
+        Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
+        
         # peak pareto plot setup
         x = str(self.n_neighbors) + "_neigh_avg_targ (GPa)"
         y = "target (GPa)"
