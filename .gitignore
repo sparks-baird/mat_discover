@@ -158,3 +158,4 @@ scratch/
 mat_discover/data/all_results.pkl
 mat_discover/data/elast_results.pkl
 mat_discover/data/elast_struct_dicts.pkl
+dummy_disc.pkl
