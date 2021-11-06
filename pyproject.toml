@@ -42,7 +42,8 @@ test = [
     "pytest-cov",
     "pre-commit",
     "sphinx==4.2.0",
-    "myst-parser==0.15.2"
+    "myst-parser==0.15.2",
+    "nbformat >=4.2.0", # for Jupyter Notebook in VS Code
 ]
 # gpu = ["torch==1.9.1+cu111"]
 # cpu = ["torch"]
