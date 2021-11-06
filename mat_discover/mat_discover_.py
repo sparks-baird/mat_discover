@@ -227,7 +227,7 @@ class Discover:
         self.true_avg_targ = None
         self.pred_avg_targ = None
         self.train_avg_targ = None
-        
+
         # create dir https://stackoverflow.com/a/273227/13697228
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
         Path(self.table_dir).mkdir(parents=True, exist_ok=True)
@@ -971,7 +971,7 @@ class Discover:
         """
         # create dir https://stackoverflow.com/a/273227/13697228
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
-        
+
         # peak pareto plot setup
         x = str(self.n_neighbors) + "_neigh_avg_targ (GPa)"
         y = "target (GPa)"
