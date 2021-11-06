@@ -35,7 +35,7 @@ A materials discovery algorithm geared towards exploring high performance candid
 ## Citing
 
 The preprint is hosted on ChemRxiv:
-> Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8-v2](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8). This content is a preprint and has not been peer-reviewed.
+> Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8-v3](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3). This content is a preprint and has not been peer-reviewed.
 
 The BibTeX citation is as follows:
 
@@ -43,7 +43,7 @@ The BibTeX citation is as follows:
 @article{baird_diep_sparks_2021,
 place={Cambridge},
 title={DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions},
-DOI={10.33774/chemrxiv-2021-5l2f8-v2},
+DOI={10.33774/chemrxiv-2021-5l2f8-v3},
 journal={ChemRxiv},
 publisher={Cambridge Open Engage},
 author={Baird, Sterling and Diep, Tran and Sparks, Taylor},
