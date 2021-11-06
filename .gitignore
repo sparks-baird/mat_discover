@@ -154,3 +154,4 @@ build_artifacts
 models/trained_models/test-property.pth
 mat_discover-feedstock/
 scratch/
+**/test-property.pth
