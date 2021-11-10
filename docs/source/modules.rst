@@ -1,13 +1,13 @@
 mat_discover API
 ================
 
-Subpackages
------------
+Module contents
+---------------
 
-.. toctree::
-   :maxdepth: 4
-
-   mat_discover.utils
+.. automodule:: mat_discover
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Submodules
 ----------
@@ -20,10 +20,10 @@ mat\_discover.mat\_discover\_ module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+Subpackages
+-----------
 
-.. automodule:: mat_discover
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. toctree::
+   :maxdepth: 4
+
+   mat_discover.utils

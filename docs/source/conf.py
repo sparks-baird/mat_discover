@@ -81,7 +81,7 @@ html_theme = "sphinx_rtd_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-autodoc_mock_imports = ["numba", "torch"]
+autodoc_mock_imports = ["numba", "torch", "pymatgen"]
 
 # https://github.com/sphinx-doc/sphinx/issues/7000#issuecomment-677916705
 source_suffix = [".rst", ".md"]
