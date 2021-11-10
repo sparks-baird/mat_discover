@@ -8,7 +8,7 @@ from sklearn.preprocessing import MinMaxScaler
 # import seaborn as sns
 
 # TODO: change to square plots
-def umap_cluster_scatter(std_emb, labels):
+def umap_cluster_scatter(std_emb, labels, figure_dir="figures"):
     """Plot UMAP embeddings colored by cluster IDs.
 
     Parameters
@@ -48,7 +48,7 @@ def umap_cluster_scatter(std_emb, labels):
         plt.legend([ax2], ["Unclassified: " + "{:.1%}".format(unclass_frac)])
     plt.tight_layout()
     plt.gca().set_aspect("equal", "box")
-    plt.savefig(join("figures", "umap-cluster-scatter"))
+    plt.savefig(join(figure_dir, "umap-cluster-scatter"))
     plt.show()
     return fig
 
@@ -61,7 +61,7 @@ def umap_cluster_scatter(std_emb, labels):
     plt.show()
 
 
-def cluster_count_hist(labels):
+def cluster_count_hist(labels, figure_dir="figures"):
     """Plot histogram of cluster counts, colored by cluster IDs.
 
     Parameters
@@ -88,12 +88,12 @@ def cluster_count_hist(labels):
     plt.xlabel("cluster ID")
     plt.ylabel("number of compounds")
     plt.tight_layout()
-    plt.savefig(join("figures", "cluster-count-hist"))
+    plt.savefig(join(figure_dir, "cluster-count-hist"))
     plt.show()
     return fig
 
 
-def target_scatter(std_emb, target):
+def target_scatter(std_emb, target, figure_dir="figures"):
     """Plot UMAP embedding locations colored by target values.
 
     Parameters
@@ -122,12 +122,12 @@ def target_scatter(std_emb, target):
     plt.colorbar(label="Bulk Modulus (GPa)", orientation="horizontal")
     plt.tight_layout()
     plt.gca().set_aspect("equal", "box")
-    plt.savefig(join("figures", "target-scatter"))
+    plt.savefig(join(figure_dir, "target-scatter"))
     plt.show()
     return fig
 
 
-def dens_scatter(x, y, pdf_sum):
+def dens_scatter(x, y, pdf_sum, figure_dir="figures"):
     """Plot DensMAP densities at the `x` and `y` embedding coordinates.
 
     Parameters
@@ -155,12 +155,12 @@ def dens_scatter(x, y, pdf_sum):
     plt.tight_layout()
     plt.colorbar(label="Density", orientation="horizontal")
     plt.gca().set_aspect("equal", "box")
-    plt.savefig(join("figures", "dens-scatter"))
+    plt.savefig(join(figure_dir, "dens-scatter"))
     plt.show()
     return fig
 
 
-def dens_targ_scatter(std_emb, target, x, y, pdf_sum):
+def dens_targ_scatter(std_emb, target, x, y, pdf_sum, figure_dir="figures"):
     """Plot overlay of density scatter and target scatter plots.
 
     Parameters
@@ -200,12 +200,12 @@ def dens_targ_scatter(std_emb, target, x, y, pdf_sum):
     plt.axis("off")
     plt.tight_layout()
     plt.gca().set_aspect("equal", "box")
-    plt.savefig(join("figures", "dens-targ-scatter"))
+    plt.savefig(join(figure_dir, "dens-targ-scatter"))
     plt.show()
     return fig
 
 
-def group_cv_parity(ytrue, ypred, labels):
+def group_cv_parity(ytrue, ypred, labels, figure_dir="figures"):
     """Leave-one-cluster-out cross-validation parity plot colored by `labels`.
 
     Parameters
@@ -236,6 +236,6 @@ def group_cv_parity(ytrue, ypred, labels):
     plt.xlabel(r"$E_\mathregular{avg,true}$ (GPa)")
     plt.ylabel(r"$E_\mathregular{avg,pred}$ (GPa)")
     plt.tight_layout()
-    plt.savefig(join("figures", "group-cv-parity"))
+    plt.savefig(join(figure_dir, "group-cv-parity"))
     plt.show()
     return fig
