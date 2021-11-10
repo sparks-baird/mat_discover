@@ -1,11 +1,8 @@
 """Materials discovery using Earth Mover's Distance, DensMAP embeddings, and HDBSCAN*.
 
-- create distance matrix
-- apply densMAP
-- create clusters via HDBSCAN*
-- search for interesting materials, for example:
-     - high-target/low-density
-     - materials with high-target surrounded by materials with low targets
+Create distance matrix, apply densMAP, and create clusters via HDBSCAN* to search for
+interesting materials. For example, materials with high-target/low-density (density
+proxy) or high-target surrounded by materials with low targets (peak proxy).
 """
 # saving class objects: https://stackoverflow.com/a/37076668/13697228
 import dill as pickle
@@ -117,6 +114,7 @@ class Discover:
         pred_weight=1,
         device="cuda",
         dist_device=None,
+        nscores=100,
     ):
         """Initialize a Discover() class.
 
@@ -179,6 +177,9 @@ class Discover:
             Which device to perform the computation on for the distance computations
             specifically. Possible values are "cpu", "cuda", and None, by default None.
             If None, default to `device`.
+
+        nscores : int, optional
+            Number of scores (i.e. compounds) to return in the CSV output files.
         """
         if timed:
             self.Timer = Timer
@@ -215,6 +216,7 @@ class Discover:
             self.force_cpu = True
         else:
             self.force_cpu = False
+        self.nscores = nscores
 
         self.mapper = ElM2D(target=self.dist_device)  # type: ignore
         self.dm = None
@@ -227,7 +229,7 @@ class Discover:
         self.true_avg_targ = None
         self.pred_avg_targ = None
         self.train_avg_targ = None
-        
+
         # create dir https://stackoverflow.com/a/273227/13697228
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
         Path(self.table_dir).mkdir(parents=True, exist_ok=True)
@@ -498,7 +500,7 @@ class Discover:
         score_df.sort_values("score", ascending=False, inplace=True)
         return score_df
 
-    def merge(self):
+    def merge(self, nscores=100):
         """Perform an outer merge of the density and peak proxy rankings.
 
         Returns
@@ -506,6 +508,8 @@ class Discover:
         DataFrame
             Outer merge of the two proxy rankings.
         """
+        if self.nscores is not None:
+            nscores = self.nscores
         self.dens_score_df.rename(columns={"score": "Density Score"}, inplace=True)
         self.peak_score_df.rename(columns={"score": "Peak Score"}, inplace=True)
 
@@ -513,16 +517,16 @@ class Discover:
             self.peak_score_df[["formula", "Peak Score"]], how="outer"
         )
 
-        comb_formula = self.dens_score_df.head(10)[["formula"]].merge(
-            self.peak_score_df.head(10)[["formula"]], how="outer"
+        comb_formula = self.dens_score_df.head(nscores)[["formula"]].merge(
+            self.peak_score_df.head(nscores)[["formula"]], how="outer"
         )
 
         self.comb_out_df = comb_score_df[np.isin(comb_score_df.formula, comb_formula)]
 
-        self.dens_score_df.head(10).to_csv(
+        self.dens_score_df.head(nscores).to_csv(
             join(self.table_dir, "dens-score.csv"), index=False, float_format="%.3f"
         )
-        self.peak_score_df.head(10).to_csv(
+        self.peak_score_df.head(nscores).to_csv(
             join(self.table_dir, "peak-score.csv"), index=False, float_format="%.3f"
         )
         self.comb_out_df.to_csv(
@@ -971,7 +975,7 @@ class Discover:
         """
         # create dir https://stackoverflow.com/a/273227/13697228
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
-        
+
         # peak pareto plot setup
         x = str(self.n_neighbors) + "_neigh_avg_targ (GPa)"
         y = "target (GPa)"
@@ -1019,20 +1023,29 @@ class Discover:
         )
 
         # Scatter plot colored by clusters
-        fig = umap_cluster_scatter(self.std_emb, self.labels)
+        fig = umap_cluster_scatter(
+            self.std_emb, self.labels, figure_dir=self.figure_dir
+        )
 
         # Histogram of cluster counts
-        fig = cluster_count_hist(self.labels)
+        fig = cluster_count_hist(self.labels, figure_dir=self.figure_dir)
 
         # Scatter plot colored by target values
-        fig = target_scatter(self.std_emb, self.all_target)
+        fig = target_scatter(self.std_emb, self.all_target, figure_dir=self.figure_dir)
 
         # PDF evaluated on grid of points
         if self.pdf:
-            fig = dens_scatter(self.pdf_x, self.pdf_y, self.pdf_sum)
+            fig = dens_scatter(
+                self.pdf_x, self.pdf_y, self.pdf_sum, figure_dir=self.figure_dir
+            )
 
             fig = dens_targ_scatter(
-                self.std_emb, self.all_target, self.pdf_x, self.pdf_y, self.pdf_sum
+                self.std_emb,
+                self.all_target,
+                self.pdf_x,
+                self.pdf_y,
+                self.pdf_sum,
+                figure_dir=self.figure_dir,
             )
 
         # dens pareto plot setup
