@@ -112,7 +112,7 @@ pip install mat_discover
 To install from source, clone the `mat_discover` repository:
 
 ```python
-git clone --recurse-submodules https://github.com/sparks-baird/mat_discover.git
+git clone https://github.com/sparks-baird/mat_discover.git
 cd mat_discover
 ```
 
