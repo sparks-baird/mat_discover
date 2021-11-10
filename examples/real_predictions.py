@@ -2,15 +2,16 @@
 # %% imports
 from os.path import join
 import numpy as np
+from math import floor
 
 # from crabnet.data.materials_data import elasticity
-from mat_discover.data import elasticity
+from mat_discover.data import elasticity_exp_50meV_noRadio as elasticity
 from mat_discover.mat_discover_ import Discover
 
 # %% instantiate
 # set dummy to True for a quicker run --> small dataset, MDS instead of UMAP
 dummy = False
-disc = Discover(dummy_run=dummy, dens_lambda=2, device="cuda", dist_device="cpu")
+disc = Discover(dummy_run=dummy, device="cuda", dist_device="cpu", nscores=1000)
 
 # %% data
 train_df = disc.data(elasticity, "train.csv", split=False, dummy=dummy)
@@ -23,7 +24,11 @@ val_df = val_df.iloc[indices]
 # split into 3 chunks
 # HACK: "hardcoded" for less than ~100000 total compounds, and max 10000 training (mem)
 val_df = val_df.sample(frac=1, random_state=42)
-val_dfs = np.array_split(val_df, 3)
+val_rows, train_rows = val_df.shape[0], train_df.shape[0]
+max_rows = 40000  # due to memory constraints of a 40000x40000 matrix (~12 GB)
+# Solve[n == ((val_rows + n train_rows) + 40000)/40000, n] via Mathematica
+n = floor((-max_rows - val_rows) / (-max_rows + train_rows))
+val_dfs = np.array_split(val_df, n)
 # val_df = val_df[:30000]
 
 table_dirs = [join("tables", val) for val in ["val1", "val2", "val3"]]
