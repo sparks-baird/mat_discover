@@ -6,7 +6,6 @@ import pickle
 
 # from tqdm import tqdm
 from pqdm.processes import pqdm
-from mat_discover.utils.Timer import Timer
 
 import numpy as np
 import pandas as pd
@@ -22,31 +21,68 @@ def structure_from_cif(cif):
     return Structure.from_str(cif, fmt="cif")
 
 
-def generate_elasticity_data(download_data=True, cif=False):
-    """Download (or reload) elasticity data using MPRester."""
-    # download and save Materials Project dataset
-    data_dir = "data"
-    elast_path = join(data_dir, "elast_results.pkl")
-    all_path = join(data_dir, "all_results.pkl")
+def generate_elasticity_data(
+    download_data=True,
+    cif=False,
+    train_e_above_hull=0.05,
+    val_e_above_hull=0.05,
+    theoretical=False,
+    folder=join("mat_discover", "data", "elasticity"),
+):
+    """Download (or reload) elasticity data using MPRester.
 
-    Path(data_dir).mkdir(parents=True, exist_ok=True)
+    Parameters
+    ----------
+    download_data : bool, optional
+        [description], by default True
+    cif : bool, optional
+        [description], by default False
+    train_e_above_hull : float, optional
+        [description], by default 0.5
+    val_e_above_hull : float, optional
+        [description], by default 0.05
+    theoretical : bool, optional
+        Whether a compound is theoretical or not. False means experimental compounds, API subject to change. Can take on values
+        False, True, None, or a list of the previous. by default False. See
+        https://matsci.org/t/how-to-use-has-icsd-exptl-id-property-in-pymatgen-query-function/2550/4
+    folder : str, optional
+        Which folder to save to, by default join("mat_discover", "data", "elasticity").
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    if type(theoretical) is not list:
+        theoretical = [theoretical]
+    # download and save Materials Project dataset
+    elast_path = join(folder, "elast_results.pkl")
+    all_path = join(folder, "all_results.pkl")
+
+    Path(folder).mkdir(parents=True, exist_ok=True)
+    
+    # create Python "module" (for loading data)
+    with open(join(folder, "__init__.py"), "w") as f:
+        pass
 
     if download_data:
         # download
         props = ["task_id", "pretty_formula", "elasticity", "cif"]
         if not cif:
             props.remove("cif")
+        # fmt: off
+        excluded_elements = [
+            "He", "Ne", "Ar", "Kr", "Xe", "Rn", "U", "Th", "Rn", "Tc", "Po", "Pu"
+            ]
+        # fmt: on
+        query = {
+            "e_above_hull": {"$lt": train_e_above_hull},
+            "elasticity": {"$exists": True},
+            "theoretical": {"$in": theoretical},
+            "elements": {"$nin": excluded_elements},
+        }
         with MPRester() as m:
-            elast_results = m.query(
-                {
-                    "e_above_hull": {"$lt": 0.5},
-                    "elasticity": {"$exists": True},
-                    "elements": {"$nin": ["Tc", "He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
-                    # "pretty_formula": {"$nin": ["Tc","He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
-                },
-                properties=props,
-                chunk_size=2000,
-            )
+            elast_results = m.query(query, properties=props, chunk_size=2000)
 
         props = ["task_id", "pretty_formula", "cif"]
         if not cif:
@@ -54,9 +90,9 @@ def generate_elasticity_data(download_data=True, cif=False):
         with MPRester() as m:
             all_results = m.query(
                 {
-                    "e_above_hull": {"$lt": 0.05},
-                    "elements": {"$nin": ["Tc", "He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
-                    # "pretty_formula": {"$nin": ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]},
+                    "e_above_hull": {"$lt": val_e_above_hull},
+                    "theoretical": {"$in": theoretical},
+                    "elements": {"$nin": excluded_elements},
                 },
                 properties=props,
                 chunk_size=2000,
@@ -76,7 +112,6 @@ def generate_elasticity_data(download_data=True, cif=False):
         with open(all_path, "rb") as f:
             all_results = pickle.load(f)
 
-    folder = join("data", "elasticity")
     Path(folder).mkdir(parents=True, exist_ok=True)
 
     def my_path(name):
@@ -95,7 +130,7 @@ def generate_elasticity_data(download_data=True, cif=False):
 
     elast_comp = [Composition(formula) for formula in elast_formulas]
 
-    elast_struct_path = join("data", "elast_struct_dicts.pkl")
+    elast_struct_path = join(folder, "elast_struct_dicts.pkl")
     if download_data:
         if cif:
             elast_structures = [
@@ -105,12 +140,11 @@ def generate_elasticity_data(download_data=True, cif=False):
             with open(elast_struct_path, "wb") as f:
                 pickle.dump(elast_struct_dicts, f)
     else:
-        with Timer("elast structures loaded"):
-            if cif:
-                with open(elast_struct_path, "rb") as f:
-                    elast_struct_dicts = pickle.load(f)
-                elast_structures = [Structure.from_dict(s) for s in elast_struct_dicts]
-                del elast_struct_dicts
+        if cif:
+            with open(elast_struct_path, "rb") as f:
+                elast_struct_dicts = pickle.load(f)
+            elast_structures = [Structure.from_dict(s) for s in elast_struct_dicts]
+            del elast_struct_dicts
 
     if not cif:
         elast_structures = []
@@ -147,7 +181,7 @@ def generate_elasticity_data(download_data=True, cif=False):
 
     val_comp = [Composition(formula) for formula in val_formulas]
 
-    val_struct_path = join("data", "all_struct_dicts.pkl")
+    val_struct_path = join(folder, "val_struct_dicts.pkl")
     if download_data:
         if cif:
             val_structures = pqdm(val_cifs, structure_from_cif, n_jobs=cpu_count())
@@ -155,12 +189,11 @@ def generate_elasticity_data(download_data=True, cif=False):
             with open(val_struct_path, "wb") as f:
                 pickle.dump(val_struct_dicts, f)
     else:
-        with Timer("val-structures-loaded"):
-            if cif:
-                with open(val_struct_path, "rb") as f:
-                    val_struct_dicts = pickle.load(f)
-                    val_structures = [Structure.from_dict(s) for s in val_struct_dicts]
-                    del val_struct_dicts
+        if cif:
+            with open(val_struct_path, "rb") as f:
+                val_struct_dicts = pickle.load(f)
+                val_structures = [Structure.from_dict(s) for s in val_struct_dicts]
+                del val_struct_dicts
 
     if not cif:
         val_structures = []
