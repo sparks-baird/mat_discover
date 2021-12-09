@@ -60,7 +60,7 @@ def generate_elasticity_data(
     all_path = join(folder, "all_results.pkl")
 
     Path(folder).mkdir(parents=True, exist_ok=True)
-    
+
     # create Python "module" (for loading data)
     with open(join(folder, "__init__.py"), "w") as f:
         pass
@@ -72,7 +72,8 @@ def generate_elasticity_data(
             props.remove("cif")
         # fmt: off
         excluded_elements = [
-            "He", "Ne", "Ar", "Kr", "Xe", "Rn", "U", "Th", "Rn", "Tc", "Po", "Pu"
+            "He", "Ne", "Ar", "Kr", "Xe", "Rn",
+            "U", "Th", "Rn", "Tc", "Po", "Pu", "Pa",
             ]
         # fmt: on
         query = {
