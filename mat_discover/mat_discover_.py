@@ -112,6 +112,7 @@ class Discover:
         table_dir="tables",
         groupby_filter="max",
         pred_weight=1,
+        proxy_weight=1,
         device="cuda",
         dist_device=None,
         nscores=100,
@@ -165,9 +166,16 @@ class Discover:
             created if it does not exist already.
 
         pred_weight : int, optional
-            Weighting applied to the predicted target values, by default 1 (i.e. equal
-            weighting between predictions and proxies). For example, to weight the
-            predicted targets at twice that of the proxy values, set to 2.
+            Weighting applied to the predicted, scaled target values, by default 1 (i.e.
+            equal weighting between predictions and proxies). For example, to weight the
+            predicted targets at twice that of the proxy values, set to 2 (while keeping
+            the default of `proxy_weight = 1`)
+
+        proxy_weight : int, optional
+            Weighting applied to the predicted, scaled proxy values, by default 1 (i.e.
+            equal weighting between predictions and proxies when using default
+            `pred_weight = 1`). For example, to weight the predicted, scaled targets at
+            twice that of the proxy values, set to 2 while retaining `pred_weight = 1`.
 
         device : str, optional
             Which device to perform the computation on. Possible values are "cpu" and
@@ -196,6 +204,7 @@ class Discover:
         self.figure_dir = figure_dir
         self.table_dir = table_dir
         self.pred_weight = pred_weight
+        self.proxy_weight = proxy_weight
         self.device = device
         if dist_device is None:
             self.dist_device = self.device
@@ -265,6 +274,7 @@ class Discover:
         plotting=None,
         umap_random_state=None,
         pred_weight=None,
+        proxy_weight=None,
         dummy_run=None,
     ):
         """Predict target and proxy for validation dataset.
@@ -279,10 +289,13 @@ class Discover:
         umap_random_state : int or None, optional
             The random seed to use for UMAP, by default None
         pred_weight : int, optional
-            The weight to assign to the predictions (proxy_weight is 1 by default), by default None.
-
-            If neither pred_weight nor self.pred_weight is specified, it defaults to 1.
-            When specified, pred_weight takes precedence over self.pred_weight.
+            The weight to assign to the scaled target predictions (`proxy_weight = 1`
+            by default), by default None. If neither `pred_weight` nor
+            `self.pred_weight` is specified, it defaults to 1.
+        proxy_weight : int, optional
+            The weight to assign to the scaled proxy predictions (`pred_weight` is 1 by
+            default), by default None. When specified, `proxy_weight` takes precedence
+            over `self.proxy_weight`. If neither `proxy_weight` nor `self.proxy_weight` is specified, it defaults to 1.
         dummy_run : bool, optional
             Whether to use MDS in place of the (typically more expensive) DensMAP, by default None.
 
@@ -414,13 +427,22 @@ class Discover:
         self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
 
         self.rad_score = self.weighted_score(
-            self.val_pred, self.val_rad_neigh_avg, pred_weight=pred_weight
+            self.val_pred,
+            self.val_rad_neigh_avg,
+            pred_weight=pred_weight,
+            proxy_weight=proxy_weight,
         )
         self.peak_score = self.weighted_score(
-            self.val_pred, self.val_k_neigh_avg, pred_weight=pred_weight
+            self.val_pred,
+            self.val_k_neigh_avg,
+            pred_weight=pred_weight,
+            proxy_weight=proxy_weight,
         )
         self.dens_score = self.weighted_score(
-            self.val_pred, self.val_dens, pred_weight=pred_weight
+            self.val_pred,
+            self.val_dens,
+            pred_weight=pred_weight,
+            proxy_weight=proxy_weight,
         )
 
         # Plotting
@@ -438,7 +460,7 @@ class Discover:
 
         return self.dens_score, self.peak_score
 
-    def weighted_score(self, pred, proxy, pred_weight=None):
+    def weighted_score(self, pred, proxy, pred_weight=None, proxy_weight=None):
         """Calculate weighted discovery score using the predicted target and proxy.
 
         Parameters
@@ -448,7 +470,9 @@ class Discover:
         proxy : 1D Array
             Predicted proxy values (e.g. density or peak proxies).
         pred_weight : int, optional
-            The weight to assign to the predictions (proxy_weight is 1 by default), by default 2
+            The weight to assign to the scaled predictions, by default 1
+        proxy_weight : int, optional
+            The weight to assign to the scaled proxies, by default 1
 
         Returns
         -------
@@ -460,13 +484,18 @@ class Discover:
         elif self.pred_weight is None and pred_weight is None:
             pred_weight = 1
 
+        if self.proxy_weight is not None and proxy_weight is None:
+            proxy_weight = self.proxy_weight
+        elif self.proxy_weight is None and proxy_weight is None:
+            proxy_weight = 1
+
         pred = pred.ravel().reshape(-1, 1)
         proxy = proxy.ravel().reshape(-1, 1)
         # Scale and weight the cluster data
         pred_scaler = self.Scaler().fit(pred)
         pred_scaled = pred_weight * pred_scaler.transform(pred)
         proxy_scaler = self.Scaler().fit(-1 * proxy)
-        proxy_scaled = proxy_scaler.transform(-1 * proxy)
+        proxy_scaled = proxy_weight * proxy_scaler.transform(-1 * proxy)
 
         # combined cluster data
         comb_data = pred_scaled + proxy_scaled
@@ -1027,11 +1056,51 @@ class Discover:
             self.std_emb, self.labels, figure_dir=self.figure_dir
         )
 
+        x = "DensMAP Dim. 1"
+        y = "DensMAP Dim. 2"
+        umap_df = pd.DataFrame(
+            {
+                x: self.std_emb[:, 0],
+                y: self.std_emb[:, 1],
+                "cluster ID": self.labels,
+                "formula": self.all_formula,
+            }
+        )
+        fig = pareto_plot(
+            umap_df,
+            x=x,
+            y=y,
+            color="cluster ID",
+            fpath=join(self.figure_dir, "px-umap-cluster-scatter"),
+            pareto_front=False,
+            parity_type=None,
+        )
+
         # Histogram of cluster counts
         fig = cluster_count_hist(self.labels, figure_dir=self.figure_dir)
 
         # Scatter plot colored by target values
         fig = target_scatter(self.std_emb, self.all_target, figure_dir=self.figure_dir)
+
+        x = "DensMAP Dim. 1"
+        y = "DensMAP Dim. 2"
+        targ_df = pd.DataFrame(
+            {
+                x: self.std_emb[:, 0],
+                y: self.std_emb[:, 1],
+                "target": self.all_target,
+                "formula": self.all_formula,
+            }
+        )
+        fig = pareto_plot(
+            targ_df,
+            x=x,
+            y=y,
+            color="target",
+            fpath=join(self.figure_dir, "px-targ-scatter"),
+            pareto_front=False,
+            parity_type=None,
+        )
 
         # PDF evaluated on grid of points
         if self.pdf:
