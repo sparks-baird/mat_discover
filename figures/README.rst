@@ -12,8 +12,8 @@ Compound-wise and cluster-wise interactive figures produced via `Plotly <https:/
 
 Hover your mouse over datapoints to see more information (e.g. composition, bulk
 modulus, cluster ID). Alternatively, you can download the ``html`` file at
-`mat_discover/figures <https://github.com/sparks-baird/mat_discover/figures>`_ and open it in your browser of
-choice.
+`mat_discover/figures <https://github.com/sparks-baird/mat_discover/figures>`_ and open
+it in your browser of choice.
 
 Compound-Wise
 ^^^^^^^^^^^^^
