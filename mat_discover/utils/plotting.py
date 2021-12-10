@@ -30,7 +30,7 @@ def umap_cluster_scatter(std_emb, labels, figure_dir="figures"):
     class_ids = labels != -1
     fig = plt.Figure()
     ax = plt.scatter(
-        std_emb[:, 0], std_emb[:, 1], c=labels, s=2, cmap=cmap, label=labels
+        std_emb[:, 0], std_emb[:, 1], c=labels, s=0.1, cmap=cmap, label=labels
     )
     unclass_ids = np.invert(class_ids)
     unclass_frac = np.sum(unclass_ids) / len(labels)
@@ -41,11 +41,17 @@ def umap_cluster_scatter(std_emb, labels, figure_dir="figures"):
             std_emb[unclass_ids, 0],
             std_emb[unclass_ids, 1],
             c=labels[unclass_ids],
-            s=2,
+            s=0.1,
             cmap=plt.cm.nipy_spectral,
             label=labels[unclass_ids],
         )
-        plt.legend([ax2], ["Unclassified: " + "{:.1%}".format(unclass_frac)])
+        # How to put the legend out of the plot: https://stackoverflow.com/a/4701285/13697228
+        plt.legend(
+            [ax2],
+            ["Unclassified: " + "{:.1%}".format(unclass_frac)],
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.05),
+        )
     plt.tight_layout()
     plt.gca().set_aspect("equal", "box")
     plt.savefig(join(figure_dir, "umap-cluster-scatter"))
@@ -114,7 +120,7 @@ def target_scatter(std_emb, target, figure_dir="figures"):
         std_emb[:, 0],
         std_emb[:, 1],
         c=target,
-        s=2,
+        s=0.1,
         cmap="Spectral_r",
         norm=mpl.colors.LogNorm(),
     )
