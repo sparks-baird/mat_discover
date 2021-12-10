@@ -11,6 +11,7 @@ Welcome to mat_discover's documentation!
    :caption: Contents:
 
    readme
+   examples
    figures
    modules
 
