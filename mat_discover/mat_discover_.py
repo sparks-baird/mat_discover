@@ -88,6 +88,66 @@ def groupby_formula(df, how="max"):
     return grp_df
 
 
+def cdf_sorting_error(y_true, y_pred, y_dummy=None):
+    """Cumulative distribution function sorting error via Wasserstein distance.
+
+    Parameters
+    ----------
+    y_true, y_pred : list of (float or int or str)
+        True and predicted values to use for sorting error, respectively.
+    y_dummy : list of (float or int or str), optional
+        Dummy values to use to generate a scaled error, by default None
+
+    Returns
+    -------
+    error, dummy_error, scaled_error : float
+        The unscaled, dummy, and scaled errors that describes the mismatch in sorting
+        between the CDFs of two lists. The scaled error represents the improvement
+        relative to the dummy error, such that `scaled_error = error / dummy_error`. If
+        `scaled_error > 1`, the sorting error is worse than if you took the average of
+        the `y_true` values as the `y_pred` values. If `scaled_error < 1`, it is better
+        than this "dummy" regressor. Scaled errors closer to 0 are better.
+    """
+    # Sorting "Error" Setup
+    n = len(y_true)
+    u = np.flip(np.cumsum(np.linspace(0, 1, n)))
+    v = u.copy()
+
+    if type(y_true[0]) is str:
+        lookup = {label: i for (i, label) in enumerate(y_true)}
+        df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred})
+        df.y_true = df.y_true.map(lookup)
+        df.y_pred = df.y_pred.map(lookup)
+        y_true, y_pred = df.data
+
+    # sorting indices from high to low
+    sorter = np.flip(y_true.argsort())
+
+    # sort everything by same indices to preserve cluster order
+    u_weights = y_true[sorter]
+    v_weights = y_pred[sorter]
+
+    if y_dummy is None:
+        y_dummy = [np.mean(y_true)] * n
+    dummy_v_weights = y_dummy[sorter]
+
+    # Weighted distance between CDFs as proxy for "how well sorted" (i.e. sorting metric)
+    error = wasserstein_distance(u, v, u_weights=u_weights, v_weights=v_weights)
+
+    # Dummy Error (i.e. if you "guess" the mean of training targets)
+    dummy_error = wasserstein_distance(
+        u,
+        v,
+        u_weights=u_weights,
+        v_weights=dummy_v_weights,
+    )
+
+    # Similar to Matbench "scaled_error"
+    scaled_error = error / dummy_error
+
+    return error, dummy_error, scaled_error
+
+
 class Discover:
     """
     A Materials Discovery class.
@@ -658,36 +718,13 @@ class Discover:
         lbl_ids = np.unique(self.labels, return_index=True)[1]
         self.avg_labels = [self.labels[lbl_id] for lbl_id in sorted(lbl_ids)]
 
-        # Sorting "Error" Setup
-        u = np.flip(np.cumsum(np.linspace(0, 1, len(self.true_avg_targ))))
-        v = u.copy()
-        # sorting indices from high to low
-        self.sorter = np.flip(self.true_avg_targ.argsort())
-
-        # sort everything by same indices to preserve cluster order
-        u_weights = self.true_avg_targ[self.sorter]
-        v_weights = self.pred_avg_targ[self.sorter]
-        dummy_v_weights = self.train_avg_targ[self.sorter]
-
-        # Weighted distance between CDFs as proxy for "how well sorted" (i.e. sorting metric)
-        self.error = wasserstein_distance(
-            u, v, u_weights=u_weights, v_weights=v_weights
+        self.error, self.dummy_error, self.scaled_error = cdf_sorting_error(
+            self.true_avg_targ, self.pred_avg_targ, y_dummy=self.train_avg_targ
         )
         if self.verbose:
-            print("Weighted group cross validation error =", self.error)
+            print("Weighted group cross validation error: ", self.error)
+            print("Weighted group cross validation scaled error: ", self.scaled_error)
 
-        # Dummy Error (i.e. if you "guess" the mean of training targets)
-        self.dummy_error = wasserstein_distance(
-            u,
-            v,
-            u_weights=u_weights,
-            v_weights=dummy_v_weights,
-        )
-
-        # Similar to Matbench "scaled_error"
-        self.scaled_error = self.error / self.dummy_error
-        if self.verbose:
-            print("Weighted group cross validation scaled error =", self.scaled_error)
         return self.scaled_error
 
     def single_group_cross_val(self, X, y, train_index, val_index, iter):
@@ -1056,6 +1093,7 @@ class Discover:
             self.std_emb, self.labels, figure_dir=self.figure_dir
         )
 
+        # Interactive scatter plot colored by clusters
         x = "DensMAP Dim. 1"
         y = "DensMAP Dim. 2"
         umap_df = pd.DataFrame(
@@ -1082,6 +1120,7 @@ class Discover:
         # Scatter plot colored by target values
         fig = target_scatter(self.std_emb, self.all_target, figure_dir=self.figure_dir)
 
+        # Interactive scatter plot colored by target values
         x = "DensMAP Dim. 1"
         y = "DensMAP Dim. 2"
         targ_df = pd.DataFrame(
