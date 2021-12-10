@@ -126,7 +126,7 @@ def pareto_plot(
                 "color_continuous_scale": nipy_spectral  # px.colors.sequential.Blackbody_r
             }
         elif isinstance(df[color].iloc[0], (float, np.float32, np.float64)):
-            scatter_color_kwargs = None
+            scatter_color_kwargs = {}
 
     elif color_continuous_scale is not None:
         scatter_color_kwargs = {"color_continuous_scale": color_continuous_scale}
