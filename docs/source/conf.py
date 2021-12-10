@@ -68,6 +68,8 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# https://sublime-and-sphinx-guide.readthedocs.io/en/latest/code_blocks.html
+pygments_style = "sphinx"
 
 # -- Options for HTML output -------------------------------------------------
 
