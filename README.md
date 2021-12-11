@@ -110,10 +110,15 @@ For materials informatics (MI) and other relevant codebases, see:
 
 ## Installation
 
-I recommend that you run `mat_discover` in a separate conda environment, at least for initial testing. After installing [Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html), you can [create a new environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) via:
+I recommend that you run `mat_discover` in a separate conda environment, at least for
+initial testing. After installing
+[Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or
+[Miniconda](https://docs.conda.io/en/latest/miniconda.html), you can [create a new
+environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands)
+in Python `3.8` (for which `mat_discover` is tested) via:
 
 ```python
-conda create --name mat_discover
+conda create --name mat_discover python==3.8
 ```
 
 There are three ways to install `mat_discover`: Anaconda (`conda`), PyPI (`pip`), and from source. Anaconda is the preferred method.
