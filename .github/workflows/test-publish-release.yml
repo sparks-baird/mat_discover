@@ -39,6 +39,7 @@ jobs:
     - name: Publish to PyPI
       shell: bash -l {0}
       run: |
+        git clean -f # remove untracked files
         flit publish
       env:
         FLIT_USERNAME: __token__
