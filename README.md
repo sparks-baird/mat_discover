@@ -32,32 +32,81 @@ A materials discovery algorithm geared towards exploring high performance candid
 
 <sup>Bulk modulus values overlaid on DensMAP densities (cropped).</sup>
 
-## Citing
+We describe the DiSCoVeR algorithm, how to install `mat_discover`, basic usage (e.g.
+`fit`/`predict` custom or built-in datasets). Interactive plots for several types of
+Pareto front plots can be found
+[here](https://sparks-baird.github.io/mat_discover/figures/). We also describe how
+to contribute, what to do if you run into bugs or have questions, and citation information.
 
-The preprint is hosted on ChemRxiv:
-> Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8-v3](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3). This content is a preprint and has not been peer-reviewed.
-
-The BibTeX citation is as follows:
-
-```bib
-@article{baird_diep_sparks_2021,
-place={Cambridge},
-title={DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions},
-DOI={10.33774/chemrxiv-2021-5l2f8-v3},
-journal={ChemRxiv},
-publisher={Cambridge Open Engage},
-author={Baird, Sterling and Diep, Tran and Sparks, Taylor},
-year={2021}
-}
-```
-
-The article is under review at [Digital Discovery](https://www.rsc.org/journals-books-databases/about-journals/digital-discovery/) (2021-11-01).
+The article ([ChemRxiv](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3)) is under
+review at [Digital
+Discovery](https://www.rsc.org/journals-books-databases/about-journals/digital-discovery/)
+(2021-12-10). See [Citing](README.md#citing).
 
 ## DiSCoVeR Workflow
 
+Why you'd want to use this tool, alternative tools, and summaries of the workflow.
+
+### Why DiSCoVeR?
+
+The primary anticipated use-case of DiSCoVeR is that you have some training data
+(chemical formulas and target property), and you would like to determine the "next best
+experiment" to perform based on a user-defined relative importance of performance
+vs. chemical novelty. You can even run the model without any training targets which is
+equivalent to setting the target weight as 0.
+
+### Alternatives
+
+This approach is similar to what you will find with Bayesian optimization
+(BO), but with explicit emphasis on chemical novelty. If you're interested in doing
+Bayesian optimization, I recommend using [Facebook/Ax](https://ax.dev/docs/bayesopt.html) (not affiliated). I am
+working on an [implementation of composition-based Bayesian optimization
+using Ax](https://github.com/facebook/Ax/issues/727) (2021-12-10).
+
+For alternative "suggest next experiment" materials discovery algorithms, see
+be interested in [PyChemia](https://github.com/MaterialsDiscovery/PyChemia),
+[Heteroscedastic-BO](https://github.com/Ryan-Rhys/Heteroscedastic-BO), and
+[thermo](https://github.com/janosh/thermo).
+
+For materials informatics (MI) and other relevant codebases, see:
+
+- [my lists of (total ~200) MI codebases](https://github.com/sgbaird?tab=stars),
+  in particular:
+  - [materials discovery](https://github.com/stars/sgbaird/lists/materials-discovery)
+  - [composition](https://github.com/stars/sgbaird/lists/%EF%B8%8F-composition-predictions)-,
+    [crystal structure](https://github.com/stars/sgbaird/lists/structural-predictions)-,
+    and [molecule](https://github.com/stars/sgbaird/lists/molecule-predictions)-based predictions
+  - [MI databases](https://github.com/stars/sgbaird/lists/materials-databases)
+  - [MI materials synthesis](https://github.com/stars/sgbaird/lists/materials-synthesis)
+  - [MI natural language processing](https://github.com/stars/sgbaird/lists/materials-nlp)
+  - [physics-based MI simulations](https://github.com/stars/sgbaird/lists/materials-synthesis)
+- Other lists of MI-relevant codebases:
+  - [general machine learning codebases](https://github.com/stars/sgbaird/lists/machine-learning-general)
+  - [tools to help with scientific publishing](https://github.com/stars/sgbaird/lists/scientific-publishing)
+  - [tools to help with your Python coding efforts](https://github.com/stars/sgbaird/lists/python-enhancements)
+- [this curated list of "Awesome" materials
+  informatics](https://github.com/tilde-lab/awesome-materials-informatics) (~100 as of 2021-12-10)
+
+### Visualization
+
 <img src="https://sparks-baird.github.io/mat_discover/figures/discover-workflow.png" alt="DiSCoVeR Workflow" width=600>
 
-<sup>Figure 1. DiSCoVeR workflow to create chemically homogeneous clusters.  (a) Training and validation data.  (b) ElMD pairwise distances.  (c) DensMAP embeddings and DensMAP densities.  (d) Clustering via HDBSCAN*.  (e) Pareto plot and discovery scores.  (f) Pareto plot of cluster properties</sup>
+<sup>Figure 1: DiSCoVeR workflow to create chemically homogeneous clusters.  (a) Training and validation data are obtained inthe form of chemical formulas and target properties (i.e.  performance).  (b) The training and validation chemical formulasare combined and used to compute ElMD pairwise distances.  (c) ElMD pairwise distance matrices are used to computeDensMAP embeddings and DensMAP densities.  (d) DensMAP embeddings are used to compute HDBSCAN\* clusters.(e) Validation target property predictions are made via CrabNet and plotted against the uniqueness proxy (e.g.  densityproxy) in the form of a Pareto front plot.  Discovery scores are assigned based on the (arbitrarily) weighted sum of scaledperformance and uniqueness proxy.  Higher scores are better.  (f) HDBSCAN* clustering results can be used to obtain acluster-wise performance (e.g.  average target property) plotted against a cluster-wise uniqueness proxy (e.g.  fraction ofvalidation compounds vs.  total compounds within a cluster).</sup>
+
+### Tabular Summary
+
+<sup>Table  1:  A  description  of  methods  used  in  this  work  and  each  method’s  role  in  DiSCoVeR.∗A  Pareto  front  is  moreinformation-dense  than  a  proxy  score  in  that  there  are  no  predefined  relative  weights  for  performance  vs.   uniquenessproxy.  Compounds that are closer to the Pareto front are better.  The upper areas of the plot represent a higher weighttowards performance while the right-most areas of the plot represent a higher weight towards uniqueness.</sup>
+| Method                                                                   | What is it?                                   | What is its role in DiSCoVeR?           |
+| ------------------------------------------------------------------------ | --------------------------------------------- | --------------------------------------- |
+| [CrabNet](https://github.com/anthony-wang/CrabNet)                       | Composition-based property regression         | Predict performance for proxy scores    |
+| [ElMD](https://github.com/lrcfmd/ElMD)                                   | Composition-based distance metric             | Supply distance matrix to DensMAP       |
+| [DensMAP](https://umap-learn.readthedocs.io/en/latest/densmap_demo.html) | Density-aware dimensionality reduction        | Obtain densities for density proxy      |
+| [HDBSCAN*](https://hdbscan.readthedocs.io/en/latest/index.html)          | Density-aware clustering                      | Create chemically homogeneous clusters  |
+| Peak proxy                                                               | High performance relative to nearby compounds | Proxy for "surprising" high performance |
+| Density proxy                                                            | Sparsity relative to nearby compounds         | Proxy for chemical novelty              |
+| Peak proxy score                                                         | Weighted sum of performance and peak proxy    | Used to rank compounds                  |
+| Density proxy score                                                      | Weighted sum of performance and density proxy | Used to rank compounds                  |
+| [Pareto front](https://en.wikipedia.org/wiki/Pareto_front)               | Optimal performance/uniqueness trade-offs     | Visually screen compounds (no weights*) |
 
 ## Installation
 
@@ -124,6 +173,7 @@ To perform the local installation, you can use `pip`, `conda`, or `flit`. If usi
 <!-- conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/ -->
 
 ## Basic Usage
+How to `fit`/`predict` and use custom or built-in datasets.
 
 ### Fit/Predict
 
@@ -137,15 +187,36 @@ disc.save()
 print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
 ```
 
-See [mat_discover_example.py](https://github.com/sparks-baird/examples/mat_discover_example.py), [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing), or [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=examples%2Fmat_discover_pypi.ipynb). On Google Colab and Binder, this may take a few minutes to install and load, respectively. During training and prediction, Google Colab will be faster than Binder since Google Colab has access to a GPU while Binder does not.
+> ⚠️ ignore the "validation" mean absolute error (MAE) command line output during `disc.fit(train_df)` ⚠️
+
+See
+[mat_discover_example.py](https://github.com/sparks-baird/examples/mat_discover_example.py),
+[![Open In Colab
+(PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing),
+or
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=examples%2Fmat_discover_pypi.ipynb).
+On Google Colab and Binder, this may take a few minutes to install and load,
+respectively. During training and prediction, Google Colab will be faster than Binder
+since Google Colab has access to a GPU while Binder does not.
 
 ### Load Data
 
-If you're using your own dataset, you will need to supply a Pandas DataFrame that contains `formula` and `target` columns. If you have a `train.csv` file (located in current working directory) with these two columns, this can be converted to a DataFrame via:
+If you're using your own dataset, you will need to supply a Pandas DataFrame that
+contains `formula` (string) and `target` (numeric) columns. If you have a `train.csv` file
+(located in current working directory) with these two columns, this can be converted to
+a DataFrame via:
 
 ```python
 import pandas as pd
-df = pd.read_csv("train.csv")
+train_df = pd.read_csv("train.csv")
+```
+
+For validation data without known property values to be used with `predict`, dummy
+values (all zeros) are assigned internally. In this case, you can read in a CSV file
+that contains only the `formula` (string) column:
+
+```python
+val_df = pd.read_csv("val.csv")
 ```
 
 Note that you can load any of the datasets within `CrabNet/data/`, which includes `matbench` data, other datasets from the CrabNet paper, and a recent (as of Oct 2021) snapshot of `K_VRH` bulk modulus data from Materials Project. For example, to load the bulk modulus snapshot:
@@ -188,30 +259,73 @@ To see what `.csv` files are available (e.g. `train.csv`), you will probably nee
 
 Finally, to download data from Materials Project directly, see [generate_elasticity_data.py](https://github.com/sparks-baird/mat_discover/blob/main/mat_discover/utils/generate_elasticity_data.py).
 
-## Interactive Plots
+## Developing and Contributing
 
-Interactive plots for several types of Pareto front plots can be found [here](https://sparks-baird.github.io/mat_discover/figures/).
-
-## Developing
-
-This project was developed primarily in "Python in Visual Studio Code" using `black`, `mypy`, `pydocstyle`, `kite`, other tools, and various community extensions. Some other notable tools used in this project are:
+This project was developed primarily in [Python in Visual Studio Code](https://code.visualstudio.com/docs/languages/python) using `black`, `mypy`, `pydocstyle`, `kite`, other tools, and various community extensions. Some other notable tools used in this project are:
 
 - Miniconda
 - `pipreqs` was used as a starting point for `requirements.txt`
-- `flit` is used to create `pyproject.toml` and publish to PyPI
+- `flit` is used to create `pyproject.toml` to publish to PyPI
 - `conda env export --from-history -f environment.yml` was used as a starting point for `environment.yml`
-- `grayskull` is used to generate `meta.yaml` for publishing to Anaconda
+- `grayskull` and `conda-souschef` are used to generate and tweak `meta.yaml`,
+  respectively, for publishing to Anaconda (if you know how to get this up on
+  conda-forge, help is welcome 😉)
 - A variety of GitHub actions are used (see [workflows](https://github.com/sparks-baird/.github/workflows))
 - `pytest` is used for testing
 - `numba` is used to accelerate the Wasserstein distance matrix computations via CPU or GPU
 
 <!-- - `conda-smithy` is used to create a feedstock for `conda-forge` -->
 
-To help with development, you will need to [install from source](README.md#from-source). Note that when using a `conda` environment (recommended), you may avoid certain issues down the road by opening VS Code via an Anaconda command prompt and entering the command `code` (at least until the VS Code devs fix some of the issues associated with opening it "normally"). For example, in Windows, press the "Windows" key, type "anaconda", and open "Anaconda Powershell Prompt (miniconda3)" or similar. Then type `code` and press enter.
+For simple changes, navigate to github.com/sparks-baird/mat_discover, click on the
+relevant file (e.g. `README.md`), and look for the pencil (✏️). GitHub will walk you
+through the rest.
+
+To help with in-depth development, you will need to [install from
+source](README.md#from-source). Note that when using a `conda` environment
+(recommended), you may avoid certain issues down the road by opening VS Code via an
+Anaconda command prompt and entering the command `code` (at least until the VS Code devs
+fix some of the issues associated with opening it "normally"). For example, in Windows,
+press the "Windows" key, type "anaconda", and open "Anaconda Powershell Prompt
+(miniconda3)" or similar. Then type `code` and press enter. To build the docs, first install `sphinx` and `sphinx_rtd_theme`. Then run:
+
+```bash
+cd docs/
+make html
+```
+
+And open `docs/build/index.html` (e.g. via `start index.html` on Windows)
 
 ## Bugs, Questions, and Suggestions
 
-If you find a bug or have suggestions for documentation please [open an issue](https://github.com/sparks-baird/mat_discover/issues/new/choose). If you're reporting a bug, please include a simplified reproducer. If you have questions, have feature suggestions/requests, or are interested in extending/improving `mat_discover` and would like to discuss, please use the Discussions tab and use the appropriate category ("Ideas", "Q&A", etc.). Pull requests are welcome and encouraged.
+If you find a bug or have suggestions for documentation please [open an
+issue](https://github.com/sparks-baird/mat_discover/issues/new/choose). If you're
+reporting a bug, please include a simplified reproducer. If you have questions, have
+feature suggestions/requests, or are interested in extending/improving `mat_discover`
+and would like to discuss, please use the Discussions tab and use the appropriate
+category ("Ideas", "Q&A", etc.). If you have a
+question, please ask! I won't bite. Pull requests are welcome and encouraged.
+
+## Citing
+
+The preprint is hosted on ChemRxiv:
+> Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8-v3](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3). This content is a preprint and has not been peer-reviewed.
+
+The BibTeX citation is as follows:
+
+```bib
+@article{baird_diep_sparks_2021,
+place={Cambridge},
+title={DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions},
+DOI={10.33774/chemrxiv-2021-5l2f8-v3},
+journal={ChemRxiv},
+publisher={Cambridge Open Engage},
+author={Baird, Sterling and Diep, Tran and Sparks, Taylor},
+year={2021}
+}
+```
+
+The article is under review at [Digital Discovery](https://www.rsc.org/journals-books-databases/about-journals/digital-discovery/).
+
 
 <!---
 Recommended installation through `pip` with python 3.7.
