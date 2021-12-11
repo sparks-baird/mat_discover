@@ -41,12 +41,12 @@ produced, and the rate of unclassified points increases from ~5% to ~25%.
     :caption: `/examples/no_dim_reduce_compare.py <https://github.com/sparks-baird/mat_discover/blob/main/examples/no_dim_reduce_compare.py>`_
     :language: python
 
-Real predictions
+Real Predictions
 ----------------
 In other words, moving past the validation study into a practical use-case. The
 practical use-case shown here takes the Materials Project compounds which contain
 elasticity data and those which do not as training and validation data, respectively.
-This is work-in-progress.
+This is a work-in-progress.
 
 .. literalinclude:: ../../examples/real_predictions.py
     :caption: `/examples/real_predictions.py <https://github.com/sparks-baird/mat_discover/blob/main/examples/real_predictions.py>`_
