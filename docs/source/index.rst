@@ -3,10 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Chemically Novel Materials Discovery (`mat_discover`)
-=====================================================
+Welcome to Chemically Novel Materials Discovery!
+================================================
 
-Welcome to the documentation for `mat_discover`! Descending from Stochastic Clustering Variance Regression (DiSCoVeR) is a
+This is the documentation for `mat_discover`. Descending from Stochastic Clustering Variance Regression (DiSCoVeR) is a
 composition-based materials
 discovery algorithm geared towards exploring high-performance candidates in new chemical
 spaces as originally proposed by `Baird, Diep, and Sparks
