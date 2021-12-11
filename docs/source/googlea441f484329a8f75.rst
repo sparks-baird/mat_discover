@@ -1,6 +1,1 @@
-:orphan:
-
-.. orphan: https://stackoverflow.com/a/40725923/13697228
-
-.. raw:: html
-    :file: googlea441f484329a8f75.html
+google-site-verification: googlea441f484329a8f75.html
