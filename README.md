@@ -63,8 +63,8 @@ Bayesian optimization, I recommend using [Facebook/Ax](https://ax.dev/docs/bayes
 working on an [implementation of composition-based Bayesian optimization
 using Ax](https://github.com/facebook/Ax/issues/727) (2021-12-10).
 
-For alternative "suggest next experiment" materials discovery algorithms, see
-be interested in [PyChemia](https://github.com/MaterialsDiscovery/PyChemia),
+For alternative "suggest next experiment" materials discovery algorithms,
+see [PyChemia](https://github.com/MaterialsDiscovery/PyChemia),
 [Heteroscedastic-BO](https://github.com/Ryan-Rhys/Heteroscedastic-BO), and
 [thermo](https://github.com/janosh/thermo).
 
