@@ -4,7 +4,7 @@
 [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=examples%2Fmat_discover_pypi.ipynb)
 [![Open in Code Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://doi.org/10.24433/CO.8463578.v1)
-[![Interactive Figures](https://img.shields.io/static/v1?message=Open%20interactive%20figures&logo=github&labelColor=5c5c5c&color=blueviolet&logoColor=white&label=%20)](https://sparks-baird.github.io/mat_discover/figures/)
+[![Interactive Figures](https://img.shields.io/static/v1?message=Open%20interactive%20figures&logo=github&labelColor=5c5c5c&color=blueviolet&logoColor=white&label=%20)](https://mat-discover.readthedocs.io/en/latest/figures.html)
 [![Documentation Status](https://readthedocs.org/projects/mat-discover/badge/?version=latest)](https://mat-discover.readthedocs.io/en/latest/?badge=latest)
 
 [![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/)
@@ -35,7 +35,7 @@ A materials discovery algorithm geared towards exploring high performance candid
 We describe the DiSCoVeR algorithm, how to install `mat_discover`, basic usage (e.g.
 `fit`/`predict` custom or built-in datasets). Interactive plots for several types of
 Pareto front plots can be found
-[here](https://sparks-baird.github.io/mat_discover/figures/). We also describe how
+[here](https://mat-discover.readthedocs.io/en/latest/figures.html). We also describe how
 to contribute, what to do if you run into bugs or have questions, and citation information.
 
 The article ([ChemRxiv](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3)) is under
