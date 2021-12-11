@@ -6,15 +6,29 @@
 Welcome to Chemically Novel Materials Discovery!
 ================================================
 
-This is the documentation for `mat_discover`. Descending from Stochastic Clustering Variance Regression (DiSCoVeR) is a
+This is the documentation for `mat_discover <https://github.com/sparks-baird/mat_discover>`_. Descending from Stochastic Clustering Variance Regression (DiSCoVeR) is a
 composition-based materials
-discovery algorithm geared towards exploring high-performance candidates in new chemical
+discovery algorithm. DiSCoVeR emphasizes exploring high-performance candidates in new chemical
 spaces as originally proposed by `Baird, Diep, and Sparks
 <https://chemrxiv.org/engage/chemrxiv/article-details/617883e30f3eeb18ee723587>`_. The
-library `mat_discover` provides a GPU-accelerated (and CPU-compatible) Python
-implementation and tools for analyzing the outputs. `mat_discover` will "suggest your
-next best experiment" using a custom dataset of chemical formula and target properties
-in just a few lines of code!
+library :code:`mat_discover` provides a GPU-accelerated (and CPU-compatible) Python
+implementation and tools for analyzing the outputs. :code:`mat_discover` will "suggest your next experiment" using a custom training dataset of chemical formula and target
+properties and a custom validation set of potential candidates. All in just a few lines
+of code!
+
+.. raw:: html
+
+   <a class="github-button" href="https://github.com/sparks-baird/mat_discover"
+   data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star
+   sparks-baird/mat_discover on GitHub">Star</a>
+   <a class="github-button"
+   href="https://github.com/sgbaird" data-size="large" data-show-count="true"
+   aria-label="Follow @sgbaird on GitHub">Follow @sgbaird</a>
+   <a class="github-button" href="https://github.com/sparks-baird/mat_discover/issues"
+   data-icon="octicon-issue-opened" data-size="large" data-show-count="true"
+   aria-label="Issue sparks-baird/mat_discover on GitHub">Issue</a>
+   <a class="github-button" href="https://github.com/sparks-baird/mat_discover/discussions" data-icon="octicon-comment-discussion" data-size="large" aria-label="Discuss sparks-baird/mat_discover on GitHub">Discuss</a>
+   <br><br>
 
 .. toctree::
    :maxdepth: 2
@@ -31,3 +45,7 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+.. raw:: html
+
+   <script async defer src="https://buttons.github.io/buttons.js"></script>
