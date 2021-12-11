@@ -42,8 +42,8 @@ def nearest_neigh_props(
 
     See Also
     --------
-    sklearn.neighbors.NearestNeighbors : "Unsupervised learner for implementing neighbor
-    searches." (source: `sklearn.neighbors.NearestNeighbors` docs)
+    sklearn.neighbors.NearestNeighbors : Unsupervised learner for implementing neighbor
+    searches. Text source: `sklearn.neighbors.NearestNeighbors` docs
     """
     rad_neigh_avg_targ, num_neigh = _nearest_neigh_props(
         X,
@@ -117,8 +117,8 @@ def _nearest_neigh_props(
 
     See Also
     --------
-    sklearn.neighbors.NearestNeighbors : "Unsupervised learner for implementing neighbor
-    searches." (source: `sklearn.neighbors.NearestNeighbors` docs)
+    sklearn.neighbors.NearestNeighbors : Unsupervised learner for implementing neighbor
+    searches. Text source: `sklearn.neighbors.NearestNeighbors` docs
     """
     if radius is None and metric == "precomputed":
         if r_strength is None:
