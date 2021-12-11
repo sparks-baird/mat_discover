@@ -342,8 +342,8 @@ class Discover:
         Parameters
         ----------
         val_df : DataFrame
-            Validation dataset containing "formula" and "target" (populate with 0's if
-            not available).
+            Validation dataset containing at minimum "formula" and optionally "target"
+            (targets are populated with 0's if not available).
         plotting : bool, optional
             Whether to plot, by default None
         umap_random_state : int or None, optional
@@ -366,6 +366,9 @@ class Discover:
         dens_score, peak_score
             Scaled discovery scores for density and peak proxies.
         """
+        if "target" not in val_df.columns:
+            val_df["target"] = 0
+
         self.val_df = val_df
 
         # CrabNet
