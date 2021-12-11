@@ -158,4 +158,9 @@ scratch/
 mat_discover/data/all_results.pkl
 mat_discover/data/elast_results.pkl
 mat_discover/data/elast_struct_dicts.pkl
+mat_discover/data/elasticity/**
 dummy_disc.pkl
+examples/tables/**
+examples/figures/**
+examples/models/**
+examples/hyperparameter_combinations/hyperparameter_combinations.ipynb
