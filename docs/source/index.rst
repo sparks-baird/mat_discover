@@ -6,7 +6,7 @@
 Chemically Novel Materials Discovery (`mat_discover`)
 =====================================================
 
-Descending from Stochastic Clustering Variance Regression (DiSCoVeR) is a
+Welcome to the documentation for `mat_discover`! Descending from Stochastic Clustering Variance Regression (DiSCoVeR) is a
 composition-based materials
 discovery algorithm geared towards exploring high-performance candidates in new chemical
 spaces as originally proposed by `Baird, Diep, and Sparks
