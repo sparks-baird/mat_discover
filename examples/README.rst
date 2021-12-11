@@ -1,20 +1,29 @@
 .. role:: raw-html-m2r(raw)
    :format: html
 
-Getting Started
----------------
-This is a bare-bones example for running `mat_discover`:
-.. literalinclude:: mat_discover_example.py
-  :language: python
+.. seealso::
+    `Basic Usage <../../README.md#basic-usage>`_
+        Import, instantiate, fit, predict, plot, save, and print top-10 ranked compounds
+        in 7 lines. Instructions for importing custom datasets and using other built-in
+        datasets (via `CrabNet.data.materials_data`) and downloading data from Materials
+        Project.
 
-This is the file that was used to produce the figures in the first DiSCoVeR paper.
+Reproduce Paper Results
+-----------------------
+This simple example for running `mat_discover` was used to produce the figures in the first DiSCoVeR paper:
+
+.. literalinclude:: ../../examples/mat_discover_example.py
+    :caption: `/examples/mat_discover_example.py <https://github.com/sparks-baird/mat_discover/blob/main/examples/mat_discover_example.py>`_
+    :language: python
 
 Hyperparameter Combinations
 ---------------------------
 You can test the effect of various hyperparameters (e.g. `Scaler`, `pred_weight`, and
 `proxy_weight`) on the model outputs:
-.. literalinclude:: hyperparameter_combinations.py
-  :language: python
+
+.. literalinclude:: ../../examples/hyperparameter_combinations.py
+    :caption: `/examples/hyperparameter_combinations.py <https://github.com/sparks-baird/mat_discover/blob/main/examples/hyperparameter_combinations.py>`_
+    :language: python
 
 Varying these parameters (`Scaler`, `pred_weight`, and `proxy_weight`) affect the
 unscaled target predictions nor the unscaled proxy values. These parameters only affect
@@ -25,11 +34,20 @@ combination are given in `hyperparameter_combinations/
 
 Without Dimension Reduction
 ---------------------------
-To test the effect of removing the UMAP dimensionality reduction step:
-.. literalinclude:: no_dim_reduce_compare.py
-  :language: python
+By removing the UMAP dimensionality reduction step, about twice as many clusters are
+produced, and the rate of unclassified points increases from ~5% to ~25%.
 
-About twice as many clusters are produced, and the rate of unclassified points increases
-from ~5% to ~25%.
+.. literalinclude:: ../../examples/no_dim_reduce_compare.py
+    :caption: `/examples/no_dim_reduce_compare.py <https://github.com/sparks-baird/mat_discover/blob/main/examples/no_dim_reduce_compare.py>`_
+    :language: python
 
-.. Various figures, both interactive and non-interactive, related to the DiSCoVeR algorithm as applied to compounds and clusters. For more details, see `the ChemRXiv paper <https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8>`_.
+Real predictions
+----------------
+In other words, moving past the validation study into a practical use-case. The
+practical use-case shown here takes the Materials Project compounds which contain
+elasticity data and those which do not as training and validation data, respectively.
+This is work-in-progress.
+
+.. literalinclude:: ../../examples/real_predictions.py
+    :caption: `/examples/real_predictions.py <https://github.com/sparks-baird/mat_discover/blob/main/examples/real_predictions.py>`_
+    :language: python
