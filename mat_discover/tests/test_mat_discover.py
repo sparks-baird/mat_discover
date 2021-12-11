@@ -31,5 +31,6 @@ def test_mat_discover():
     disc.group_cross_val(cat_df, umap_random_state=42)
     print("scaled test error = ", disc.scaled_error)
     disc.plot()
+    next_experiment = disc.suggest_next_experiment()
     # disc.save() #doesn't work with pytest for some reason (pickle: object not the same)
     # disc.load()
