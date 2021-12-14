@@ -14,22 +14,22 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 # %% setup
-train_df, val_df = data(elasticity, "train.csv", dummy=False)
-np.random.seed(42)
+train_df, val_df = data(elasticity, "train.csv", dummy=False, random_state=42)
 train_df, val_df, extraordinary_thresh = extraordinary_split(
     train_df, val_df, random_state=42
 )
+np.random.seed(42)
 
 # set dummy to True for a quicker run --> small dataset, MDS instead of UMAP
-dummy_run = True
+dummy_run = False
 if dummy_run:
     val_df = val_df.iloc[:100]
 
 # name_mapper = {"target": "Bulk Modulus (GPa)"}
 # extraordinary_histogram(train_df, val_df, labels=name_mapper)
 
-n_iter = 10  # of objective function evaluations (e.g. wet-lab synthesis)
-n_repeats = 1
+n_iter = 100  # of objective function evaluations (e.g. wet-lab synthesis)
+n_repeats = 5
 
 rand_experiments = [
     Adapt(
