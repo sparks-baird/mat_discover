@@ -9,9 +9,6 @@ import dill as pickle
 from pathlib import Path
 from os.path import join
 
-# retrieve static file from package: https://stackoverflow.com/a/20885799/13697228
-from importlib.resources import open_text
-
 from warnings import warn
 from operator import attrgetter
 from chem_wasserstein.utils.Timer import Timer, NoTimer
@@ -24,7 +21,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import multivariate_normal, wasserstein_distance
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
-from sklearn.model_selection import LeaveOneGroupOut, train_test_split
+from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.manifold import MDS
 from sklearn.metrics import mean_squared_error
 
@@ -35,6 +32,9 @@ import hdbscan
 
 from chem_wasserstein.ElM2D_ import ElM2D
 
+from crabnet.train_crabnet import get_model
+
+from mat_discover.utils.data import data
 from mat_discover.utils.nearest_neigh import nearest_neigh_props
 from mat_discover.utils.pareto import pareto_plot  # , get_pareto_ind
 from mat_discover.utils.plotting import (
@@ -44,8 +44,6 @@ from mat_discover.utils.plotting import (
     dens_scatter,
     dens_targ_scatter,
 )
-
-from crabnet.train_crabnet import get_model
 
 plt.rcParams.update(
     {
@@ -60,32 +58,6 @@ plt.rcParams.update(
 def my_mvn(mu_x, mu_y, r):
     """Calculate multivariate normal at (mu_x, mu_y) with constant radius, r."""
     return multivariate_normal([mu_x, mu_y], [[r, 0], [0, r]])
-
-
-def groupby_formula(df, how="max"):
-    """Group identical compositions together and preserve original indices.
-
-    See https://stackoverflow.com/a/49216427/13697228
-
-    Parameters
-    ----------
-    df : DataFrame
-        At minimum should contain "formula" and "target" columns.
-    how : str, optional
-        How to perform the "groupby", either "mean" or "max", by default "max"
-
-    Returns
-    -------
-    DataFrame
-        The grouped DataFrame such that the original indices are preserved.
-    """
-    grp_df = (
-        df.reset_index()
-        .groupby(by="formula")
-        .agg({"index": lambda x: tuple(x), "target": "max"})
-        .reset_index()
-    )
-    return grp_df
 
 
 def cdf_sorting_error(y_true, y_pred, y_dummy=None):
@@ -136,10 +108,7 @@ def cdf_sorting_error(y_true, y_pred, y_dummy=None):
 
     # Dummy Error (i.e. if you "guess" the mean of training targets)
     dummy_error = wasserstein_distance(
-        u,
-        v,
-        u_weights=u_weights,
-        v_weights=dummy_v_weights,
+        u, v, u_weights=u_weights, v_weights=dummy_v_weights,
     )
 
     # Similar to Matbench "scaled_error"
@@ -170,7 +139,7 @@ class Discover:
         Scaler=RobustScaler,
         figure_dir="figures",
         table_dir="tables",
-        groupby_filter="max",
+        # groupby_filter="max",
         pred_weight=1,
         proxy_weight=1,
         device="cuda",
@@ -291,6 +260,7 @@ class Discover:
         self.dm = None
         # self.formula = None
         # self.target = None
+        self.crabnet_model = None
         self.train_formula = None
         self.train_target = None
         self.train_df = None
@@ -303,7 +273,7 @@ class Discover:
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
         Path(self.table_dir).mkdir(parents=True, exist_ok=True)
 
-    def fit(self, train_df):
+    def fit(self, train_df, verbose=None):
         """Fit CrabNet model to training data.
 
         Parameters
@@ -316,6 +286,8 @@ class Discover:
         self.train_formula = train_df["formula"]
         self.train_target = train_df["target"]
 
+        if verbose is None:
+            verbose = self.verbose
         # TODO: remove the "val MAE", which is wrong (should be NaN or just not displayed)
         # turns out this is a bit more difficult because of use of self.data_loader
         with Timer("train-CrabNet"):
@@ -324,6 +296,7 @@ class Discover:
                 train_df=train_df,
                 learningcurve=False,
                 force_cpu=self.force_cpu,
+                verbose=verbose,
             )
 
         # TODO: UMAP on new data (i.e. add metric != "precomputed" functionality)
@@ -357,9 +330,12 @@ class Discover:
             default), by default None. When specified, `proxy_weight` takes precedence
             over `self.proxy_weight`. If neither `proxy_weight` nor `self.proxy_weight` is specified, it defaults to 1.
         dummy_run : bool, optional
-            Whether to use MDS in place of the (typically more expensive) DensMAP, by default None.
-
-            If neither dummy_run nor self.dummy_run is specified, it defaults to (effectively) being False. When specified, dummy_run takes precedence over self.dummy_run.
+            Whether to use MDS in place of the (typically more expensive) DensMAP, by
+            default None. If neither dummy_run nor self.dummy_run is specified, it defaults to (effectively) being False. When specified, dummy_run takes precedence over self.dummy_run.
+        dm : 2D array, optional
+            Precomputed ElM2D distance matrix.
+        umap_trans, std_trans : DensMAP Mapper
+            Pre-specified DensMAP mappers for clustering and visualization, respectively, which contain embeddings and densities.
 
         Returns
         -------
@@ -367,7 +343,7 @@ class Discover:
             Scaled discovery scores for density and peak proxies.
         """
         if "target" not in val_df.columns:
-            val_df["target"] = 0
+            val_df["target"] = np.nan
 
         self.val_df = val_df
 
@@ -375,12 +351,20 @@ class Discover:
         # TODO: parity plot
         crabnet_model = self.crabnet_model
         # CrabNet predict output format: (act, pred, formulae, uncert)
-        self.train_true, train_pred, _, self.train_sigma = crabnet_model.predict(
-            self.train_df
-        )
-        self.val_true, self.val_pred, _, self.val_sigma = crabnet_model.predict(
-            self.val_df
-        )
+        if self.pred_weight != 0:
+            self.train_true, train_pred, _, self.train_sigma = crabnet_model.predict(
+                self.train_df
+            )
+            self.val_true, self.val_pred, _, self.val_sigma = crabnet_model.predict(
+                self.val_df
+            )
+        else:
+            self.train_true, train_pred, self.train_sigma = [
+                np.zeros(self.train_df.shape[0])
+            ] * 3
+            self.val_true, self.val_pred, self.val_sigma = [
+                np.zeros(self.val_df.shape[0])
+            ] * 3
         pred = np.concatenate((train_pred, self.val_pred), axis=0)
 
         self.val_rmse = mean_squared_error(self.val_true, self.val_pred, squared=False)
@@ -398,9 +382,9 @@ class Discover:
         self.all_formula = pd.concat((train_formula, self.val_formula), axis=0)
         self.all_target = pd.concat((train_target, val_target), axis=0)
 
-        ntrain, nval = len(train_formula), len(self.val_formula)
-        ntot = ntrain + nval
-        train_ids, val_ids = np.arange(ntrain), np.arange(ntrain, ntot)
+        self.ntrain, self.nval = len(train_formula), len(self.val_formula)
+        self.ntot = self.ntrain + self.nval
+        train_ids, val_ids = np.arange(self.ntrain), np.arange(self.ntrain, self.ntot)
 
         # distance matrix
         with self.Timer("fit-wasserstein"):
@@ -410,19 +394,24 @@ class Discover:
         # TODO: look into UMAP via GPU
         # TODO: create and use fast, built-in Wasserstein UMAP method
 
-        # UMAP (clustering and visualization) (or MDS for a quick run)
+        # UMAP (clustering and visualization) (or MDS for a quick run with small dataset)
         if (dummy_run is None and self.dummy_run) or dummy_run:
-            umap_trans = MDS(n_components=2, dissimilarity="precomputed").fit(self.dm)
+            with Timer("MDS"):
+                umap_trans = MDS(n_components=2, dissimilarity="precomputed").fit(
+                    self.dm
+                )
             std_trans = umap_trans
             self.umap_emb = umap_trans.embedding_
             self.std_emb = umap_trans.embedding_
             self.umap_r_orig = np.random.rand(self.dm.shape[0])
             self.std_r_orig = np.random.rand(self.dm.shape[0])
         else:
-            umap_trans = self.umap_fit_cluster(self.dm, random_state=umap_random_state)
-            std_trans = self.umap_fit_vis(self.dm, random_state=umap_random_state)
-            self.umap_emb, self.umap_r_orig = self.extract_emb_rad(umap_trans)[:2]
-            self.std_emb, self.std_r_orig = self.extract_emb_rad(std_trans)[:2]
+            self.umap_trans = self.umap_fit_cluster(
+                self.dm, random_state=umap_random_state
+            )
+            self.std_trans = self.umap_fit_vis(self.dm, random_state=umap_random_state)
+            self.umap_emb, self.umap_r_orig = self.extract_emb_rad(self.umap_trans)[:2]
+            self.std_emb, self.std_r_orig = self.extract_emb_rad(self.std_trans)[:2]
 
         # HDBSCAN*
         if (dummy_run is None and self.dummy_run) or dummy_run:
@@ -444,14 +433,21 @@ class Discover:
 
         # Probability Density Function Summation
         if self.pdf:
-            self.pdf_x, self.pdf_y, self.pdf_sum = self.mvn_prob_sum(
-                self.std_emb, self.std_r_orig
-            )
+            with Timer("gridded-pdf-summation"):
+                self.pdf_x, self.pdf_y, self.pdf_sum = self.mvn_prob_sum(
+                    self.std_emb, self.std_r_orig
+                )
 
         # validation density contributed by training densities
-        train_emb = self.umap_emb[:ntrain]
-        train_r_orig = self.umap_r_orig[:ntrain]
-        val_emb = self.umap_emb[ntrain:]
+        train_emb = self.umap_emb[: self.ntrain]
+        train_r_orig = self.umap_r_orig[: self.ntrain]
+        val_emb = self.umap_emb[self.ntrain :]
+        val_r_orig = self.umap_r_orig[self.ntrain :]
+
+        self.train_df["emb"] = list(map(tuple, train_emb))
+        self.train_df["r_orig"] = train_r_orig
+        self.val_df["emb"] = list(map(tuple, val_emb))
+        self.val_df["r_orig"] = val_r_orig
 
         with self.Timer("train-val-pdf-summation"):
             mvn_list = list(map(my_mvn, train_emb[:, 0], train_emb[:, 1], train_r_orig))
@@ -483,11 +479,12 @@ class Discover:
         self.cluster_score = self.weighted_score(self.cluster_avg, self.val_frac)
 
         # compound-wise scores (i.e. individual compounds)
-        self.rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
-            self.dm, pred
-        )
-        self.val_rad_neigh_avg = self.rad_neigh_avg_targ[val_ids]
-        self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
+        with Timer("nearest-neighbor-properties"):
+            self.rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
+                self.dm, pred
+            )
+            self.val_rad_neigh_avg = self.rad_neigh_avg_targ[val_ids]
+            self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
 
         self.rad_score = self.weighted_score(
             self.val_pred,
@@ -568,24 +565,36 @@ class Discover:
         score = comb_scaler.transform(comb_data).ravel()
         return score
 
-    def sort(self, score):
+    def sort(self, score, proxy_name="density"):
         """Sort (rank) compounds by their proxy score.
 
         Parameters
         ----------
         score : 1D Array
-            Discovery scores.
+            Discovery scores for the given proxy given by `proxy_name`.
+            
+        proxy_name : string, optional
+            Name of the proxy, by default "density". Possible values are "density"
+            (`self.val_dens`), "peak" (`self.k_neigh_avg`), and "radius"
+            (`self.val_rad_neigh_avg`).
 
         Returns
         -------
         DataFrame
-            Contains "formula", "prediction", "density", and "score".
+            Contains "formula", "prediction", `proxy_name`, and "score".
         """
+        proxy_lookup = {
+            "density": self.val_dens,
+            "peak": self.val_k_neigh_avg,
+            "radius": self.val_rad_neigh_avg,
+        }
+        proxy = proxy_lookup[proxy_name]
+
         score_df = pd.DataFrame(
             {
-                "formula": self.val_formula,
+                "formula": self.val_df.formula,
                 "prediction": self.val_pred,
-                "density": self.val_dens,
+                proxy_name: proxy,
                 "score": score,
             }
         )
@@ -602,23 +611,23 @@ class Discover:
         """
         if self.nscores is not None:
             nscores = self.nscores
-        self.dens_score_df.rename(columns={"score": "Density Score"}, inplace=True)
-        self.peak_score_df.rename(columns={"score": "Peak Score"}, inplace=True)
+        dens_score_df = self.dens_score_df.rename(columns={"score": "Density Score"})
+        peak_score_df = self.peak_score_df.rename(columns={"score": "Peak Score"})
 
-        comb_score_df = self.dens_score_df[["formula", "Density Score"]].merge(
-            self.peak_score_df[["formula", "Peak Score"]], how="outer"
+        comb_score_df = dens_score_df[["formula", "Density Score"]].merge(
+            peak_score_df[["formula", "Peak Score"]], how="outer"
         )
 
-        comb_formula = self.dens_score_df.head(nscores)[["formula"]].merge(
-            self.peak_score_df.head(nscores)[["formula"]], how="outer"
+        comb_formula = dens_score_df.head(nscores)[["formula"]].merge(
+            peak_score_df.head(nscores)[["formula"]], how="outer"
         )
 
         self.comb_out_df = comb_score_df[np.isin(comb_score_df.formula, comb_formula)]
 
-        self.dens_score_df.head(nscores).to_csv(
+        dens_score_df.head(nscores).to_csv(
             join(self.table_dir, "dens-score.csv"), index=False, float_format="%.3f"
         )
-        self.peak_score_df.head(nscores).to_csv(
+        peak_score_df.head(nscores).to_csv(
             join(self.table_dir, "peak-score.csv"), index=False, float_format="%.3f"
         )
         self.comb_out_df.to_csv(
@@ -752,7 +761,7 @@ class Discover:
             of the the simplest "models" you can use, the average of the training data).
         """
         if self.verbose:
-            print("Iteration: ", iter)
+            print("[Iteration: ", iter, "]")
 
         Xn, yn = X.to_numpy(), y.to_numpy()
         X_train, X_val = Xn[train_index], Xn[val_index]
@@ -1279,73 +1288,17 @@ class Discover:
             disc = pickle.load(f)
             return disc
 
-    def data(
-        self,
-        module,
-        fname="train.csv",
-        groupby=True,
-        dummy=False,
-        split=True,
-        val_size=0.2,
-        test_size=0.0,
-        random_state=42,
-    ):
-        """Grab data from within the subdirectories (modules) of mat_discover.
+    def data(self, module, **data_kwargs):
+        return data(module, **data_kwargs)
 
-        Parameters
-        ----------
-        module : Module
-            The module within mat_discover that contains e.g. "train.csv". For example,
-            from crabnet.data.materials_data import elasticity
-        fname : str, optional
-            Filename of text file to open.
-        dummy : bool, optional
-            Whether to pare down the data to a small test set, by default False
-        groupby : bool, optional
-            Whether to use groupby_formula to filter identical compositions
-        split : bool, optional
-            Whether to split the data into train, val, and (optionally) test sets, by default True
-        val_size : float, optional
-            Validation dataset fraction, by default 0.2
-        test_size : float, optional
-            Test dataset fraction, by default 0.0
-        random_state : int, optional
-            seed to use for the train/val/test split, by default 42
 
-        Returns
-        -------
-        DataFrame
-            If split==False, then the full DataFrame is returned directly
+# %% Code Graveyard
+# if dm is not None:
+#     skip_elmd = True
+# else:
+#     skip_elmd = False
+# if umap_trans is not None and std_trans is not None:
+#     skip_umap = True
+# else:
+#     skip_umap = False
 
-        DataFrame, DataFrame
-            If test_size == 0 and split==True, then training and validation DataFrames are returned.
-
-        DataFrame, DataFrame, DataFrame
-            If test_size > 0 and split==True, then training, validation, and test DataFrames are returned.
-        """
-        train_csv = open_text(module, fname)
-        df = pd.read_csv(train_csv)
-
-        if groupby:
-            df = groupby_formula(df, how="max")
-
-        if dummy:
-            ntot = min(100, len(df))
-            df = df.head(ntot)
-
-        if split:
-            if test_size > 0:
-                df, test_df = train_test_split(
-                    df, test_size=test_size, random_state=random_state
-                )
-
-            train_df, val_df = train_test_split(
-                df, test_size=val_size / (1 - test_size), random_state=random_state
-            )
-
-            if test_size > 0:
-                return train_df, val_df, test_df
-            else:
-                return train_df, val_df
-        else:
-            return df
