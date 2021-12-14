@@ -99,3 +99,4 @@ for Scaler in Scalers:
         disc.plot()
 
 # cdf_sorting_error
+# create heatmaps
