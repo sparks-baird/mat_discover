@@ -6,6 +6,7 @@ from mat_discover.utils.extraordinary import (
     extraordinary_split,
     extraordinary_histogram,
 )
+
 from crabnet.data.materials_data import elasticity
 from mat_discover.utils.data import data
 from mat_discover.adaptive_design import Adapt
@@ -21,7 +22,7 @@ train_df, val_df, extraordinary_thresh = extraordinary_split(
 np.random.seed(42)
 
 # set dummy to True for a quicker run --> small dataset, MDS instead of UMAP
-dummy_run = False
+dummy_run = True
 if dummy_run:
     val_df = val_df.iloc[:100]
 
@@ -31,36 +32,70 @@ if dummy_run:
 n_iter = 100  # of objective function evaluations (e.g. wet-lab synthesis)
 n_repeats = 5
 
-rand_experiments = [
-    Adapt(
-        train_df, val_df, dummy_run=dummy_run, device="cuda"
-    ).closed_loop_adaptive_design(n_experiments=n_iter, random_search=True)
-    for _ in range(n_repeats)
-]
+rand_experiments = []
 
-print("[Novelty-Experiments]")
-novelty_experiments = [
-    Adapt(
-        train_df, val_df, dummy_run=dummy_run, device="cuda", pred_weight=0
-    ).closed_loop_adaptive_design(n_experiments=n_iter)
-    for _ in range(n_repeats)
-]
+for i in range(n_repeats):
+    print([f"[rand_experiment: {i}]"])
+    adapt = Adapt(
+        train_df,
+        val_df,
+        timed=False,
+        dummy_run=dummy_run,
+        device="cpu",
+        dist_device="cpu",
+    )
+    rand_experiments.append(
+        adapt.closed_loop_adaptive_design(
+            n_experiments=n_iter, random_search=True, print_experiment=False
+        )
+    )
 
-print("[Equal-Experiments]")
-equal_experiments = [
-    Adapt(
-        train_df, val_df, dummy_run=dummy_run, device="cuda"
-    ).closed_loop_adaptive_design(n_experiments=n_iter)
-    for _ in range(n_repeats)
-]
+novelty_experiments = []
+for i in range(n_repeats):
+    print([f"[novelty_experiment: {i}]"])
+    adapt = Adapt(
+        train_df,
+        val_df,
+        timed=False,
+        dummy_run=dummy_run,
+        device="cpu",
+        dist_device="cpu",
+        pred_weight=0,
+    )
+    novelty_experiments.append(
+        adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
+    )
 
-print("[Performance-Experiments]")
-performance_experiments = [
-    Adapt(
-        train_df, val_df, dummy_run=dummy_run, device="cuda", proxy_weight=0
-    ).closed_loop_adaptive_design(n_experiments=n_iter)
-    for _ in range(n_repeats)
-]
+equal_experiments = []
+for i in range(n_repeats):
+    print([f"[equal_experiment: {i}]"])
+    adapt = Adapt(
+        train_df,
+        val_df,
+        timed=False,
+        dummy_run=dummy_run,
+        device="cpu",
+        dist_device="cpu",
+    )
+    equal_experiments.append(
+        adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
+    )
+
+performance_experiments = []
+for i in range(n_repeats):
+    print([f"[performance_experiment: {i}]"])
+    adapt = Adapt(
+        train_df,
+        val_df,
+        timed=False,
+        dummy_run=dummy_run,
+        device="cpu",
+        dist_device="cpu",
+        proxy_weight=0,
+    )
+    performance_experiments.append(
+        adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
+    )
 
 experiments = [
     rand_experiments,
@@ -74,13 +109,14 @@ y_names = ["cummax", "target", "cumthresh", "n_unique_atoms", "n_unique_template
 rows = len(y_names)
 cols = len(experiments)
 
-# x = [[list(range(n_iter))] * cols] * rows
 x = list(range(n_iter))
 y = np.zeros((rows, cols, n_repeats, n_iter))
+formula = rows * [cols * [n_repeats * [None]]]
 for (col, experiment) in enumerate(experiments):
     for (row, y_name) in enumerate(y_names):
         for (page, sub_experiment) in enumerate(experiment):
             y[row, col, page] = sub_experiment[y_name].values.tolist()
+            formula[row][col][page] = sub_experiment["formula"].values.tolist()
 
 labels = {
     "_index": "adaptive design iteration",
@@ -107,7 +143,13 @@ for row in range(rows):
         color = colors[col]
         for page in range(n_repeats):
             fig.append_trace(
-                go.Scatter(x=x, y=y[row, col, page], line=dict(color=color)),
+                go.Scatter(
+                    x=x,
+                    y=y[row, col, page],
+                    line=dict(color=color),
+                    text=formula[row][col][page],
+                    hovertemplate="%{text}",
+                ),
                 row=row + 1,
                 col=col + 1,
             )
@@ -196,6 +238,12 @@ fig.show()
 # perf_adapt = deepcopy(equal_adapt)
 # perf_adapt.proxy_weight = 0.0
 
-from copy import deepcopy
-import pandas as pd
-import plotly.express as px
+# from copy import deepcopy
+# import pandas as pd
+# import plotly.express as px
+
+# x = [[list(range(n_iter))] * cols] * rows
+
+# import gc
+# # https://stackoverflow.com/a/57860310/13697228
+# from torch.cuda import empty_cache
