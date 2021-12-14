@@ -1,10 +1,6 @@
 """Compare DiSCoVeR to random search."""
 # %% imports
-from copy import deepcopy
 import numpy as np
-import pandas as pd
-
-import plotly.express as px
 
 from mat_discover.utils.extraordinary import (
     extraordinary_split,
@@ -25,46 +21,44 @@ train_df, val_df, extraordinary_thresh = extraordinary_split(
 )
 
 # set dummy to True for a quicker run --> small dataset, MDS instead of UMAP
-dummy_run = False
+dummy_run = True
 if dummy_run:
     val_df = val_df.iloc[:100]
-equal_adapt = Adapt(train_df, val_df, dummy_run=dummy_run, device="cuda")
 
 # name_mapper = {"target": "Bulk Modulus (GPa)"}
 # extraordinary_histogram(train_df, val_df, labels=name_mapper)
 
-# %% random search
-rand_adapt = deepcopy(equal_adapt)
-
-novelty_adapt = deepcopy(equal_adapt)
-novelty_adapt.pred_weight = 0.0
-
-perf_adapt = deepcopy(equal_adapt)
-perf_adapt.proxy_weight = 0.0
-
-n_iter = 50  # of objective function evaluations (e.g. wet-lab synthesis)
-n_repeats = 3
+n_iter = 10  # of objective function evaluations (e.g. wet-lab synthesis)
+n_repeats = 1
 
 rand_experiments = [
-    rand_adapt.closed_loop_adaptive_design(n_experiments=n_iter, random_search=True)
+    Adapt(
+        train_df, val_df, dummy_run=dummy_run, device="cuda"
+    ).closed_loop_adaptive_design(n_experiments=n_iter, random_search=True)
     for _ in range(n_repeats)
 ]
 
 print("[Novelty-Experiments]")
 novelty_experiments = [
-    novelty_adapt.closed_loop_adaptive_design(n_experiments=n_iter)
+    Adapt(
+        train_df, val_df, dummy_run=dummy_run, device="cuda", pred_weight=0
+    ).closed_loop_adaptive_design(n_experiments=n_iter)
     for _ in range(n_repeats)
 ]
 
 print("[Equal-Experiments]")
 equal_experiments = [
-    equal_adapt.closed_loop_adaptive_design(n_experiments=n_iter)
+    Adapt(
+        train_df, val_df, dummy_run=dummy_run, device="cuda"
+    ).closed_loop_adaptive_design(n_experiments=n_iter)
     for _ in range(n_repeats)
 ]
 
 print("[Performance-Experiments]")
 performance_experiments = [
-    perf_adapt.closed_loop_adaptive_design(n_experiments=n_iter)
+    Adapt(
+        train_df, val_df, dummy_run=dummy_run, device="cuda", proxy_weight=0
+    ).closed_loop_adaptive_design(n_experiments=n_iter)
     for _ in range(n_repeats)
 ]
 
@@ -193,3 +187,15 @@ fig.show()
 # y = np.random.rand(rows, cols, n_iter)
 
 # experiments = [rand_experiments] * 4
+
+# rand_adapt = deepcopy(equal_adapt)
+
+# novelty_adapt = deepcopy(equal_adapt)
+# novelty_adapt.pred_weight = 0.0
+
+# perf_adapt = deepcopy(equal_adapt)
+# perf_adapt.proxy_weight = 0.0
+
+from copy import deepcopy
+import pandas as pd
+import plotly.express as px
