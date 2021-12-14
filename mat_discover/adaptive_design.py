@@ -40,7 +40,7 @@ class Adapt(Discover):
     ):
         if not random_search:
             if fit:
-                self.fit(self.train_df, verbose=fit_verbose)
+                self.fit(self.train_df, verbose=fit_verbose, save=False)
             elif self.crabnet_model is None:
                 raise ValueError(
                     "Run `disc.fit(train_df)` method or specify `fit_afresh=True`."
