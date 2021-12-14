@@ -33,6 +33,12 @@ jobs:
             conda install -c sgbaird pqdm elmd
             pip install -U pip
             pip install conda-souschef ElM2D==0.4.1
+            
+        - name: Pytest
+          shell: bash -l {0}
+          run: |
+            export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
+            coverage run --source=mat_discover -m pytest # python -m pytest
 
         - name: Build and publish
           shell: bash -l {0}
@@ -55,14 +61,8 @@ jobs:
           run: |
             git config --global user.name 'sgbaird'
             git config --global user.email 'sgbaird@users.noreply.github.com'
-            git commit -m "update meta.yaml via grayskull and conda-souschef" meta.yaml
+            git commit -am "update meta.yaml via grayskull and conda-souschef" meta.yaml
             git push
-
-        - name: Pytest
-          shell: bash -l {0}
-          run: |
-            export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
-            coverage run --source=mat_discover -m pytest # python -m pytest
 
         - name: Upload to coveralls
           shell: bash -l {0}
