@@ -273,7 +273,7 @@ class Discover:
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
         Path(self.table_dir).mkdir(parents=True, exist_ok=True)
 
-    def fit(self, train_df, verbose=None):
+    def fit(self, train_df, verbose=None, save=True):
         """Fit CrabNet model to training data.
 
         Parameters
@@ -290,13 +290,14 @@ class Discover:
             verbose = self.verbose
         # TODO: remove the "val MAE", which is wrong (should be NaN or just not displayed)
         # turns out this is a bit more difficult because of use of self.data_loader
-        with Timer("train-CrabNet"):
+        with self.Timer("train-CrabNet"):
             self.crabnet_model = get_model(
                 mat_prop=self.mat_prop_name,
                 train_df=train_df,
                 learningcurve=False,
                 force_cpu=self.force_cpu,
                 verbose=verbose,
+                save=save,
             )
 
         # TODO: UMAP on new data (i.e. add metric != "precomputed" functionality)
@@ -396,7 +397,7 @@ class Discover:
 
         # UMAP (clustering and visualization) (or MDS for a quick run with small dataset)
         if (dummy_run is None and self.dummy_run) or dummy_run:
-            with Timer("MDS"):
+            with self.Timer("MDS"):
                 umap_trans = MDS(n_components=2, dissimilarity="precomputed").fit(
                     self.dm
                 )
@@ -433,7 +434,7 @@ class Discover:
 
         # Probability Density Function Summation
         if self.pdf:
-            with Timer("gridded-pdf-summation"):
+            with self.Timer("gridded-pdf-summation"):
                 self.pdf_x, self.pdf_y, self.pdf_sum = self.mvn_prob_sum(
                     self.std_emb, self.std_r_orig
                 )
@@ -479,7 +480,7 @@ class Discover:
         self.cluster_score = self.weighted_score(self.cluster_avg, self.val_frac)
 
         # compound-wise scores (i.e. individual compounds)
-        with Timer("nearest-neighbor-properties"):
+        with self.Timer("nearest-neighbor-properties"):
             self.rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
                 self.dm, pred
             )
