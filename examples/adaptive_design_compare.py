@@ -1,5 +1,6 @@
 """Compare DiSCoVeR to random search."""
 # %% imports
+import dill as pickle
 import numpy as np
 
 from mat_discover.utils.extraordinary import (
@@ -35,7 +36,7 @@ n_repeats = 5
 rand_experiments = []
 
 for i in range(n_repeats):
-    print([f"[rand_experiment: {i}]"])
+    print(f"[RANDOM-EXPERIMENT: {i}]")
     adapt = Adapt(
         train_df,
         val_df,
@@ -52,7 +53,7 @@ for i in range(n_repeats):
 
 novelty_experiments = []
 for i in range(n_repeats):
-    print([f"[novelty_experiment: {i}]"])
+    print(f"[NOVELTY-EXPERIMENT: {i}]")
     adapt = Adapt(
         train_df,
         val_df,
@@ -68,7 +69,7 @@ for i in range(n_repeats):
 
 equal_experiments = []
 for i in range(n_repeats):
-    print([f"[equal_experiment: {i}]"])
+    print(f"[EQUAL-EXPERIMENT: {i}]")
     adapt = Adapt(
         train_df,
         val_df,
@@ -83,7 +84,7 @@ for i in range(n_repeats):
 
 performance_experiments = []
 for i in range(n_repeats):
-    print([f"[performance_experiment: {i}]"])
+    print(f"[PERFORMANCE-EXPERIMENT: {i}]")
     adapt = Adapt(
         train_df,
         val_df,
@@ -163,6 +164,8 @@ fig.update_traces(showlegend=False)
 fig.update_layout(height=300 * rows, width=300 * cols)
 fig.show()
 
+with open("rand_novelty_equal_performance.pkl", "wb") as f:
+    pickle.dump(experiments, f)
 
 # TODO: elemental prevalence variety and distribution (periodic table?)
 # TODO: chemical template variety and distribution (need a package)
