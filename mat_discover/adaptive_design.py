@@ -1,4 +1,5 @@
 from tqdm import tqdm
+from copy import deepcopy
 import numpy as np
 import pandas as pd
 from crabnet.utils.composition import _fractional_composition_L, _element_composition_L
@@ -78,7 +79,7 @@ class Adapt(Discover):
                 "radius": "rad_score_df",
             }
             proxy_df_name = proxy_lookup[proxy_name]
-            proxy_df = getattr(self, proxy_df_name)
+            proxy_df = getattr(self, proxy_df_name).reset_index()
             next_formula, next_target, next_proxy, next_score = [
                 proxy_df[name].iloc[0]
                 for name in ["formula", "prediction", proxy_name, "score"]
@@ -106,9 +107,14 @@ class Adapt(Discover):
             "r_orig": next_r_orig,
         }
 
-        # append compound to train, remove from val
-        self.train_df = self.train_df.append(next_experiment, ignore_index=True)
-        self.val_df = self.val_df[self.val_df["index"] != next_experiment["index"]]
+        # append compound to train, remove from val, and reset indices
+        # https://stackoverflow.com/a/12204428/13697228
+        self.train_df = self.train_df.append(
+            next_experiment, ignore_index=True
+        ).reset_index(drop=True)
+        self.val_df = self.val_df[
+            self.val_df["index"] != next_experiment["index"]
+        ].reset_index(drop=True)
 
         next_experiment[proxy_name] = next_proxy
         next_experiment["score"] = next_score
@@ -130,30 +136,45 @@ class Adapt(Discover):
                 self.train_df.append(self.val_df).target.sort_values(),
                 extraordinary_quantile,
             )
+        init_train_formula = self.train_df.formula
+        init_train_target = self.train_df.target
         self.extraordinary_thresh = extraordinary_thresh
         experiments = []
-        for i in tqdm(range(n_experiments)):
-            if i == 0:
-                next_experiment = self.suggest_first_experiment(
-                    **suggest_next_experiment_kwargs
-                )
-            else:
-                next_experiment = self.suggest_next_experiment(
-                    **suggest_next_experiment_kwargs
-                )
+        first_experiment = self.suggest_first_experiment(
+            **suggest_next_experiment_kwargs
+        )
+        experiments.append(first_experiment)
+        for _ in tqdm(range(1, n_experiments)):
+            next_experiment = self.suggest_next_experiment(
+                **suggest_next_experiment_kwargs
+            )
             experiments.append(next_experiment)
 
+        init_max = max(init_train_target)
         experiment_df = pd.DataFrame(experiments)
         experiment_df["cummax"] = experiment_df.target.cummax()
+        experiment_df.loc[experiment_df["cummax"] <= init_max, "cummax"] = init_max
 
         experiment_df["cumthresh"] = (
             experiment_df.target >= extraordinary_thresh
         ).cumsum()
 
-        n_unique_atoms = []
         atoms_list = set()
-        n_unique_templates = []
         templates = set()
+        for formula in init_train_formula:
+            atoms, _ = _fractional_composition_L(formula)
+            _, counts = _element_composition_L(formula)
+            atoms_list.update(atoms)
+            counts = (
+                np.array(counts).astype(int)
+                / np.gcd.reduce(np.array(counts).astype(int))
+            ).tolist()
+            template = tuple(sorted(counts))
+            templates.add(template)
+
+        n_unique_atoms = []
+        n_unique_templates = []
+
         for formula in experiment_df.formula:
             atoms, _ = _fractional_composition_L(formula)
             _, counts = _element_composition_L(formula)
@@ -210,4 +231,7 @@ class Adapt(Discover):
 #         warn(
 #             "DataFrames will be manipulated internally (`disc.train_df` and `disc.val_df`) and only `next_experiment` will be returned."
 #         )
+
+# n_unique_atoms.append(len(atoms_list))
+# n_unique_templates.append(len(templates))
 
