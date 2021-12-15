@@ -22,6 +22,9 @@ train_df, val_df, extraordinary_thresh = extraordinary_split(
     train_df, val_df, train_size=100, extraordinary_percentile=0.98, random_state=42
 )
 np.random.seed(42)
+# REVIEW: why do I think this RNG affects anything downstream? (CrabNet, yes, but I'm
+# having trouble thinking of where else an RNG would have an effect, other than
+# rand_experiments, which makes me think - why do multiple repeats for the real ones?)
 
 # set dummy to True for a quicker run --> small dataset, MDS instead of UMAP
 dummy_run = False
@@ -30,7 +33,7 @@ if dummy_run:
     n_iter = 3
     n_repeats = 1
 else:
-    n_iter = 25  # of objective function evaluations (e.g. wet-lab synthesis)
+    n_iter = 900  # of objective function evaluations (e.g. wet-lab synthesis)
     n_repeats = 3
 
 # name_mapper = {"target": "Bulk Modulus (GPa)"}
