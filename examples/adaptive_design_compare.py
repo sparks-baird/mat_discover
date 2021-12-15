@@ -1,6 +1,7 @@
 """Compare DiSCoVeR to random search."""
 # %% imports
 import dill as pickle
+from os.path import join
 import numpy as np
 
 from mat_discover.utils.extraordinary import (
@@ -18,20 +19,22 @@ import plotly.graph_objects as go
 # %% setup
 train_df, val_df = data(elasticity, "train.csv", dummy=False, random_state=42)
 train_df, val_df, extraordinary_thresh = extraordinary_split(
-    train_df, val_df, random_state=42
+    train_df, val_df, train_size=100, extraordinary_percentile=0.98, random_state=42
 )
 np.random.seed(42)
 
 # set dummy to True for a quicker run --> small dataset, MDS instead of UMAP
-dummy_run = True
+dummy_run = False
 if dummy_run:
     val_df = val_df.iloc[:100]
+    n_iter = 3
+    n_repeats = 1
+else:
+    n_iter = 25  # of objective function evaluations (e.g. wet-lab synthesis)
+    n_repeats = 3
 
 # name_mapper = {"target": "Bulk Modulus (GPa)"}
 # extraordinary_histogram(train_df, val_df, labels=name_mapper)
-
-n_iter = 100  # of objective function evaluations (e.g. wet-lab synthesis)
-n_repeats = 5
 
 rand_experiments = []
 
@@ -51,21 +54,21 @@ for i in range(n_repeats):
         )
     )
 
-novelty_experiments = []
-for i in range(n_repeats):
-    print(f"[NOVELTY-EXPERIMENT: {i}]")
-    adapt = Adapt(
-        train_df,
-        val_df,
-        timed=False,
-        dummy_run=dummy_run,
-        device="cpu",
-        dist_device="cpu",
-        pred_weight=0,
-    )
-    novelty_experiments.append(
-        adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
-    )
+# novelty_experiments = []
+# for i in range(n_repeats):
+#     print(f"[NOVELTY-EXPERIMENT: {i}]")
+#     adapt = Adapt(
+#         train_df,
+#         val_df,
+#         timed=False,
+#         dummy_run=dummy_run,
+#         device="cpu",
+#         dist_device="cuda",
+#         pred_weight=0,
+#     )
+#     novelty_experiments.append(
+#         adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
+#     )
 
 equal_experiments = []
 for i in range(n_repeats):
@@ -75,34 +78,34 @@ for i in range(n_repeats):
         val_df,
         timed=False,
         dummy_run=dummy_run,
-        device="cpu",
-        dist_device="cpu",
+        device="cuda",
+        dist_device="cuda",
     )
     equal_experiments.append(
         adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
     )
 
-performance_experiments = []
-for i in range(n_repeats):
-    print(f"[PERFORMANCE-EXPERIMENT: {i}]")
-    adapt = Adapt(
-        train_df,
-        val_df,
-        timed=False,
-        dummy_run=dummy_run,
-        device="cpu",
-        dist_device="cpu",
-        proxy_weight=0,
-    )
-    performance_experiments.append(
-        adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
-    )
+# performance_experiments = []
+# for i in range(n_repeats):
+#     print(f"[PERFORMANCE-EXPERIMENT: {i}]")
+#     adapt = Adapt(
+#         train_df,
+#         val_df,
+#         timed=False,
+#         dummy_run=dummy_run,
+#         device="cpu",
+#         dist_device="cpu",
+#         proxy_weight=0,
+#     )
+#     performance_experiments.append(
+#         adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
+#     )
 
 experiments = [
     rand_experiments,
-    novelty_experiments,
+    # novelty_experiments,
     equal_experiments,
-    performance_experiments,
+    # performance_experiments,
 ]
 
 y_names = ["cummax", "target", "cumthresh", "n_unique_atoms", "n_unique_templates"]
@@ -134,11 +137,13 @@ fig = make_subplots(
     rows=rows, cols=cols, shared_xaxes=True, shared_yaxes=True, vertical_spacing=0.02
 )
 
-x_pars = ["Random", "Novelty", "50/50", "Performance"]
+# x_pars = ["Random", "Novelty", "50/50", "Performance"]
+x_pars = ["Random", "50/50"]
 col_nums = [str(i) for i in range((rows - 1) * cols + 1, rows * cols + 1)]
 row_nums = [""] + [str(i) for i in list(range(cols + 1, rows * cols, cols))]
 
-colors = ["red", "black", "green", "blue"]
+# colors = ["red", "black", "green", "blue"]
+colors = ["red", "black"]
 for row in range(rows):
     for col in range(cols):
         color = colors[col]
@@ -149,7 +154,7 @@ for row in range(rows):
                     y=y[row, col, page],
                     line=dict(color=color),
                     text=formula[row][col][page],
-                    hovertemplate="%{text}",
+                    hovertemplate="Formula: %{text} <br>Iteration: %{x} <br>Target (GPa): %{y})",
                 ),
                 row=row + 1,
                 col=col + 1,
@@ -164,11 +169,13 @@ fig.update_traces(showlegend=False)
 fig.update_layout(height=300 * rows, width=300 * cols)
 fig.show()
 
+fig.write_image(join("figures", "ad-compare.png"))
+
 with open("rand_novelty_equal_performance.pkl", "wb") as f:
     pickle.dump(experiments, f)
 
-# TODO: elemental prevalence variety and distribution (periodic table?)
-# TODO: chemical template variety and distribution (need a package)
+# TODO: elemental prevalence distribution (periodic table?)
+# TODO: chemical template distribution (need a package)
 # TODO: 3 different parameter weightings
 # REVIEW: should I also include RobustScaler vs. MinMaxScaler?
 
