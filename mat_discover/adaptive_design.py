@@ -131,13 +131,12 @@ class Adapt(Discover):
         extraordinary_quantile=0.98,
         **suggest_next_experiment_kwargs,
     ):
+        init_train_df = self.train_df
         if extraordinary_thresh is None:
             extraordinary_thresh = np.quantile(
                 self.train_df.append(self.val_df).target.sort_values(),
                 extraordinary_quantile,
             )
-        init_train_formula = self.train_df.formula
-        init_train_target = self.train_df.target
         self.extraordinary_thresh = extraordinary_thresh
         experiments = []
         first_experiment = self.suggest_first_experiment(
@@ -150,48 +149,65 @@ class Adapt(Discover):
             )
             experiments.append(next_experiment)
 
-        init_max = max(init_train_target)
-        experiment_df = pd.DataFrame(experiments)
-        experiment_df["cummax"] = experiment_df.target.cummax()
-        experiment_df.loc[experiment_df["cummax"] <= init_max, "cummax"] = init_max
-
-        experiment_df["cumthresh"] = (
-            experiment_df.target >= extraordinary_thresh
-        ).cumsum()
-
-        atoms_list = set()
-        templates = set()
-        for formula in init_train_formula:
-            atoms, _ = _fractional_composition_L(formula)
-            _, counts = _element_composition_L(formula)
-            atoms_list.update(atoms)
-            counts = (
-                np.array(counts).astype(int)
-                / np.gcd.reduce(np.array(counts).astype(int))
-            ).tolist()
-            template = tuple(sorted(counts))
-            templates.add(template)
-
-        n_unique_atoms = []
-        n_unique_templates = []
-
-        for formula in experiment_df.formula:
-            atoms, _ = _fractional_composition_L(formula)
-            _, counts = _element_composition_L(formula)
-            atoms_list.update(atoms)
-            n_unique_atoms.append(len(atoms_list))
-            counts = (
-                np.array(counts).astype(int)
-                / np.gcd.reduce(np.array(counts).astype(int))
-            ).tolist()
-            template = tuple(sorted(counts))
-            templates.add(template)
-            n_unique_templates.append(len(templates))
-
-        experiment_df["n_unique_atoms"] = n_unique_atoms
-        experiment_df["n_unique_templates"] = n_unique_templates
+        experiment_df = ad_experiments_metrics(
+            experiments, init_train_df, self.extraordinary_thresh
+        )
 
         return experiment_df
+
+
+def ad_experiments_metrics(experiments, train_df, extraordinary_thresh):
+    experiment_df = pd.DataFrame(experiments)
+    cummax, cumthresh, n_unique_atoms, n_unique_templates = ad_metrics(
+        experiments, train_df, extraordinary_thresh
+    )
+    experiment_df["cummax"] = cummax
+    experiment_df["cumthresh"] = cumthresh
+    experiment_df["n_unique_atoms"] = n_unique_atoms
+    experiment_df["n_unique_templates"] = n_unique_templates
+
+    return experiment_df
+
+
+def ad_metrics(experiments, init_train_df, extraordinary_thresh):
+    init_train_formula = init_train_df.formula
+    init_train_target = init_train_df.target
+    init_max = max(init_train_target)
+    experiment_df = pd.DataFrame(experiments)
+    cummax = experiment_df.target.cummax()
+    cummax[cummax <= init_max] = init_max
+    # experiment_df.loc[experiment_df["cummax"] <= init_max, "cummax"] = init_max
+
+    cumthresh = (experiment_df.target >= extraordinary_thresh).cumsum()
+
+    atoms_list = set()
+    templates = set()
+    for formula in init_train_formula:
+        atoms, _ = _fractional_composition_L(formula)
+        _, counts = _element_composition_L(formula)
+        atoms_list.update(atoms)
+        counts = (
+            np.array(counts).astype(int) / np.gcd.reduce(np.array(counts).astype(int))
+        ).tolist()
+        template = tuple(sorted(counts))
+        templates.add(template)
+
+    n_unique_atoms = []
+    n_unique_templates = []
+
+    for formula in experiment_df.formula:
+        atoms, _ = _fractional_composition_L(formula)
+        _, counts = _element_composition_L(formula)
+        atoms_list.update(atoms)
+        n_unique_atoms.append(len(atoms_list))
+        counts = (
+            np.array(counts).astype(int) / np.gcd.reduce(np.array(counts).astype(int))
+        ).tolist()
+        template = tuple(sorted(counts))
+        templates.add(template)
+        n_unique_templates.append(len(templates))
+
+    return cummax, cumthresh, n_unique_atoms, n_unique_templates
 
 
 # %% Code Graveyard
@@ -234,4 +250,48 @@ class Adapt(Discover):
 
 # n_unique_atoms.append(len(atoms_list))
 # n_unique_templates.append(len(templates))
+
+# init_max = max(init_train_target)
+# experiment_df = pd.DataFrame(experiments)
+# experiment_df["cummax"] = experiment_df.target.cummax()
+# experiment_df.loc[experiment_df["cummax"] <= init_max, "cummax"] = init_max
+
+# experiment_df["cumthresh"] = (
+#     experiment_df.target >= extraordinary_thresh
+# ).cumsum()
+
+# atoms_list = set()
+# templates = set()
+# for formula in init_train_formula:
+#     atoms, _ = _fractional_composition_L(formula)
+#     _, counts = _element_composition_L(formula)
+#     atoms_list.update(atoms)
+#     counts = (
+#         np.array(counts).astype(int)
+#         / np.gcd.reduce(np.array(counts).astype(int))
+#     ).tolist()
+#     template = tuple(sorted(counts))
+#     templates.add(template)
+
+# n_unique_atoms = []
+# n_unique_templates = []
+
+# for formula in experiment_df.formula:
+#     atoms, _ = _fractional_composition_L(formula)
+#     _, counts = _element_composition_L(formula)
+#     atoms_list.update(atoms)
+#     n_unique_atoms.append(len(atoms_list))
+#     counts = (
+#         np.array(counts).astype(int)
+#         / np.gcd.reduce(np.array(counts).astype(int))
+#     ).tolist()
+#     template = tuple(sorted(counts))
+#     templates.add(template)
+#     n_unique_templates.append(len(templates))
+
+# experiment_df["n_unique_atoms"] = n_unique_atoms
+# experiment_df["n_unique_templates"] = n_unique_templates
+
+# init_train_formula = self.train_df.formula
+# init_train_target = self.train_df.target
 
