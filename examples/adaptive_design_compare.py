@@ -1,7 +1,9 @@
 """Compare DiSCoVeR to random search."""
 # %% imports
 import dill as pickle
+from copy import deepcopy
 from os.path import join
+from tqdm import tqdm
 import numpy as np
 
 from mat_discover.utils.extraordinary import (
@@ -9,9 +11,10 @@ from mat_discover.utils.extraordinary import (
     extraordinary_histogram,
 )
 
+from crabnet.train_crabnet import get_model
 from crabnet.data.materials_data import elasticity
 from mat_discover.utils.data import data
-from mat_discover.adaptive_design import Adapt
+from mat_discover.adaptive_design import Adapt, ad_experiments_metrics
 
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
@@ -33,15 +36,15 @@ if dummy_run:
     n_iter = 3
     n_repeats = 1
 else:
-    n_iter = 900  # of objective function evaluations (e.g. wet-lab synthesis)
-    n_repeats = 3
+    n_iter = 400  # of objective function evaluations (e.g. wet-lab synthesis)
+    n_repeats = 1
 
 # name_mapper = {"target": "Bulk Modulus (GPa)"}
 # extraordinary_histogram(train_df, val_df, labels=name_mapper)
 
 rand_experiments = []
 
-for i in range(n_repeats):
+for i in range(n_repeats + 4):
     print(f"[RANDOM-EXPERIMENT: {i}]")
     adapt = Adapt(
         train_df,
@@ -57,21 +60,21 @@ for i in range(n_repeats):
         )
     )
 
-# novelty_experiments = []
-# for i in range(n_repeats):
-#     print(f"[NOVELTY-EXPERIMENT: {i}]")
-#     adapt = Adapt(
-#         train_df,
-#         val_df,
-#         timed=False,
-#         dummy_run=dummy_run,
-#         device="cpu",
-#         dist_device="cuda",
-#         pred_weight=0,
-#     )
-#     novelty_experiments.append(
-#         adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
-#     )
+novelty_experiments = []
+for i in range(n_repeats):
+    print(f"[NOVELTY-EXPERIMENT: {i}]")
+    adapt = Adapt(
+        train_df,
+        val_df,
+        timed=False,
+        dummy_run=dummy_run,
+        device="cuda",
+        dist_device="cuda",
+        pred_weight=0,
+    )
+    novelty_experiments.append(
+        adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
+    )
 
 equal_experiments = []
 for i in range(n_repeats):
@@ -88,27 +91,52 @@ for i in range(n_repeats):
         adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
     )
 
-# performance_experiments = []
+performance_experiments = []
+for i in range(n_repeats):
+    print(f"[PERFORMANCE-EXPERIMENT: {i}]")
+    adapt = Adapt(
+        train_df,
+        val_df,
+        timed=False,
+        dummy_run=dummy_run,
+        device="cuda",
+        dist_device="cuda",
+        proxy_weight=0,
+    )
+    performance_experiments.append(
+        adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
+    )
+
+# performance_experiments_check = []
 # for i in range(n_repeats):
 #     print(f"[PERFORMANCE-EXPERIMENT: {i}]")
-#     adapt = Adapt(
-#         train_df,
-#         val_df,
-#         timed=False,
-#         dummy_run=dummy_run,
-#         device="cpu",
-#         dist_device="cpu",
-#         proxy_weight=0,
+#     perf_train_df = deepcopy(train_df)
+#     perf_val_df = deepcopy(val_df)
+#     next_experiments = []
+#     for j in tqdm(range(n_iter)):
+#         crabnet_model = get_model(
+#             train_df=perf_train_df, verbose=False, learningcurve=False
+#         )
+#         val_true, val_pred, _, val_sigma = crabnet_model.predict(perf_val_df)
+#         perf_val_df["pred"] = val_pred
+#         perf_val_df["sigma"] = val_sigma
+#         idx = perf_val_df.pred.idxmax()
+#         # idx = np.where(val_pred == max(val_pred))[0][0]
+#         move_row = perf_val_df.loc[idx]
+#         perf_train_df.append(move_row)
+#         perf_val_df = perf_val_df.drop(index=idx)
+#         next_experiments.append(move_row.to_dict())
+#     experiment = ad_experiments_metrics(
+#         next_experiments, train_df, extraordinary_thresh
 #     )
-#     performance_experiments.append(
-#         adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
-#     )
+#     performance_experiments_check.append(experiment)
 
 experiments = [
     rand_experiments,
-    # novelty_experiments,
+    novelty_experiments,
     equal_experiments,
-    # performance_experiments,
+    performance_experiments,
+    # performance_experiments_check,
 ]
 
 y_names = ["cummax", "target", "cumthresh", "n_unique_atoms", "n_unique_templates"]
@@ -117,8 +145,8 @@ rows = len(y_names)
 cols = len(experiments)
 
 x = list(range(n_iter))
-y = np.zeros((rows, cols, n_repeats, n_iter))
-formula = rows * [cols * [n_repeats * [None]]]
+y = np.zeros((rows, cols, n_repeats + 4, n_iter))
+formula = rows * [cols * [(n_repeats + 4) * [None]]]
 for (col, experiment) in enumerate(experiments):
     for (row, y_name) in enumerate(y_names):
         for (page, sub_experiment) in enumerate(experiment):
@@ -141,23 +169,22 @@ fig = make_subplots(
 )
 
 # x_pars = ["Random", "Novelty", "50/50", "Performance"]
-x_pars = ["Random", "50/50"]
+x_pars = ["Random", "Performance", "Performance Check"]
 col_nums = [str(i) for i in range((rows - 1) * cols + 1, rows * cols + 1)]
 row_nums = [""] + [str(i) for i in list(range(cols + 1, rows * cols, cols))]
 
-# colors = ["red", "black", "green", "blue"]
-colors = ["red", "black"]
+colors = ["red", "black", "green", "blue"]
 for row in range(rows):
     for col in range(cols):
         color = colors[col]
-        for page in range(n_repeats):
+        for page in range(n_repeats + 4):
             fig.append_trace(
                 go.Scatter(
                     x=x,
                     y=y[row, col, page],
                     line=dict(color=color),
                     text=formula[row][col][page],
-                    hovertemplate="Formula: %{text} <br>Iteration: %{x} <br>Target (GPa): %{y})",
+                    hovertemplate="Formula: %{text} <br>Iteration: %{x} <br>y: %{y})",
                 ),
                 row=row + 1,
                 col=col + 1,
@@ -173,10 +200,12 @@ fig.update_layout(height=300 * rows, width=300 * cols)
 fig.show()
 
 fig.write_image(join("figures", "ad-compare.png"))
+fig.write_html(join("figures", "ad-compare.html"))
 
 with open("rand_novelty_equal_performance.pkl", "wb") as f:
     pickle.dump(experiments, f)
 
+# TODO: val RMSE vs. iteration
 # TODO: elemental prevalence distribution (periodic table?)
 # TODO: chemical template distribution (need a package)
 # TODO: 3 different parameter weightings
