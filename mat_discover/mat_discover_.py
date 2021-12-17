@@ -290,15 +290,16 @@ class Discover:
             verbose = self.verbose
         # TODO: remove the "val MAE", which is wrong (should be NaN or just not displayed)
         # turns out this is a bit more difficult because of use of self.data_loader
-        with self.Timer("train-CrabNet"):
-            self.crabnet_model = get_model(
-                mat_prop=self.mat_prop_name,
-                train_df=train_df,
-                learningcurve=False,
-                force_cpu=self.force_cpu,
-                verbose=verbose,
-                save=save,
-            )
+        if self.pred_weight != 0:
+            with self.Timer("train-CrabNet"):
+                self.crabnet_model = get_model(
+                    mat_prop=self.mat_prop_name,
+                    train_df=train_df,
+                    learningcurve=False,
+                    force_cpu=self.force_cpu,
+                    verbose=verbose,
+                    save=save,
+                )
 
         # TODO: UMAP on new data (i.e. add metric != "precomputed" functionality)
 
@@ -387,105 +388,125 @@ class Discover:
         self.ntot = self.ntrain + self.nval
         train_ids, val_ids = np.arange(self.ntrain), np.arange(self.ntrain, self.ntot)
 
-        # distance matrix
-        with self.Timer("fit-wasserstein"):
-            self.mapper.fit(self.all_formula)
-            self.dm = self.mapper.dm
+        if self.proxy_weight != 0:
+            # distance matrix
+            with self.Timer("fit-wasserstein"):
+                self.mapper.fit(self.all_formula)
+                self.dm = self.mapper.dm
 
-        # TODO: look into UMAP via GPU
-        # TODO: create and use fast, built-in Wasserstein UMAP method
+            # TODO: look into UMAP via GPU
+            # TODO: create and use fast, built-in Wasserstein UMAP method
 
-        # UMAP (clustering and visualization) (or MDS for a quick run with small dataset)
-        if (dummy_run is None and self.dummy_run) or dummy_run:
-            with self.Timer("MDS"):
-                umap_trans = MDS(n_components=2, dissimilarity="precomputed").fit(
-                    self.dm
+            # UMAP (clustering and visualization) (or MDS for a quick run with small dataset)
+            if (dummy_run is None and self.dummy_run) or dummy_run:
+                with self.Timer("MDS"):
+                    umap_trans = MDS(n_components=2, dissimilarity="precomputed").fit(
+                        self.dm
+                    )
+                std_trans = umap_trans
+                self.umap_emb = umap_trans.embedding_
+                self.std_emb = umap_trans.embedding_
+                self.umap_r_orig = np.random.rand(self.dm.shape[0])
+                self.std_r_orig = np.random.rand(self.dm.shape[0])
+            else:
+                self.umap_trans = self.umap_fit_cluster(
+                    self.dm, random_state=umap_random_state
                 )
-            std_trans = umap_trans
-            self.umap_emb = umap_trans.embedding_
-            self.std_emb = umap_trans.embedding_
-            self.umap_r_orig = np.random.rand(self.dm.shape[0])
-            self.std_r_orig = np.random.rand(self.dm.shape[0])
-        else:
-            self.umap_trans = self.umap_fit_cluster(
-                self.dm, random_state=umap_random_state
-            )
-            self.std_trans = self.umap_fit_vis(self.dm, random_state=umap_random_state)
-            self.umap_emb, self.umap_r_orig = self.extract_emb_rad(self.umap_trans)[:2]
-            self.std_emb, self.std_r_orig = self.extract_emb_rad(self.std_trans)[:2]
-
-        # HDBSCAN*
-        if (dummy_run is None and self.dummy_run) or dummy_run:
-            min_cluster_size = 5
-            min_samples = 1
-        else:
-            min_cluster_size = 50
-            min_samples = 1
-        clusterer = self.cluster(
-            self.umap_emb, min_cluster_size=min_cluster_size, min_samples=min_samples
-        )
-        self.labels = self.extract_labels_probs(clusterer)[0]
-
-        # np.unique while preserving order https://stackoverflow.com/a/12926989/13697228
-        lbl_ids = np.unique(self.labels, return_index=True)[1]
-        self.unique_labels = [self.labels[lbl_id] for lbl_id in sorted(lbl_ids)]
-
-        self.val_labels = self.labels[val_ids]
-
-        # Probability Density Function Summation
-        if self.pdf:
-            with self.Timer("gridded-pdf-summation"):
-                self.pdf_x, self.pdf_y, self.pdf_sum = self.mvn_prob_sum(
-                    self.std_emb, self.std_r_orig
+                self.std_trans = self.umap_fit_vis(
+                    self.dm, random_state=umap_random_state
                 )
-
-        # validation density contributed by training densities
-        train_emb = self.umap_emb[: self.ntrain]
-        train_r_orig = self.umap_r_orig[: self.ntrain]
-        val_emb = self.umap_emb[self.ntrain :]
-        val_r_orig = self.umap_r_orig[self.ntrain :]
-
-        self.train_df["emb"] = list(map(tuple, train_emb))
-        self.train_df["r_orig"] = train_r_orig
-        self.val_df["emb"] = list(map(tuple, val_emb))
-        self.val_df["r_orig"] = val_r_orig
-
-        with self.Timer("train-val-pdf-summation"):
-            mvn_list = list(map(my_mvn, train_emb[:, 0], train_emb[:, 1], train_r_orig))
-            pdf_list = [mvn.pdf(val_emb) for mvn in mvn_list]
-            self.val_dens = np.sum(pdf_list, axis=0)
-            self.val_log_dens = np.log(self.val_dens)
-
-        # cluster-wise predicted average
-        cluster_pred = np.array(
-            [pred.ravel()[self.labels == lbl] for lbl in self.unique_labels],
-            dtype=object,
-        )
-        self.cluster_avg = np.vectorize(np.mean)(cluster_pred).reshape(-1, 1)
-
-        # cluster-wise validation fraction
-        train_ct, val_ct = np.array(
-            [
-                [
-                    np.count_nonzero(self.labels[ids] == lbl)
-                    for lbl in self.unique_labels
+                self.umap_emb, self.umap_r_orig = self.extract_emb_rad(self.umap_trans)[
+                    :2
                 ]
-                for ids in [train_ids, val_ids]
-            ]
-        )
-        self.val_frac = (val_ct / (train_ct + val_ct)).reshape(-1, 1)
+                self.std_emb, self.std_r_orig = self.extract_emb_rad(self.std_trans)[:2]
 
-        # # Scale and weight the cluster data
-        # # REVIEW: Which Scaler to use? RobustScaler means no set limits on "score"
-        self.cluster_score = self.weighted_score(self.cluster_avg, self.val_frac)
-
-        # compound-wise scores (i.e. individual compounds)
-        with self.Timer("nearest-neighbor-properties"):
-            self.rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
-                self.dm, pred
+            # HDBSCAN*
+            if (dummy_run is None and self.dummy_run) or dummy_run:
+                min_cluster_size = 5
+                min_samples = 1
+            else:
+                min_cluster_size = 50
+                min_samples = 1
+            clusterer = self.cluster(
+                self.umap_emb,
+                min_cluster_size=min_cluster_size,
+                min_samples=min_samples,
             )
-            self.val_rad_neigh_avg = self.rad_neigh_avg_targ[val_ids]
-            self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
+            self.labels = self.extract_labels_probs(clusterer)[0]
+
+            # np.unique while preserving order https://stackoverflow.com/a/12926989/13697228
+            lbl_ids = np.unique(self.labels, return_index=True)[1]
+            self.unique_labels = [self.labels[lbl_id] for lbl_id in sorted(lbl_ids)]
+
+            self.val_labels = self.labels[val_ids]
+
+            # Probability Density Function Summation
+            if self.pdf:
+                with self.Timer("gridded-pdf-summation"):
+                    self.pdf_x, self.pdf_y, self.pdf_sum = self.mvn_prob_sum(
+                        self.std_emb, self.std_r_orig
+                    )
+
+            # validation density contributed by training densities
+            train_emb = self.umap_emb[: self.ntrain]
+            train_r_orig = self.umap_r_orig[: self.ntrain]
+            val_emb = self.umap_emb[self.ntrain :]
+            val_r_orig = self.umap_r_orig[self.ntrain :]
+
+            self.train_df["emb"] = list(map(tuple, train_emb))
+            self.train_df["r_orig"] = train_r_orig
+            self.val_df["emb"] = list(map(tuple, val_emb))
+            self.val_df["r_orig"] = val_r_orig
+
+            with self.Timer("train-val-pdf-summation"):
+                mvn_list = list(
+                    map(my_mvn, train_emb[:, 0], train_emb[:, 1], train_r_orig)
+                )
+                pdf_list = [mvn.pdf(val_emb) for mvn in mvn_list]
+                self.val_dens = np.sum(pdf_list, axis=0)
+                self.val_log_dens = np.log(self.val_dens)
+
+            self.val_df["dens"] = self.val_dens
+
+            # cluster-wise predicted average
+            cluster_pred = np.array(
+                [pred.ravel()[self.labels == lbl] for lbl in self.unique_labels],
+                dtype=object,
+            )
+            self.cluster_avg = np.vectorize(np.mean)(cluster_pred).reshape(-1, 1)
+
+            # cluster-wise validation fraction
+            train_ct, val_ct = np.array(
+                [
+                    [
+                        np.count_nonzero(self.labels[ids] == lbl)
+                        for lbl in self.unique_labels
+                    ]
+                    for ids in [train_ids, val_ids]
+                ]
+            )
+            self.val_frac = (val_ct / (train_ct + val_ct)).reshape(-1, 1)
+
+            # # Scale and weight the cluster data
+            # # REVIEW: Which Scaler to use? RobustScaler means no set limits on "score"
+            self.cluster_score = self.weighted_score(self.cluster_avg, self.val_frac)
+
+            # compound-wise scores (i.e. individual compounds)
+            with self.Timer("nearest-neighbor-properties"):
+                self.rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
+                    self.dm, pred
+                )
+                self.val_rad_neigh_avg = self.rad_neigh_avg_targ[val_ids]
+                self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
+        else:
+            self.val_rad_neigh_avg = np.zeros_like(self.val_pred)
+            self.val_k_neigh_avg = np.zeros_like(self.val_pred)
+            self.val_dens = np.zeros_like(self.val_pred)
+
+            self.val_df["emb"] = list(
+                map(tuple, np.zeros((self.val_df.shape[0], 2)).tolist())
+            )
+            self.val_df["dens"] = np.zeros(self.val_df.shape[0])
 
         self.rad_score = self.weighted_score(
             self.val_pred,
@@ -521,7 +542,15 @@ class Discover:
 
         return self.dens_score, self.peak_score
 
-    def weighted_score(self, pred, proxy, pred_weight=None, proxy_weight=None):
+    def weighted_score(
+        self,
+        pred,
+        proxy,
+        pred_weight=None,
+        proxy_weight=None,
+        pred_scaler=None,
+        proxy_scaler=None,
+    ):
         """Calculate weighted discovery score using the predicted target and proxy.
 
         Parameters
@@ -553,10 +582,12 @@ class Discover:
         pred = pred.ravel().reshape(-1, 1)
         proxy = proxy.ravel().reshape(-1, 1)
         # Scale and weight the cluster data
-        pred_scaler = self.Scaler().fit(pred)
-        pred_scaled = pred_weight * pred_scaler.transform(pred)
-        proxy_scaler = self.Scaler().fit(-1 * proxy)
-        proxy_scaled = proxy_weight * proxy_scaler.transform(-1 * proxy)
+        if pred_scaler is None:
+            self.pred_scaler = self.Scaler().fit(pred)
+        pred_scaled = pred_weight * self.pred_scaler.transform(pred)
+        if proxy_scaler is None:
+            self.proxy_scaler = self.Scaler().fit(-1 * proxy)
+        proxy_scaled = proxy_weight * self.proxy_scaler.transform(-1 * proxy)
 
         # combined cluster data
         comb_data = pred_scaled + proxy_scaled
@@ -597,6 +628,7 @@ class Discover:
                 "prediction": self.val_pred,
                 proxy_name: proxy,
                 "score": score,
+                "index": self.val_df["index"],
             }
         )
         score_df.sort_values("score", ascending=False, inplace=True)
