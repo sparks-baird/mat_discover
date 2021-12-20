@@ -11,4 +11,4 @@ chem_wasserstein==1.0.6
 crabnet==1.0.6
 scikit-learn==1.0.1
 sphinx==4.3.1
-myst-parser==0.15.2
+myst-parser==0.16.1
