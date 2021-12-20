@@ -11,6 +11,8 @@ class Adapt(Discover):
         super().__init__(**Discover_kwargs)
         self.train_df = deepcopy(train_df)
         self.val_df = deepcopy(val_df)
+        self.pred_scaler = None
+        self.proxy_scaler = None
 
     def suggest_first_experiment(
         self,
@@ -64,6 +66,13 @@ class Adapt(Discover):
                     val_emb = np.array(self.val_df.emb.tolist())
 
                     train_r_orig = self.train_df.r_orig.values
+
+                    if predict_kwargs.get("count_repeats", False):
+                        counts = self.train_df["counts"]
+                        train_r_orig = [
+                            r / count for (r, count) in zip(train_r_orig, counts)
+                        ]
+
                     mvn_list = list(
                         map(my_mvn, train_emb[:, 0], train_emb[:, 1], train_r_orig)
                     )
