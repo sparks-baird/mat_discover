@@ -78,7 +78,7 @@ see [CAMD](https://github.com/TRI-AMDD/CAMD) ([trihackathon2020 tutorial noteboo
 [Heteroscedastic-BO](https://github.com/Ryan-Rhys/Heteroscedastic-BO), and
 [thermo](https://github.com/janosh/thermo).
 
-For materials informatics (MI) and other relevant codebases, see:
+For materials informatics (MI) and other relevant codebases/links, see:
 
 - [my lists of (total ~200) MI codebases](https://github.com/sgbaird?tab=stars),
   in particular:
@@ -86,7 +86,7 @@ For materials informatics (MI) and other relevant codebases, see:
   - [composition](https://github.com/stars/sgbaird/lists/%EF%B8%8F-composition-predictions)-,
     [crystal structure](https://github.com/stars/sgbaird/lists/structural-predictions)-,
     and [molecule](https://github.com/stars/sgbaird/lists/molecule-predictions)-based predictions
-  - [MI databases](https://github.com/stars/sgbaird/lists/materials-databases)
+  - [MI databases](https://github.com/stars/sgbaird/lists/materials-databases), especially [NOMAD](https://nomad-lab.eu/)
   - [MI materials synthesis](https://github.com/stars/sgbaird/lists/materials-synthesis)
   - [MI natural language processing](https://github.com/stars/sgbaird/lists/materials-nlp)
   - [physics-based MI simulations](https://github.com/stars/sgbaird/lists/materials-synthesis)
