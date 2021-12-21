@@ -74,7 +74,7 @@ working on an [implementation of composition-based Bayesian optimization
 using Ax](https://github.com/facebook/Ax/issues/727) (2021-12-10).
 
 For alternative "suggest next experiment" materials discovery algorithms,
-see [PyChemia](https://github.com/MaterialsDiscovery/PyChemia),
+see [CAMD](https://github.com/TRI-AMDD/CAMD) ([trihackathon2020 tutorial notebooks](https://github.com/TRI-AMDD/tri-hackathon-2020)), [PyChemia](https://github.com/MaterialsDiscovery/PyChemia),
 [Heteroscedastic-BO](https://github.com/Ryan-Rhys/Heteroscedastic-BO), and
 [thermo](https://github.com/janosh/thermo).
 
