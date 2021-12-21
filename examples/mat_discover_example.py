@@ -10,7 +10,7 @@ dummy = False
 # set gcv to False for a quicker run --> group-cross validation can take a while
 gcv = False
 disc = Discover(dummy_run=dummy, device="cuda")
-train_df, val_df = disc.data(elasticity, "train.csv", dummy=dummy)
+train_df, val_df = disc.data(elasticity, fname="train.csv", dummy=dummy)
 cat_df = pd.concat((train_df, val_df), axis=0)
 
 # %% fit
