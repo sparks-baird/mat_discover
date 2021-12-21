@@ -247,7 +247,7 @@ def group_cv_parity(ytrue, ypred, labels, figure_dir="figures"):
     return fig
 
 
-def matplotlibify(fig, size=24):
+def matplotlibify(fig, size=24, width_inches=3.5, height_inches=3.5, dpi=142):
     # make it look more like matplotlib
     # modified from: https://medium.com/swlh/formatting-a-plotly-figure-with-matplotlib-style-fa56ddd97539)
     font_dict = dict(family="Arial", size=size, color="black")
@@ -256,10 +256,6 @@ def matplotlibify(fig, size=24):
     # screen = app.screens()[0]
     # dpi = screen.physicalDotsPerInch()
     # app.quit()
-    dpi = 142
-
-    width_inches = 3.5
-    height_inches = width_inches
 
     fig.update_layout(
         font=font_dict,
