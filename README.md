@@ -45,15 +45,23 @@ Discovery](https://www.rsc.org/journals-books-databases/about-journals/digital-d
 
 ## DiSCoVeR Workflow
 
-Why you'd want to use this tool, alternative tools, and summaries of the workflow.
+Why you'd want to use this tool, whether it's "any good", alternative tools, and summaries of the workflow.
 
 ### Why DiSCoVeR?
 
-The primary anticipated use-case of DiSCoVeR is that you have some training data
-(chemical formulas and target property), and you would like to determine the "next best
-experiment" to perform based on a user-defined relative importance of performance
-vs. chemical novelty. You can even run the model without any training targets which is
-equivalent to setting the target weight as 0.
+The primary anticipated use-case of DiSCoVeR is that you have some training data (chemical formulas and target property), and you would like to determine the "next best experiment" to perform based on a user-defined relative importance of performance vs. chemical novelty. You can even run the model without any training targets which is equivalent to setting the target weight as 0.
+
+### Is it any good?
+
+Take an initial training set of 100 chemical formulas and associated Materials Project bulk moduli followed by 900 adaptive design iterations (x-axis) using random search, novelty (performance weighted at 0), a 50/50 weighting split, and performance (novelty weighted at 0). These are the columns. The rows are the best observed bulk modulus, the currently observed bulk modulus, the total number of observed "extraordinary" compounds (top 2%), and the total number of _additional_ unique atoms and chemical formulae templates added. These are the rows. In other words:
+1. What's the best bulk modulus observed so far?
+2. What bulk modulus was observed during this iteration?
+3. How many "extraordinary" compounds have been observed so far?
+4. How many unique atoms have been explored so far? (not counting atoms already in the starting 100 formulas)
+5. How many unique chemical templates (e.g. A2B3, ABC, ABC2) have been explored so far? (not counting templates already in the starting 100 formulas)
+
+The 50/50 weighting split offers a good trade-off.
+
 
 ### Alternatives
 
