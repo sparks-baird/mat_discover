@@ -33,9 +33,8 @@ A materials discovery algorithm geared towards exploring high performance candid
 <sup>Bulk modulus values overlaid on DensMAP densities (cropped).</sup>
 
 We describe the DiSCoVeR algorithm, how to install `mat_discover`, basic usage (e.g.
-`fit`/`predict` custom or built-in datasets). Interactive plots for several types of
-Pareto front plots can be found
-[here](https://mat-discover.readthedocs.io/en/latest/figures.html). We also describe how
+`fit`/`predict`, custom or built-in datasets, adaptive design). [Interactive plots](https://mat-discover.readthedocs.io/en/latest/figures.html) for several types of
+Pareto front plots are available via [the mat_discover documentation](https://mat-discover.readthedocs.io/en/latest/). We also describe how
 to contribute, what to do if you run into bugs or have questions, and citation information.
 
 The article ([ChemRxiv](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3)) is under
@@ -45,15 +44,25 @@ Discovery](https://www.rsc.org/journals-books-databases/about-journals/digital-d
 
 ## DiSCoVeR Workflow
 
-Why you'd want to use this tool, alternative tools, and summaries of the workflow.
+Why you'd want to use this tool, whether it's "any good", alternative tools, and summaries of the workflow.
 
 ### Why DiSCoVeR?
 
-The primary anticipated use-case of DiSCoVeR is that you have some training data
-(chemical formulas and target property), and you would like to determine the "next best
-experiment" to perform based on a user-defined relative importance of performance
-vs. chemical novelty. You can even run the model without any training targets which is
-equivalent to setting the target weight as 0.
+The primary anticipated use-case of DiSCoVeR is that you have some training data (chemical formulas and target property), and you would like to determine the "next best experiment" to perform based on a user-defined relative importance of performance vs. chemical novelty. You can even run the model without any training targets which is equivalent to setting the target weight as 0.
+
+### Is it any good?
+
+Take an initial training set of 100 chemical formulas and associated Materials Project bulk moduli followed by 900 adaptive design iterations (x-axis) using random search, novelty-only (performance weighted at 0), a 50/50 weighting split, and performance-only (novelty weighted at 0). These are the columns. The rows are the total number of observed "extraordinary" compounds (top 2%), the total number of _additional_ unique atoms, and total number of additional unique chemical formulae templates. These are the rows. In other words:
+1. How many "extraordinary" compounds have been observed so far?
+1. How many unique atoms have been explored so far? (not counting atoms already in the starting 100 formulas)
+1. How many unique chemical templates (e.g. A2B3, ABC, ABC2) have been explored so far? (not counting templates already in the starting 100 formulas)
+
+The 50/50 weighting split offers a good trade-off between performance and novelty. Click the image to navigate to the interactive figure.
+
+<a href=https://mat-discover.readthedocs.io/en/latest/figures.html#adaptive-design-comparison>
+  <img src=https://user-images.githubusercontent.com/45469701/146947278-6399e996-ce9a-46bd-bda7-e3b4feedc525.png width=675>
+</a>
+
 
 ### Alternatives
 
@@ -64,11 +73,11 @@ working on an [implementation of composition-based Bayesian optimization
 using Ax](https://github.com/facebook/Ax/issues/727) (2021-12-10).
 
 For alternative "suggest next experiment" materials discovery algorithms,
-see [PyChemia](https://github.com/MaterialsDiscovery/PyChemia),
+see [CAMD](https://github.com/TRI-AMDD/CAMD) ([trihackathon2020 tutorial notebooks](https://github.com/TRI-AMDD/tri-hackathon-2020)), [PyChemia](https://github.com/MaterialsDiscovery/PyChemia),
 [Heteroscedastic-BO](https://github.com/Ryan-Rhys/Heteroscedastic-BO), and
 [thermo](https://github.com/janosh/thermo).
 
-For materials informatics (MI) and other relevant codebases, see:
+For materials informatics (MI) and other relevant codebases/links, see:
 
 - [my lists of (total ~200) MI codebases](https://github.com/sgbaird?tab=stars),
   in particular:
@@ -76,7 +85,7 @@ For materials informatics (MI) and other relevant codebases, see:
   - [composition](https://github.com/stars/sgbaird/lists/%EF%B8%8F-composition-predictions)-,
     [crystal structure](https://github.com/stars/sgbaird/lists/structural-predictions)-,
     and [molecule](https://github.com/stars/sgbaird/lists/molecule-predictions)-based predictions
-  - [MI databases](https://github.com/stars/sgbaird/lists/materials-databases)
+  - [MI databases](https://github.com/stars/sgbaird/lists/materials-databases), especially [NOMAD](https://nomad-lab.eu/)
   - [MI materials synthesis](https://github.com/stars/sgbaird/lists/materials-synthesis)
   - [MI natural language processing](https://github.com/stars/sgbaird/lists/materials-nlp)
   - [physics-based MI simulations](https://github.com/stars/sgbaird/lists/materials-synthesis)
@@ -88,12 +97,14 @@ For materials informatics (MI) and other relevant codebases, see:
   informatics](https://github.com/tilde-lab/awesome-materials-informatics) (~100 as of 2021-12-10)
 
 ### Visualization
+The DiSCoVeR workflow is visualized as follows:
 
 <img src="https://sparks-baird.github.io/mat_discover/figures/discover-workflow.png" alt="DiSCoVeR Workflow" width=600>
 
 <sup>Figure 1: DiSCoVeR workflow to create chemically homogeneous clusters.  (a) Training and validation data are obtained inthe form of chemical formulas and target properties (i.e.  performance).  (b) The training and validation chemical formulasare combined and used to compute ElMD pairwise distances.  (c) ElMD pairwise distance matrices are used to computeDensMAP embeddings and DensMAP densities.  (d) DensMAP embeddings are used to compute HDBSCAN\* clusters.(e) Validation target property predictions are made via CrabNet and plotted against the uniqueness proxy (e.g.  densityproxy) in the form of a Pareto front plot.  Discovery scores are assigned based on the (arbitrarily) weighted sum of scaledperformance and uniqueness proxy.  Higher scores are better.  (f) HDBSCAN* clustering results can be used to obtain acluster-wise performance (e.g.  average target property) plotted against a cluster-wise uniqueness proxy (e.g.  fraction ofvalidation compounds vs.  total compounds within a cluster).</sup>
 
 ### Tabular Summary
+A summary of the DiSCoVeR methods are given in the following table:
 
 <sup>Table  1:  A  description  of  methods  used  in  this  work  and  each  method’s  role  in  DiSCoVeR.∗A  Pareto  front  is  moreinformation-dense  than  a  proxy  score  in  that  there  are  no  predefined  relative  weights  for  performance  vs.   uniquenessproxy.  Compounds that are closer to the Pareto front are better.  The upper areas of the plot represent a higher weighttowards performance while the right-most areas of the plot represent a higher weight towards uniqueness.</sup>
 | Method                                                                   | What is it?                                   | What is its role in DiSCoVeR?           |
@@ -178,7 +189,7 @@ To perform the local installation, you can use `pip`, `conda`, or `flit`. If usi
 <!-- conda install torch cudatoolkit=11.1 -c pytorch -c conda-forge # or use pip command specific to you from https://pytorch.org/get-started/locally/ -->
 
 ## Basic Usage
-How to `fit`/`predict` and use custom or built-in datasets.
+How to `fit`/`predict`, use custom or built-in datasets, and perform adaptive design.
 
 ### Fit/Predict
 
@@ -263,6 +274,35 @@ The built-in data directories are as follows:
 To see what `.csv` files are available (e.g. `train.csv`), you will probably need to navigate to [CrabNet/data/](https://github.com/sgbaird/CrabNet/tree/master/crabnet/data) and explore.
 
 Finally, to download data from Materials Project directly, see [generate_elasticity_data.py](https://github.com/sparks-baird/mat_discover/blob/main/mat_discover/utils/generate_elasticity_data.py).
+
+### Adaptive Design
+The anticipated end-use of `mat_discover` is in an adaptive design scheme where the objective function (e.g. wetlab synthesis and characterization) is expensive. After loading some data for a validation scenario (or your own data)
+```python
+from crabnet.data.materials_data import elasticity
+from mat_discover.utils.data import data
+from mat_discover.adaptive_design import Adapt
+train_df, val_df = data(elasticity, "train.csv", dummy=False, random_state=42)
+train_df, val_df, extraordinary_thresh = extraordinary_split(
+    train_df, val_df, train_size=100, extraordinary_percentile=0.98, random_state=42
+)
+```
+you can then predict your first additional experiment to run via:
+```python
+adapt = Adapt(train_df, val_df, timed=False)
+first_experiment = adapt.suggest_first_experiment() # fit Discover() to train_df, then move top-ranked from val_df to train_df
+```
+Subsequent experiments are suggested as follows:
+```python
+second_experiment = adapt.suggest_next_experiment() # refit CrabNet, use existing DensMAP data, move top-ranked from val to train
+third_experiment = adapt.suggest_next_experiment()
+```
+
+Alternatively, you can do this in a closed loop via:
+```python
+n_iter = 100
+adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
+```
+However, as the name suggests, the closed loop approach does not allow you to input data after each suggested experiment.
 
 ## Developing and Contributing
 

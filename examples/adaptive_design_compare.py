@@ -16,6 +16,7 @@ from crabnet.data.materials_data import elasticity
 from mat_discover.utils.data import data
 from mat_discover.adaptive_design import Adapt, ad_experiments_metrics
 
+from mat_discover.utils.plotting import matplotlibify
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
@@ -36,11 +37,11 @@ if dummy_run:
     n_iter = 3
     n_repeats = 1
 else:
-    n_iter = 400  # of objective function evaluations (e.g. wet-lab synthesis)
+    n_iter = 900  # of objective function evaluations (e.g. wet-lab synthesis)
     n_repeats = 1
 
-# name_mapper = {"target": "Bulk Modulus (GPa)"}
-# extraordinary_histogram(train_df, val_df, labels=name_mapper)
+name_mapper = {"target": "Bulk Modulus (GPa)"}
+extraordinary_histogram(train_df, val_df, labels=name_mapper)
 
 rand_experiments = []
 
@@ -168,8 +169,8 @@ fig = make_subplots(
     rows=rows, cols=cols, shared_xaxes=True, shared_yaxes=True, vertical_spacing=0.02
 )
 
-# x_pars = ["Random", "Novelty", "50/50", "Performance"]
-x_pars = ["Random", "Performance", "Performance Check"]
+x_pars = ["Random", "Novelty", "50/50", "Performance"]
+# x_pars = ["Random", "Performance", "Performance Check"]
 col_nums = [str(i) for i in range((rows - 1) * cols + 1, rows * cols + 1)]
 row_nums = [""] + [str(i) for i in list(range(cols + 1, rows * cols, cols))]
 
@@ -178,17 +179,19 @@ for row in range(rows):
     for col in range(cols):
         color = colors[col]
         for page in range(n_repeats + 4):
-            fig.append_trace(
-                go.Scatter(
-                    x=x,
-                    y=y[row, col, page],
-                    line=dict(color=color),
-                    text=formula[row][col][page],
-                    hovertemplate="Formula: %{text} <br>Iteration: %{x} <br>y: %{y})",
-                ),
-                row=row + 1,
-                col=col + 1,
-            )
+            # if col == 0 or page == 0:
+            if page == 0:
+                fig.append_trace(
+                    go.Scatter(
+                        x=x,
+                        y=y[row, col, page],
+                        line=dict(color=color),
+                        text=formula[row][col][page],
+                        hovertemplate="Formula: %{text} <br>Iteration: %{x} <br>y: %{y}",
+                    ),
+                    row=row + 1,
+                    col=col + 1,
+                )
 for col_num, x_par in zip(col_nums, x_pars):
     fig["layout"][f"xaxis{col_num}"]["title"] = f"{x_par} AD Iteration (#)"
 
@@ -199,8 +202,11 @@ fig.update_traces(showlegend=False)
 fig.update_layout(height=300 * rows, width=300 * cols)
 fig.show()
 
-fig.write_image(join("figures", "ad-compare.png"))
 fig.write_html(join("figures", "ad-compare.html"))
+
+
+fig2, scale = matplotlibify(fig, size=28, width_inches=3.5*cols, height_inches=3.5*rows)
+fig2.write_image(join("figures", "ad-compare.png"))
 
 with open("rand_novelty_equal_performance.pkl", "wb") as f:
     pickle.dump(experiments, f)

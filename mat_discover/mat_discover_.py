@@ -311,6 +311,7 @@ class Discover:
         pred_weight=None,
         proxy_weight=None,
         dummy_run=None,
+        count_repeats=False,
     ):
         """Predict target and proxy for validation dataset.
 
@@ -453,12 +454,17 @@ class Discover:
             val_emb = self.umap_emb[self.ntrain :]
             val_r_orig = self.umap_r_orig[self.ntrain :]
 
+            if count_repeats:
+                counts = self.train_df["counts"]
+                train_r_orig = [r / count for (r, count) in zip(train_r_orig, counts)]
+
             self.train_df["emb"] = list(map(tuple, train_emb))
             self.train_df["r_orig"] = train_r_orig
             self.val_df["emb"] = list(map(tuple, val_emb))
             self.val_df["r_orig"] = val_r_orig
 
             with self.Timer("train-val-pdf-summation"):
+                # TODO: factor in repeats (df["counts"]) with flag
                 mvn_list = list(
                     map(my_mvn, train_emb[:, 0], train_emb[:, 1], train_r_orig)
                 )
