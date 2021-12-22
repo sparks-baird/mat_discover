@@ -2,23 +2,23 @@ name: Install with flit and test via Pytest
 
 on:
   push:
-    paths:
-    - '**.py' # only run workflow when source files changed
+#     paths:
+#     - '**.py' # only run workflow when source files changed
 
 jobs:
   linux-pytest:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 5
+      matrix:
+        python-version: ['3.7', '3.8', '3.9']
 
     steps:
     - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-    - name: Set up Python 3.8
+    - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.8'
+        python-version: ${{ matrix.python-version }}
       
     - name: Check Black code style
       uses: psf/black@stable #https://black.readthedocs.io/en/stable/integrations/github_actions.html
@@ -46,3 +46,6 @@ jobs:
 #         subdir: 'conda'
 #         anacondatoken: ${{ secrets.ANACONDA_TOKEN }}
 #         platforms: 'win osx linux'
+
+#       with:
+#         submodules: recursive
