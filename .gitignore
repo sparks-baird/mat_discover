@@ -164,3 +164,6 @@ examples/tables/**
 examples/figures/**
 examples/models/**
 examples/hyperparameter_combinations/hyperparameter_combinations.ipynb
+mat_discover/data/thermoelectric-train.csv
+mat_discover/data/train.xlsx
+mat_discover/data/val.xlsx
