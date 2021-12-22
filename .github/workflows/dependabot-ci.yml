@@ -1,10 +1,13 @@
 name: Dependabot CI
-on: pull_request
+on:
+  pull_request:
+    paths:
+      - "**/requirements.txt"
       
 jobs:
   dependabot:
     runs-on: ubuntu-latest
-    if: ${{ github.actor == 'dependabot[bot]' }}
+#     if: ${{ github.actor == 'dependabot[bot]' }}
     strategy:
       max-parallel: 5
 
