@@ -34,7 +34,7 @@ A materials discovery algorithm geared towards exploring high performance candid
 
 We describe the DiSCoVeR algorithm, how to install `mat_discover`, basic usage (e.g.
 `fit`/`predict`, custom or built-in datasets, adaptive design). [Interactive plots](https://mat-discover.readthedocs.io/en/latest/figures.html) for several types of
-Pareto front plots are available via [the mat_discover documentation](https://mat-discover.readthedocs.io/en/latest/). We also describe how
+Pareto front plots are available via [the `mat_discover` documentation](https://mat-discover.readthedocs.io/en/latest/). We also describe how
 to contribute, what to do if you run into bugs or have questions, and citation information.
 
 The article ([ChemRxiv](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3)) is under
