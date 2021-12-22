@@ -205,7 +205,9 @@ fig.show()
 fig.write_html(join("figures", "ad-compare.html"))
 
 
-fig2, scale = matplotlibify(fig, size=28, width_inches=3.5*cols, height_inches=3.5*rows)
+fig2, scale = matplotlibify(
+    fig, size=28, width_inches=3.5 * cols, height_inches=3.5 * rows
+)
 fig2.write_image(join("figures", "ad-compare.png"))
 
 with open("rand_novelty_equal_performance.pkl", "wb") as f:
