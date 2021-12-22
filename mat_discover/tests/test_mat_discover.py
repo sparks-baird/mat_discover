@@ -24,7 +24,7 @@ def test_mat_discover():
     dataset rather than UMAP on a large dataset (for faster runtimes).
     """
     disc = Discover(dummy_run=True)
-    train_df, val_df = disc.data(elasticity, "train.csv", dummy=True)
+    train_df, val_df = disc.data(elasticity, fname="train.csv", dummy=True)
     disc.fit(train_df)
     score = disc.predict(val_df, umap_random_state=42)
     cat_df = pd.concat((train_df, val_df), axis=0)
