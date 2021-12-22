@@ -108,7 +108,10 @@ def cdf_sorting_error(y_true, y_pred, y_dummy=None):
 
     # Dummy Error (i.e. if you "guess" the mean of training targets)
     dummy_error = wasserstein_distance(
-        u, v, u_weights=u_weights, v_weights=dummy_v_weights,
+        u,
+        v,
+        u_weights=u_weights,
+        v_weights=dummy_v_weights,
     )
 
     # Similar to Matbench "scaled_error"
@@ -610,7 +613,7 @@ class Discover:
         ----------
         score : 1D Array
             Discovery scores for the given proxy given by `proxy_name`.
-            
+
         proxy_name : string, optional
             Name of the proxy, by default "density". Possible values are "density"
             (`self.val_dens`), "peak" (`self.k_neigh_avg`), and "radius"
@@ -1340,4 +1343,3 @@ class Discover:
 #     skip_umap = True
 # else:
 #     skip_umap = False
-

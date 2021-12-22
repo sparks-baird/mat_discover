@@ -79,7 +79,9 @@ def extraordinary_histogram(
     )
 
     fig.update_layout(
-        legend_orientation="h", legend_y=1.025, legend_yanchor="bottom",
+        legend_orientation="h",
+        legend_y=1.025,
+        legend_yanchor="bottom",
     )
 
     fig, scale = matplotlibify(fig, size=20)
@@ -95,4 +97,3 @@ def extraordinary_histogram(
 # extraordinary_df = train_val_df.head(n_extraordinary)
 # extraordinary_lower = extraordinary_df.tail(1).target.values[0]
 # train_val_df = train_val_df.iloc[n_extraordinary:]
-
