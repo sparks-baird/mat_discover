@@ -159,7 +159,7 @@ pip install -U pip
 Due to limitations of PyPI distributions of CUDA/PyTorch, you will need to install PyTorch separately via the command that's most relevant to you ([PyTorch Getting Started](https://pytorch.org/get-started/locally/)). For example, for Stable/Windows/Pip/Python/CUDA-11.3:
 
 ```python
-pip3 install torch==1.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
+pip install torch==1.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
 ```
 
 <!--- ```python
