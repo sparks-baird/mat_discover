@@ -97,7 +97,7 @@ def pareto_plot(
         What kind of parity line to plot: "max-of-both", "max-of-each", or "none"
     """
     mx = np.max(df[color])
-    if color_continuous_scale is None and color_discrete_map is None:
+    if color_continuous_scale is None and color_discrete_map is None and mx >= 1:
         if isinstance(df[color].iloc[0], (int, np.integer)):
             # if mx < 24:
             #     df.loc[:, color] = df[color].astype(str)
@@ -132,18 +132,15 @@ def pareto_plot(
         scatter_color_kwargs = {"color_continuous_scale": color_continuous_scale}
     elif color_discrete_map is not None:
         scatter_color_kwargs = {"color_discrete_sequence": color_discrete_map}
+    else:
+        scatter_color_kwargs = {}
 
     # trace order counts 0, 1, 2, ... instead of 0, 1, 10, 11
     df["color_num"] = df[color].astype(int)
     df = df.sort_values("color_num")
 
     fig = px.scatter(
-        df,
-        x=x,
-        y=y,
-        color=color,
-        hover_data=hover_data,
-        **scatter_color_kwargs,
+        df, x=x, y=y, color=color, hover_data=hover_data, **scatter_color_kwargs,
     )
 
     # unpack
