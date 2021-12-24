@@ -51,3 +51,21 @@ This is a work-in-progress.
 .. literalinclude:: ../../examples/real_predictions.py
     :caption: `/examples/real_predictions.py <https://github.com/sparks-baird/mat_discover/blob/main/examples/real_predictions.py>`_
     :language: python
+
+Adaptive Design Comparison
+--------------------------
+Use the `Adapt()` class to perform adaptive design for several hyperparameter
+combinations and compare against random search.
+
+.. literalinclude:: ../../examples/adaptive_design_compare.py
+    :caption: `/examples/adaptive_design_compare.py <https://github.com/sparks-baird/mat_discover/blob/main/examples/adaptive_design_compare.py>`_
+    :language: python
+
+Bare Bones
+----------
+Looking to implement DiSCoVeR yourself or better understand it, but without all the
+Python class trickery and imports from multiple files?
+
+.. literalinclude:: ../../examples/bare_bones.py
+    :caption: `/examples/bare_bones.py <https://github.com/sparks-baird/mat_discover/blob/main/examples/bare_bones.py>`_
+    :language: python
