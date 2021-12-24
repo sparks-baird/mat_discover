@@ -126,7 +126,7 @@ initial testing. After installing
 [Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or
 [Miniconda](https://docs.conda.io/en/latest/miniconda.html), you can [create a new
 environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands)
-in Python `3.8` (for which `mat_discover` is tested) via:
+in Python `3.8` (`mat_discover` is also tested on `3.7` and `3.9`) via:
 
 ```python
 conda create --name mat_discover python==3.8
