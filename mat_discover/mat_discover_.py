@@ -413,16 +413,19 @@ class Discover:
                 self.umap_r_orig = np.random.rand(self.dm.shape[0])
                 self.std_r_orig = np.random.rand(self.dm.shape[0])
             else:
-                self.umap_trans = self.umap_fit_cluster(
-                    self.dm, random_state=umap_random_state
-                )
-                self.std_trans = self.umap_fit_vis(
-                    self.dm, random_state=umap_random_state
-                )
-                self.umap_emb, self.umap_r_orig = self.extract_emb_rad(self.umap_trans)[
-                    :2
-                ]
-                self.std_emb, self.std_r_orig = self.extract_emb_rad(self.std_trans)[:2]
+                with self.Timer("DensMAP"):
+                    self.umap_trans = self.umap_fit_cluster(
+                        self.dm, random_state=umap_random_state
+                    )
+                    self.std_trans = self.umap_fit_vis(
+                        self.dm, random_state=umap_random_state
+                    )
+                    self.umap_emb, self.umap_r_orig = self.extract_emb_rad(
+                        self.umap_trans
+                    )[:2]
+                    self.std_emb, self.std_r_orig = self.extract_emb_rad(
+                        self.std_trans
+                    )[:2]
 
             # HDBSCAN*
             if (dummy_run is None and self.dummy_run) or dummy_run:
@@ -956,6 +959,7 @@ class Discover:
                 n_components=2,
                 metric="precomputed",
                 random_state=random_state,
+                low_memory=False,
             ).fit(dm)
         return umap_trans
 
@@ -992,6 +996,7 @@ class Discover:
                 dens_lambda=self.dens_lambda,
                 metric="precomputed",
                 random_state=random_state,
+                low_memory=False,
             ).fit(dm)
         return std_trans
 
