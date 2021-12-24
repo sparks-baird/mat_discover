@@ -2,7 +2,7 @@
 # DiSCoVeR
 
 [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=examples%2Fmat_discover_pypi.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=mat_discover_pypi.ipynb)
 [![Open in Code Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://doi.org/10.24433/CO.8463578.v1)
 [![Interactive Figures](https://img.shields.io/static/v1?message=Open%20interactive%20figures&logo=github&labelColor=5c5c5c&color=blueviolet&logoColor=white&label=%20)](https://mat-discover.readthedocs.io/en/latest/figures.html)
 [![Documentation Status](https://readthedocs.org/projects/mat-discover/badge/?version=latest)](https://mat-discover.readthedocs.io/en/latest/?badge=latest)
@@ -210,7 +210,7 @@ See
 [![Open In Colab
 (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing),
 or
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=examples%2Fmat_discover_pypi.ipynb).
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sparks-baird/mat_discover/main?labpath=mat_discover_pypi.ipynb).
 On Google Colab and Binder, this may take a few minutes to install and load,
 respectively. During training and prediction, Google Colab will be faster than Binder
 since Google Colab has access to a GPU while Binder does not.
