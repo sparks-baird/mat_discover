@@ -26,9 +26,9 @@ dependencies = [
     "dill",
     "crabnet >=1.1.6",
     "chem_wasserstein >=1.0.8",
+    # "ElMD==0.4.8", #PyPI
     # "pymatgen",
     # "joblib",
-    # "ElMD==0.4.8", #PyPI
     # "psutil",
     # for torch, run "set PIP_FIND_LINKS=https://download.pytorch.org/whl/torch_stable.html" before "flit install"
     # see also: https://github.com/takluyver/flit/issues/369
