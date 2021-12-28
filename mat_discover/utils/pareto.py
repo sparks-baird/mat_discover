@@ -140,7 +140,12 @@ def pareto_plot(
     df = df.sort_values("color_num")
 
     fig = px.scatter(
-        df, x=x, y=y, color=color, hover_data=hover_data, **scatter_color_kwargs,
+        df,
+        x=x,
+        y=y,
+        color=color,
+        hover_data=hover_data,
+        **scatter_color_kwargs,
     )
 
     # unpack
