@@ -1,4 +1,4 @@
-plotly==5.4.0
+plotly==5.5.0
 pqdm==0.1.0
 scipy==1.7.3
 dill==0.3.4
@@ -9,6 +9,6 @@ matplotlib==3.5.1
 conda-souschef==1.0.0
 chem_wasserstein==1.0.6
 crabnet==1.0.6
-scikit-learn==1.0.1
+scikit-learn==1.0.2
 myst-parser==0.16.1
 sphinx==4.3.2
