@@ -33,6 +33,7 @@ jobs:
         pip install flit torch
         # pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
         # flit install --deps production --extras test
+        pip install --upgrade numpy # in case of ValueError: numpy.ndarray size changed, may indicate binary incompatibility
         flit install
     - name: Test with pytest
       shell: bash -l {0}
