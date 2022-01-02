@@ -35,7 +35,7 @@ jobs:
       shell: bash -l {0}
       run: |
         pip install flit torch
-        pip install oldest-supported-numpy
+        # pip install oldest-supported-numpy # might need to go into pyproject.toml requires instead
         # pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
         # flit install --deps production --extras test
         flit install
