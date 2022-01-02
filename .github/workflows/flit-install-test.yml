@@ -15,7 +15,8 @@ jobs:
       max-parallel: 5
       fail-fast: false
       matrix:
-         python-version: ['3.7', '3.8', '3.9']
+         python-version: ['3.8']
+#          python-version: ['3.7', '3.8', '3.9']
 
     steps:
     - uses: actions/checkout@v2
@@ -37,6 +38,7 @@ jobs:
         pip install flit torch
         pip install psutil==5.8.0
         pip install virtualenv==20.11.0
+        pip install Pygments==2.11.1
         # pip install oldest-supported-numpy # might need to go into pyproject.toml requires instead
         # pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
         # flit install --deps production --extras test
