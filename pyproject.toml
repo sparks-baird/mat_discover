@@ -22,7 +22,7 @@ dependencies = [
     "pandas",
     "matplotlib >=3.4.3",
     "scikit_learn",
-    "umap-learn",
+    "umap-learn<=0.5.1",
     "dill",
     "crabnet >=1.1.6",
     "chem_wasserstein >=1.0.8",
