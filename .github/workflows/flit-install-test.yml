@@ -6,6 +6,7 @@ on:
     - '**.py' # only run workflow when source files changed 
     - '**.yml'
     - 'requirements.txt'
+    - 'pyproject.toml'
 
 jobs:
   linux-pytest:
