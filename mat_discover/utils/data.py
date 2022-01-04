@@ -28,6 +28,7 @@ def groupby_formula(df, how="max"):
         .agg({"index": lambda x: tuple(x), "target": "max"})
         .reset_index()
     )
+    grp_df["count"] = grp_df["index"].apply(len)
     return grp_df
 
 
