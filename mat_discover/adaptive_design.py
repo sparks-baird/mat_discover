@@ -6,6 +6,18 @@ from crabnet.utils.composition import _fractional_composition_L, _element_compos
 from mat_discover.mat_discover_ import Discover, my_mvn
 
 
+class DummyCrabNet:
+    def __init__(self):
+        pass
+
+    def fit(self, train_df):
+        pass
+
+    def predict(self, val_df):
+        rows = val_df.shape[0]
+        return np.ones(rows), np.ones(rows), ["Fe"] * rows, np.zeros(rows)
+
+
 class Adapt(Discover):
     def __init__(self, train_df, val_df, **Discover_kwargs):
         super().__init__(**Discover_kwargs)
@@ -18,12 +30,13 @@ class Adapt(Discover):
         self,
         proxy_name="density",
         random_search=False,
+        fit=True,
         print_experiment=True,
         **predict_kwargs,
     ):
         first_experiment = self.suggest_next_experiment(
             proxy_name=proxy_name,
-            fit=True,
+            fit=fit,
             predict=True,
             random_search=random_search,
             print_experiment=print_experiment,
@@ -47,9 +60,10 @@ class Adapt(Discover):
             if fit:
                 self.fit(self.train_df, verbose=fit_verbose, save=False)
             elif self.crabnet_model is None:
-                raise ValueError(
-                    "Run `disc.fit(train_df)` method or specify `fit_afresh=True`."
-                )
+                self.crabnet_model = DummyCrabNet()
+                # raise ValueError(
+                #     "Run `disc.fit(train_df)` method or specify `fit_afresh=True`."
+                # )
             if predict:
                 # TODO: precompute dm, umap, etc.
                 self.predict(self.val_df, **predict_kwargs)
@@ -68,7 +82,7 @@ class Adapt(Discover):
                     train_r_orig = self.train_df.r_orig.values
 
                     if predict_kwargs.get("count_repeats", False):
-                        counts = self.train_df["counts"]
+                        counts = self.train_df["count"]
                         train_r_orig = [
                             r / count for (r, count) in zip(train_r_orig, counts)
                         ]
@@ -233,6 +247,11 @@ def ad_metrics(experiments, init_train_df, extraordinary_thresh):
         n_unique_templates.append(len(templates))
 
     return cummax, cumthresh, n_unique_atoms, n_unique_templates
+
+
+# TODO: implement save and load
+
+# TODO: move plotting code into Adapt
 
 
 # %% Code Graveyard
