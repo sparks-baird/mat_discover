@@ -99,7 +99,7 @@ For materials informatics (MI) and other relevant codebases/links, see:
 ### Visualization
 The DiSCoVeR workflow is visualized as follows:
 
-<img src="https://sparks-baird.github.io/mat_discover/figures/discover-workflow.png" alt="DiSCoVeR Workflow" width=600>
+<img src="https://github.com/sparks-baird/mat_discover/raw/main/figures/discover-workflow.png" alt="DiSCoVeR Workflow" width=600>
 
 <sup>Figure 1: DiSCoVeR workflow to create chemically homogeneous clusters.  (a) Training and validation data are obtained inthe form of chemical formulas and target properties (i.e.  performance).  (b) The training and validation chemical formulasare combined and used to compute ElMD pairwise distances.  (c) ElMD pairwise distance matrices are used to computeDensMAP embeddings and DensMAP densities.  (d) DensMAP embeddings are used to compute HDBSCAN\* clusters.(e) Validation target property predictions are made via CrabNet and plotted against the uniqueness proxy (e.g.  densityproxy) in the form of a Pareto front plot.  Discovery scores are assigned based on the (arbitrarily) weighted sum of scaledperformance and uniqueness proxy.  Higher scores are better.  (f) HDBSCAN* clustering results can be used to obtain acluster-wise performance (e.g.  average target property) plotted against a cluster-wise uniqueness proxy (e.g.  fraction ofvalidation compounds vs.  total compounds within a cluster).</sup>
 
