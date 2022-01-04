@@ -8,6 +8,8 @@ proxy) or high-target surrounded by materials with low targets (peak proxy).
 import dill as pickle
 from pathlib import Path
 from os.path import join
+import gc
+from torch.cuda import empty_cache
 
 from warnings import warn
 from operator import attrgetter
@@ -295,6 +297,11 @@ class Discover:
         # turns out this is a bit more difficult because of use of self.data_loader
         if self.pred_weight != 0:
             with self.Timer("train-CrabNet"):
+                if self.crabnet_model is not None:
+                    # deallocate CUDA memory https://discuss.pytorch.org/t/how-can-we-release-gpu-memory-cache/14530/28
+                    del self.crabnet_model
+                    gc.collect()
+                    empty_cache()
                 self.crabnet_model = get_model(
                     mat_prop=self.mat_prop_name,
                     train_df=train_df,
@@ -461,7 +468,7 @@ class Discover:
             val_r_orig = self.umap_r_orig[self.ntrain :]
 
             if count_repeats:
-                counts = self.train_df["counts"]
+                counts = self.train_df["count"]
                 train_r_orig = [r / count for (r, count) in zip(train_r_orig, counts)]
 
             self.train_df["emb"] = list(map(tuple, train_emb))
@@ -470,7 +477,7 @@ class Discover:
             self.val_df["r_orig"] = val_r_orig
 
             with self.Timer("train-val-pdf-summation"):
-                # TODO: factor in repeats (df["counts"]) with flag
+                # TODO: factor in repeats (df["count"]) with flag
                 mvn_list = list(
                     map(my_mvn, train_emb[:, 0], train_emb[:, 1], train_r_orig)
                 )
