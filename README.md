@@ -35,7 +35,7 @@ A materials discovery algorithm geared towards exploring high performance candid
 We describe the DiSCoVeR algorithm, how to install `mat_discover`, basic usage (e.g.
 `fit`/`predict`, custom or built-in datasets, adaptive design). [Interactive plots](https://mat-discover.readthedocs.io/en/latest/figures.html) for several types of
 Pareto front plots are available via [the `mat_discover` documentation](https://mat-discover.readthedocs.io/en/latest/). We also describe how
-to contribute, what to do if you run into bugs or have questions, and citation information.
+to contribute, what to do if you run into bugs or have questions, and citation information. The [`mat_discover` docs](https://mat-discover.readthedocs.io/en/latest/) have more, such as [examples](https://mat-discover.readthedocs.io/en/latest/examples.html) (including a [teaching example](https://mat-discover.readthedocs.io/en/latest/examples.html#bare-bones)), the [interactive figures](https://mat-discover.readthedocs.io/en/latest/figures.html#figures) mentioned, and the [Python API](https://mat-discover.readthedocs.io/en/latest/modules.html).
 
 The article ([ChemRxiv](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3)) is under
 review at [Digital
@@ -72,8 +72,8 @@ Bayesian optimization, I recommend using [Facebook/Ax](https://ax.dev/docs/bayes
 working on an [implementation of composition-based Bayesian optimization
 using Ax](https://github.com/facebook/Ax/issues/727) (2021-12-10).
 
-For alternative "suggest next experiment" materials discovery algorithms,
-see [CAMD](https://github.com/TRI-AMDD/CAMD) ([trihackathon2020 tutorial notebooks](https://github.com/TRI-AMDD/tri-hackathon-2020)), [PyChemia](https://github.com/MaterialsDiscovery/PyChemia),
+For alternative "suggest next experiment" materials discovery tools,
+see the [Citrine Platform](https://citrination.com/) (free for non-commercial use), [CAMD](https://github.com/TRI-AMDD/CAMD) ([trihackathon2020 tutorial notebooks](https://github.com/TRI-AMDD/tri-hackathon-2020)), [PyChemia](https://github.com/MaterialsDiscovery/PyChemia),
 [Heteroscedastic-BO](https://github.com/Ryan-Rhys/Heteroscedastic-BO), and
 [thermo](https://github.com/janosh/thermo).
 
