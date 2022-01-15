@@ -3,10 +3,11 @@ from souschef.recipe import Recipe
 import os
 from os.path import join
 from pathlib import Path
-import mat_discover
+from shutil import copyfile
+import mat_discover as module
 
-name, version = mat_discover.__name__, mat_discover.__version__
-os.system("grayskull pypi {0}=={1}".format(name, version))
+name, version = module.__name__, module.__version__
+os.system(f"grayskull pypi {name}=={version}")
 
 Path("scratch").mkdir(exist_ok=True)
 
@@ -22,3 +23,5 @@ my_recipe["requirements"]["run"].append("pytorch >=1.9.0")
 my_recipe["requirements"]["run"].append("cudatoolkit <11.4")
 my_recipe.save(fpath)
 my_recipe.save(fpath2)
+
+copyfile("LICENSE", join("scratch", "LICENSE"))
