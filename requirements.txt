@@ -12,4 +12,4 @@ crabnet==1.2.1
 conda-souschef==2.1.1
 scikit-learn==1.0.2
 myst-parser==0.16.1
-sphinx==4.3.2
+sphinx==4.4.0
