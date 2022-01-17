@@ -30,6 +30,7 @@ jobs:
         pip install flit torch pytest
         pip install -r requirements.txt
         pip install numba==0.53.* numpy==1.22.0
+        flit install
     - name: Test with pytest
       shell: bash -l {0}
       run: |
