@@ -40,7 +40,7 @@ Cluster Count Histogram
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 \ :raw-html-m2r:`<br>`
-:raw-html-m2r:`<img src="https://sparks-baird.github.io/mat_discover/figures/cluster-count-hist.png" alt="Cluster Count Histogram" width=350>`
+:raw-html-m2r:`<img src="https://github.com/sparks-baird/mat_discover/blob/main/figures/cluster-count-hist.png?raw=true" alt="Cluster Count Histogram" width=350>`
 
 DensMAP Embeddings Colored by Cluster
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -67,19 +67,25 @@ Density and Target Characteristics
 ----------------------------------
 
 Density Scatter Plot of 2D DensMAP Embeddings\ :raw-html-m2r:`<br>`
-:raw-html-m2r:`<img src="https://sparks-baird.github.io/mat_discover/figures/dens-scatter.png" alt="Density Scatter Plot of 2D DensMAP Embeddings" width=350>`
+:raw-html-m2r:`<img src="https://github.com/sparks-baird/mat_discover/blob/main/figures/dens-scatter.png?raw=true" alt="Density Scatter Plot of 2D DensMAP Embeddings" width=350>`
 
 
 Target Scatter Plot of 2D DensMAP Embeddings\ :raw-html-m2r:`<br>`
-:raw-html-m2r:`<img src="https://sparks-baird.github.io/mat_discover/figures/target-scatter.png" alt="Density Scatter Plot of 2D DensMAP Embeddings" width=350>`
+:raw-html-m2r:`<img src="https://github.com/sparks-baird/mat_discover/blob/main/figures/target-scatter.png?raw=true" alt="Density Scatter Plot of 2D DensMAP Embeddings" width=350>`
 
 Density Scatter Plot with Bulk Modulus Overlay in 2D DensMAP Embedding Space\ :raw-html-m2r:`<br>`
-:raw-html-m2r:`<img src="https://sparks-baird.github.io/mat_discover/figures/dens-targ-scatter.png" alt="Density Scatter Plot with Bulk Modulus Overlay in 2D DensMAP Embedding Space" width=350>`
+:raw-html-m2r:`<img src="https://github.com/sparks-baird/mat_discover/blob/main/figures/dens-targ-scatter.png?raw=true" alt="Density Scatter Plot with Bulk Modulus Overlay in 2D DensMAP Embedding Space" width=350>`
 
 Adaptive Design Comparison
 --------------------------
 
-Random search compared with DiSCoVeR performance/proxy weights:
+Take an initial training set of 100 chemical formulas and associated Materials Project bulk moduli followed by 900 adaptive design iterations (x-axis) using random search, novelty-only (performance weighted at 0), a 50/50 weighting split, and performance-only (novelty weighted at 0). These are the columns. The rows are the total number of observed "extraordinary" compounds (top 2%), the total number of additional unique atoms, and total number of additional unique chemical formulae templates. These are the rows. In other words:
+
+- How many "extraordinary" compounds have been observed so far?
+- How many unique atoms have been explored so far? (not counting atoms already in the starting 100 formulas)
+- How many unique chemical templates (e.g. A2B3, ABC, ABC2) have been explored so far? (not counting templates already in the starting 100 formulas)
+
+Random search is compared with DiSCoVeR performance/proxy weights. The 50/50 weighting split offers a good trade-off between performance and novelty.
 
 .. raw:: html
    :file: ad-compare.html
