@@ -1,6 +1,6 @@
 # Figures
 
-> :warning: If you are on [the GitHub website](https://github.com/sparks-baird/mat_discover/tree/main/figures), please instead navigate to the [documentation website](https://mat-discover.readthedocs.org/en/latest/figures.html) :warning:
+> :warning: If you are on [the GitHub website](https://github.com/sparks-baird/mat_discover/tree/main/figures), please instead navigate to [the documentation website](https://mat-discover.readthedocs.org/en/latest/figures.html) :warning:
 
 Various figures, both interactive and non-interactive, related to the DiSCoVeR algorithm as applied to compounds and clusters. For more details, see [the ChemRXiv paper](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8).
 
@@ -52,25 +52,25 @@ The following are non-interactive figures focused on cluster properties and dens
 ### Cluster Properties
 
 Cluster Count Histogram  
-<img src="https://sparks-baird.github.io/mat_discover/figures/cluster-count-hist.png" alt="Cluster Count Histogram" width=350>
+<img src="https://github.com/sparks-baird/mat_discover/blob/main/figures/cluster-count-hist.png?raw=true" alt="Cluster Count Histogram" width=350>
 <hr>
 
 DensMAP Embeddings Colored by Cluster  
-<img src="https://sparks-baird.github.io/mat_discover/figures/umap-cluster-scatter.png" alt="DensMAP Embeddings Colored by Cluster" width=350>
+<img src="https://github.com/sparks-baird/mat_discover/blob/main/figures/umap-cluster-scatter.png?raw=true" alt="DensMAP Embeddings Colored by Cluster" width=350>
 <hr>
 
 ### Density and Target Characteristics
 
 Density Scatter Plot of 2D DensMAP Embeddings  
-<img src="https://sparks-baird.github.io/mat_discover/figures/dens-scatter.png" alt="Density Scatter Plot of 2D DensMAP Embeddings" width=350>
+<img src="https://github.com/sparks-baird/mat_discover/blob/main/figures/dens-scatter.png?raw=true" alt="Density Scatter Plot of 2D DensMAP Embeddings" width=350>
 <hr>
 
 Target Scatter Plot of 2D DensMAP Embeddings  
-<img src="https://sparks-baird.github.io/mat_discover/figures/target-scatter.png" alt="Density Scatter Plot of 2D DensMAP Embeddings" width=350>
+<img src="https://github.com/sparks-baird/mat_discover/blob/main/figures/target-scatter.png?raw=true" alt="Density Scatter Plot of 2D DensMAP Embeddings" width=350>
 <hr>
 
 Density Scatter Plot with Bulk Modulus Overlay in 2D DensMAP Embedding Space  
-<img src="https://sparks-baird.github.io/mat_discover/figures/dens-targ-scatter.png" alt="Density Scatter Plot with Bulk Modulus Overlay in 2D DensMAP Embedding Space" width=350>
+<img src="https://github.com/sparks-baird/mat_discover/blob/main/figures/dens-targ-scatter.png?raw=true" alt="Density Scatter Plot with Bulk Modulus Overlay in 2D DensMAP Embedding Space" width=350>
 <hr>
 
 <!-- 
