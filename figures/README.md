@@ -1,5 +1,7 @@
 # Figures
 
+> :warning: If you are on [the GitHub website](https://github.com/sparks-baird/mat_discover/tree/main/figures), please instead navigate to the [documentation website](https://mat-discover.readthedocs.org/en/latest/figures.html) :warning:
+
 Various figures, both interactive and non-interactive, related to the DiSCoVeR algorithm as applied to compounds and clusters. For more details, see [the ChemRXiv paper](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8).
 
 ## Interactive Figures
