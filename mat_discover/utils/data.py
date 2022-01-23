@@ -25,7 +25,7 @@ def groupby_formula(df, how="max"):
     grp_df = (
         df.reset_index()
         .groupby(by="formula")
-        .agg({"index": lambda x: tuple(x), "target": "max"})
+        .agg({"index": lambda x: tuple(x), "target": how})
         .reset_index()
     )
     grp_df["count"] = grp_df["index"].apply(len)
