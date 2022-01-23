@@ -13,8 +13,7 @@ spaces as originally proposed by `Baird, Diep, and Sparks
 <https://chemrxiv.org/engage/chemrxiv/article-details/617883e30f3eeb18ee723587>`_. The
 library :code:`mat_discover` provides a GPU-accelerated (and CPU-compatible) Python
 implementation and tools for analyzing the outputs. :code:`mat_discover` will "suggest your next experiment" using a custom training dataset of chemical formula and target
-properties and a custom validation set of potential candidates. All in just a few lines
-of code!
+properties and a custom validation set of potential candidates. All in just a few lines of code! `Get started learning about DiSCoVeR <https://mat-discover.readthedocs.io/en/latest/readme.html>`_.
 
 .. raw:: html
 
