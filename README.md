@@ -31,7 +31,7 @@ A materials discovery algorithm geared towards exploring high performance candid
 
 <sup>Bulk modulus values overlaid on DensMAP densities (cropped).</sup>
 
-We describe the DiSCoVeR algorithm, how to install `mat_discover`, basic usage (e.g.
+We describe the DiSCoVeR algorithm, how to install `mat_discover`, and basic usage (e.g.
 `fit`/`predict`, custom or built-in datasets, adaptive design). [Interactive plots](https://mat-discover.readthedocs.io/en/latest/figures.html) for several types of
 Pareto front plots are available via [the `mat_discover` documentation](https://mat-discover.readthedocs.io/en/latest/). We also describe how
 to contribute, what to do if you run into bugs or have questions, and citation information. The [`mat_discover` docs](https://mat-discover.readthedocs.io/en/latest/) have more, such as [examples](https://mat-discover.readthedocs.io/en/latest/examples.html) (including a [teaching example](https://mat-discover.readthedocs.io/en/latest/examples.html#bare-bones)), the [interactive figures](https://mat-discover.readthedocs.io/en/latest/figures.html#figures) mentioned, and the [Python API](https://mat-discover.readthedocs.io/en/latest/modules.html).
