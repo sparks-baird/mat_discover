@@ -19,7 +19,6 @@
 ![Conda](https://img.shields.io/conda/v/sgbaird/mat_discover)
 ![Conda](https://img.shields.io/conda/pn/sgbaird/mat_discover)
 [![Conda](https://img.shields.io/conda/dn/sgbaird/mat_discover?label=conda%7Cdownloads)](https://anaconda.org/sgbaird/mat_discover)
-[![Downloads](https://pepy.tech/badge/mat-discover)](https://pepy.tech/project/mat-discover)
 [![Anaconda-Server Badge](https://anaconda.org/sgbaird/mat_discover/badges/latest_release_relative_date.svg)](https://anaconda.org/sgbaird/mat_discover)
 <!-- ![Conda](https://img.shields.io/conda/dn/sgbaird/mat_discover) -->
 <!-- [![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg)](https://anaconda.org/sgbaird/mat_discover) -->
