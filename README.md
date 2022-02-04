@@ -53,7 +53,7 @@ Take an initial training set of 100 chemical formulas and associated Materials P
 1. How many unique atoms have been explored so far? (not counting atoms already in the starting 100 formulas)
 1. How many unique chemical templates (e.g. A2B3, ABC, ABC2) have been explored so far? (not counting templates already in the starting 100 formulas)
 
-The 50/50 weighting split offers a good trade-off between performance and novelty. Click the image to navigate to the interactive figure.
+The 50/50 weighting split offers a good trade-off between performance and novelty. Click the image to navigate to the interactive figure which includes two additional rows: best so far and current observed.
 
 <a href=https://mat-discover.readthedocs.io/en/latest/figures.html#adaptive-design-comparison>
   <img src=https://user-images.githubusercontent.com/45469701/146947278-6399e996-ce9a-46bd-bda7-e3b4feedc525.png width=675>
