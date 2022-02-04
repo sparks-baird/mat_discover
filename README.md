@@ -4,7 +4,7 @@
 [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
 [![Open in Code Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://doi.org/10.24433/CO.8463578.v1)
 [![Interactive Figures](https://img.shields.io/static/v1?message=Open%20interactive%20figures&logo=github&labelColor=5c5c5c&color=blueviolet&logoColor=white&label=%20)](https://mat-discover.readthedocs.io/en/latest/figures.html)
-[![Read the Docs](https://img.shields.io/readthedocs/mat-discover?label=Open%20the%20documentation)](https://mat-discover.readthedocs.io/en/latest/)
+[![Read the Docs](https://img.shields.io/readthedocs/mat-discover?label=Open%20the%20documentation&logo=readthedocs)](https://mat-discover.readthedocs.io/en/latest/)
 
 [![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
