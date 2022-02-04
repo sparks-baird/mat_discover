@@ -48,7 +48,7 @@ The primary anticipated use-case of DiSCoVeR is that you have some training data
 
 ### Is it any good?
 
-Take an initial training set of 100 chemical formulas and associated Materials Project bulk moduli followed by 900 adaptive design iterations (x-axis) using random search, novelty-only (performance weighted at 0), a 50/50 weighting split, and performance-only (novelty weighted at 0). These are the columns. The rows are the total number of observed "extraordinary" compounds (top 2%), the total number of _additional_ unique atoms, and total number of additional unique chemical formulae templates. These are the rows. In other words:
+Take an initial training set of 100 chemical formulas and associated Materials Project bulk moduli followed by 900 adaptive design iterations (x-axis) using random search, novelty-only (performance weighted at 0), a 50/50 weighting split, and performance-only (novelty weighted at 0). These are the columns. The rows are the total number of observed "extraordinary" compounds (top 2%), the total number of _additional_ unique atoms, and total number of additional unique chemical formulae templates. In other words:
 1. How many "extraordinary" compounds have been observed so far?
 1. How many unique atoms have been explored so far? (not counting atoms already in the starting 100 formulas)
 1. How many unique chemical templates (e.g. A2B3, ABC, ABC2) have been explored so far? (not counting templates already in the starting 100 formulas)
