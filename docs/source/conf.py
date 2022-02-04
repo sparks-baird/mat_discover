@@ -81,7 +81,7 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]  # throws a WARNING, remove
+html_static_path = []  # throws a WARNING, removed "_static"
 
 html_extra_path = ["googlea441f484329a8f75.html"]
 
