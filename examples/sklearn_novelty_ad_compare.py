@@ -218,4 +218,3 @@ with open("sklearn_novelty_equal_performance.pkl", "wb") as f:
     pickle.dump(experiments, f)
 
 1 + 1
-
