@@ -85,7 +85,7 @@ html_static_path = ["_static"]
 
 html_extra_path = ["googlea441f484329a8f75.html"]
 
-autodoc_mock_imports = ["numba", "torch", "pymatgen"]
+autodoc_mock_imports = ["numba", "torch", "pymatgen", "hdbscan"]
 
 # https://github.com/sphinx-doc/sphinx/issues/7000#issuecomment-677916705
 source_suffix = [".rst", ".md"]
