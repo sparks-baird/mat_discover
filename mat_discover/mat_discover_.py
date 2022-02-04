@@ -609,9 +609,9 @@ class Discover:
             self.train_dens = self.novelty_learner.negative_outlier_factor_
             self.val_dens = self.novelty_learner.score_samples(X_val)
             mn = min(min(self.train_dens), min(self.val_dens))
-            self.train_dens = self.train_dens + 1.001 - mn
-            self.val_dens = self.val_dens + 1.001 - mn
-            self.val_log_dens = np.log(self.val_dens)
+            self.train_dens = self.train_dens
+            self.val_dens = self.val_dens
+            self.val_log_dens = np.log(self.val_dens + 1.001 - mn)
             self.val_rad_neigh_avg = copy(self.val_dens)
             self.val_k_neigh_avg = copy(self.val_dens)
 
