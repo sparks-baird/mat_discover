@@ -116,7 +116,10 @@ def cdf_sorting_error(y_true, y_pred, y_dummy=None):
 
     # Dummy Error (i.e. if you "guess" the mean of training targets)
     dummy_error = wasserstein_distance(
-        u, v, u_weights=u_weights, v_weights=dummy_v_weights,
+        u,
+        v,
+        u_weights=u_weights,
+        v_weights=dummy_v_weights,
     )
 
     # Similar to Matbench "scaled_error"
