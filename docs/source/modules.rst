@@ -20,6 +20,14 @@ mat\_discover.mat\_discover\_ module
    :undoc-members:
    :show-inheritance:
 
+mat\_discover.adaptive\_design\_ module
+------------------------------------
+
+.. automodule:: mat_discover.adaptive_design
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Subpackages
 -----------
 
