@@ -5,6 +5,7 @@ interesting materials. For example, materials with high-target/low-density (dens
 proxy) or high-target surrounded by materials with low targets (peak proxy).
 """
 # saving class objects: https://stackoverflow.com/a/37076668/13697228
+from copy import copy
 import dill as pickle
 from pathlib import Path
 from os.path import join
@@ -13,6 +14,7 @@ from torch.cuda import empty_cache
 
 from warnings import warn
 from operator import attrgetter
+
 from chem_wasserstein.utils.Timer import Timer, NoTimer
 
 import matplotlib.pyplot as plt
@@ -25,6 +27,7 @@ from scipy.stats import multivariate_normal, wasserstein_distance
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.manifold import MDS
+from sklearn.decomposition import PCA
 from sklearn.metrics import mean_squared_error
 
 # from sklearn.decomposition import PCA
@@ -32,8 +35,11 @@ from sklearn.metrics import mean_squared_error
 import umap
 import hdbscan
 
+from ElMD import ElMD
 from chem_wasserstein.ElM2D_ import ElM2D
 
+# from crabnet.utils.composition import generate_features
+from composition_based_feature_vector.composition import generate_features
 from crabnet.train_crabnet import get_model
 
 from mat_discover.utils.data import data
@@ -110,10 +116,7 @@ def cdf_sorting_error(y_true, y_pred, y_dummy=None):
 
     # Dummy Error (i.e. if you "guess" the mean of training targets)
     dummy_error = wasserstein_distance(
-        u,
-        v,
-        u_weights=u_weights,
-        v_weights=dummy_v_weights,
+        u, v, u_weights=u_weights, v_weights=dummy_v_weights,
     )
 
     # Similar to Matbench "scaled_error"
@@ -144,6 +147,8 @@ class Discover:
         Scaler=RobustScaler,
         figure_dir="figures",
         table_dir="tables",
+        novelty_learner="discover",
+        novelty_prop="mod_petti",
         # groupby_filter="max",
         pred_weight=1,
         proxy_weight=1,
@@ -197,13 +202,30 @@ class Discover:
         figure_dir, table_dir : str, optional
             Relative or absolute path to directory at which to save figures or tables,
             by default "figures" and "tables", respectively. The directory will be
-            created if it does not exist already.
+            created if it does not exist already. `if dummy_run` then append "dummy" to
+            the folder via `os.path.join`.
 
         pred_weight : int, optional
             Weighting applied to the predicted, scaled target values, by default 1 (i.e.
             equal weighting between predictions and proxies). For example, to weight the
             predicted targets at twice that of the proxy values, set to 2 (while keeping
             the default of `proxy_weight = 1`)
+
+        novelty_learner : str or sklearn Regressor, optional
+            Whether to use the DiSCoVeR algorithm (`"discover"`) or another learner for
+            novelty detection (e.g. `sklearn.neighbors.LocalOutlierFactor`). By default
+            "discover".
+
+        novelty_prop : str, optional
+            Which featurization scheme to use for determining novelty. `"mod_petti"` is
+            is currently the only supported/tested option for the DiSCoVeR
+            `novelty_learner` for speed considerations, though the other "linear"
+            featurizers should technically be compatible (untested). The "vector"
+            featurizers can be implemented, although with some code plumbing needed. See
+            ElM2D [1]_ and ElMD supported featurizers [2]_. Possible options for
+            `sklearn`-type `novelty_learner`-s are those supported by the CBFV [3]_
+            package (and assuming that all elements that appear in train/val datasets
+            are supported). By default "mod_petti".
 
         proxy_weight : int, optional
             Weighting applied to the predicted, scaled proxy values, by default 1 (i.e.
@@ -222,6 +244,13 @@ class Discover:
 
         nscores : int, optional
             Number of scores (i.e. compounds) to return in the CSV output files.
+
+        References
+        ----------
+
+        .. [1] https://github.com/lrcfmd/ElM2D
+        .. [2] https://github.com/lrcfmd/ElMD/tree/v0.4.7#elemental-similarity
+        .. [3] https://github.com/kaaiian/CBFV
         """
         if timed:
             self.Timer = Timer
@@ -235,8 +264,13 @@ class Discover:
         self.verbose = verbose
         self.mat_prop_name = mat_prop_name
         self.dummy_run = dummy_run
+        if dummy_run:
+            figure_dir = join(figure_dir, "dummy")
+            table_dir = join(table_dir, "dummy")
         self.figure_dir = figure_dir
         self.table_dir = table_dir
+        self.novelty_learner = novelty_learner
+        self.novelty_prop = novelty_prop
         self.pred_weight = pred_weight
         self.proxy_weight = proxy_weight
         self.device = device
@@ -322,6 +356,7 @@ class Discover:
         proxy_weight=None,
         dummy_run=None,
         count_repeats=False,
+        return_peak=False,
     ):
         """Predict target and proxy for validation dataset.
 
@@ -399,7 +434,7 @@ class Discover:
         self.ntot = self.ntrain + self.nval
         train_ids, val_ids = np.arange(self.ntrain), np.arange(self.ntrain, self.ntot)
 
-        if self.proxy_weight != 0:
+        if self.proxy_weight != 0 and self.novelty_learner == "discover":
             # distance matrix
             with self.Timer("fit-wasserstein"):
                 self.mapper.fit(self.all_formula)
@@ -517,7 +552,8 @@ class Discover:
                 )
                 self.val_rad_neigh_avg = self.rad_neigh_avg_targ[val_ids]
                 self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
-        else:
+
+        elif self.proxy_weight == 0 and self.novelty_learner == "discover":
             self.val_rad_neigh_avg = np.zeros_like(self.val_pred)
             self.val_k_neigh_avg = np.zeros_like(self.val_pred)
             self.val_dens = np.zeros_like(self.val_pred)
@@ -526,6 +562,68 @@ class Discover:
                 map(tuple, np.zeros((self.val_df.shape[0], 2)).tolist())
             )
             self.val_df["dens"] = np.zeros(self.val_df.shape[0])
+
+        elif self.proxy_weight != 0 and self.novelty_learner != "discover":
+            warn(
+                f"self.val_rad_neigh_avg` and `self.val_k_neigh_avg` are being assigned the same values as `val_dens` for compatibility reasons since a non-DiSCoVeR novelty learner was specified: {self.novelty_learner}."
+            )
+            # composition-based featurization
+            X_train = []
+            X_val = []
+            if self.novelty_prop == "mod_petti":
+                for comp in self.train_formula.tolist():
+                    X_train.append(ElMD(comp, metric=self.novelty_prop).feature_vector)
+                for comp in self.val_formula.tolist():
+                    X_val.append(ElMD(comp, metric=self.novelty_prop).feature_vector)
+                X_train = np.array(X_train)
+                X_val = np.array(X_val)
+            else:
+                train_df = pd.DataFrame(
+                    {
+                        "formula": self.train_formula,
+                        "target": np.zeros_like(self.train_formula),
+                    }
+                )
+                val_df = pd.DataFrame(
+                    {
+                        "formula": self.val_formula,
+                        "target": np.zeros_like(self.val_formula),
+                    }
+                )
+                X_train, y, formulae, skipped = generate_features(
+                    train_df, elem_prop=self.novelty_prop
+                )
+                X_val, y, formulae, skipped = generate_features(
+                    val_df, elem_prop=self.novelty_prop
+                )
+                # https://stackoverflow.com/a/30808571/13697228
+                X_train = X_train.filter(regex="avg_*")
+                X_val = X_val.filter(regex="avg_*")
+
+            # novelty
+            self.novelty_learner.fit(X_train)
+            self.val_labels = self.novelty_learner.predict(X_val)
+            self.train_dens = self.novelty_learner.negative_outlier_factor_
+            self.val_dens = self.novelty_learner.score_samples(X_val)
+            mn = min(min(self.train_dens), min(self.val_dens))
+            self.train_dens = self.train_dens + 1.001 - mn
+            self.val_dens = self.val_dens + 1.001 - mn
+            self.val_log_dens = np.log(self.val_dens)
+            self.val_rad_neigh_avg = copy(self.val_dens)
+            self.val_k_neigh_avg = copy(self.val_dens)
+
+            self.train_r_orig = 1 / self.train_dens
+            self.val_r_orig = 1 / self.val_dens
+
+            pca = PCA(n_components=2)
+            X_all = np.concatenate((X_train, X_val))
+            pca.fit(X_all)
+            emb = pca.transform(X_all)
+            self.train_df["emb"] = list(map(tuple, emb[: self.ntrain]))
+            self.val_df["emb"] = list(map(tuple, emb[self.ntrain :]))
+            self.val_df["dens"] = self.val_dens
+            self.train_df["r_orig"] = self.train_r_orig
+            self.val_df["r_orig"] = self.val_r_orig
 
         self.rad_score = self.weighted_score(
             self.val_pred,
@@ -559,7 +657,10 @@ class Discover:
 
         self.merge()
 
-        return self.dens_score, self.peak_score
+        if return_peak:
+            return self.dens_score, self.peak_score
+        else:
+            return self.dens_score
 
     def weighted_score(
         self,
@@ -930,7 +1031,7 @@ class Discover:
         labels, probabilities = attrgetter("labels_", "probabilities_")(clusterer)
         return labels, probabilities
 
-    def umap_fit_cluster(self, dm, random_state=None):
+    def umap_fit_cluster(self, dm, metric="precomputed", random_state=None):
         """Perform DensMAP fitting for clustering.
 
         See https://umap-learn.readthedocs.io/en/latest/clustering.html.
@@ -940,6 +1041,9 @@ class Discover:
         dm : ndarray
             Pairwise Element Mover's Distance (`ElMD`) matrix within a single set of
             points.
+
+        metric : str
+            Which metric to use for DensMAP, by default "precomputed".
 
         random_state: int, RandomState instance or None, optional (default: None)
             "If int, random_state is the seed used by the random number generator; If
@@ -964,7 +1068,7 @@ class Discover:
                 n_neighbors=30,
                 min_dist=0,
                 n_components=2,
-                metric="precomputed",
+                metric=metric,
                 random_state=random_state,
                 low_memory=False,
             ).fit(dm)
