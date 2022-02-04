@@ -122,10 +122,10 @@ initial testing. After installing
 [Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or
 [Miniconda](https://docs.conda.io/en/latest/miniconda.html), you can [create a new
 environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands)
-in Python `3.8` (`mat_discover` is also tested on `3.7` and `3.9`) via:
+in Python `3.9` (`mat_discover` is also tested on `3.7` and `3.8`) via:
 
 ```python
-conda create --name mat_discover python==3.8
+conda create --name mat_discover python==3.9.*
 ```
 
 There are three ways to install `mat_discover`: Anaconda (`conda`), PyPI (`pip`), and from source. Anaconda is the preferred method.
