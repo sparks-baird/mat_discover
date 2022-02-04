@@ -102,7 +102,7 @@ The DiSCoVeR workflow is visualized as follows:
 ### Tabular Summary
 A summary of the DiSCoVeR methods are given in the following table:
 
-<sup>Table  1:  A  description  of  methods  used  in  this  work  and  each  method’s  role  in  DiSCoVeR.∗A  Pareto  front  is  moreinformation-dense  than  a  proxy  score  in  that  there  are  no  predefined  relative  weights  for  performance  vs.   uniquenessproxy.  Compounds that are closer to the Pareto front are better.  The upper areas of the plot represent a higher weighttowards performance while the right-most areas of the plot represent a higher weight towards uniqueness.</sup>
+<sup>Table 1: A description of methods used in this work and each method’s role in DiSCoVeR. ∗A Pareto front is more information-dense than a proxy score in that there are no predefined relative weights for performance vs. uniqueness proxy. Compounds that are closer to the Pareto front are better. The upper areas of the plot represent a higher weight towards performance while the right-most areas of the plot represent a higher weight towards uniqueness.</sup>
 | Method                                                                   | What is it?                                   | What is its role in DiSCoVeR?           |
 | ------------------------------------------------------------------------ | --------------------------------------------- | --------------------------------------- |
 | [CrabNet](https://github.com/anthony-wang/CrabNet)                       | Composition-based property regression         | Predict performance for proxy scores    |
