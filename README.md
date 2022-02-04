@@ -270,7 +270,13 @@ The built-in data directories are as follows:
 >  'materials_data.example_materials_property'}
 > ```
 
-To see what `.csv` files are available (e.g. `train.csv`), you will probably need to navigate to [CrabNet/data/](https://github.com/sgbaird/CrabNet/tree/master/crabnet/data) and explore.
+To see what `.csv` files are available (e.g. `train.csv`), you will probably need to navigate to [CrabNet/data/](https://github.com/sgbaird/CrabNet/tree/master/crabnet/data) and explore. For example, to use a snapshot of the Materials Project `e_above_hull` dataset ([`mp_e_hull`](https://github.com/sgbaird/CrabNet/tree/master/crabnet/data/benchmark_data/mp_e_hull)):
+```python
+from crabnet.data.benchmark_data import mp_e_hull
+train_df = disc.data(mp_e_hull, "train.csv", split=False)
+val_df = disc.data(mp_e_hull, "val.csv", split=False)
+test_df = disc.data(mp_ehull, "test.csv", split=False)
+```
 
 Finally, to download data from Materials Project directly, see [generate_elasticity_data.py](https://github.com/sparks-baird/mat_discover/blob/main/mat_discover/utils/generate_elasticity_data.py).
 
