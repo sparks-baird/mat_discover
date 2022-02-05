@@ -52,7 +52,7 @@ if dummy_run:
     n_iter = 3
     n_repeats = 1
 else:
-    n_iter = 900  # of objective function evaluations (e.g. wet-lab synthesis)
+    n_iter = 300  # of objective function evaluations (e.g. wet-lab synthesis)
     n_repeats = 1
 
 figure_dir = "figures"
@@ -206,15 +206,15 @@ fig.update_traces(showlegend=False)
 fig.update_layout(height=300 * rows, width=300 * cols)
 fig.show()
 
-fig.write_html(join("figures", "sklearn-compare.html"))
+fig.write_html(join(figure_dir, "sklearn-compare.html"))
 
 
 fig2, scale = matplotlibify(
     fig, size=28, width_inches=3.5 * cols, height_inches=3.5 * rows
 )
-fig2.write_image(join("figures", "sklearn-compare.png"))
+fig2.write_image(join(figure_dir, "sklearn-compare.png"))
 
-with open("sklearn_novelty_equal_performance.pkl", "wb") as f:
+with open(join(figure_dir, "sklearn_novelty_equal_performance.pkl"), "wb") as f:
     pickle.dump(experiments, f)
 
 1 + 1
