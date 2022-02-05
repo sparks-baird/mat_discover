@@ -89,3 +89,8 @@ Random search is compared with DiSCoVeR performance/proxy weights. The 50/50 wei
 
 .. raw:: html
    :file: ad-compare.html
+
+In a similar vein using 300 adaptive design iterations, we compared the 50/50 DiSCoVeR algorithm with `sklearn.neighbors.LocalOutlierFactor` (novelty detection algorithm) using `mat2vec` and `mod_petti` compositional featurizers. `LocalOutlierFactor` (LOC) was only used for the novelty metric, i.e. the performance metric was computed as normal using CrabNet in both cases. Random search is also in there as a baseline. While LOC does reasonably well with finding new chemical formula templates and adding new atoms, it's not very good at finding high-performing candidates (at least with this quick implementation of this). Perhaps this is because LOC isn't suggesting candidates which improve the model's predictive accuracy or because the LOC scores keep getting rescaled to certain range. Contrast this with Bayesian optimization which naturally favors exploitation over exploration as the optimization progresses, and DiSCoVeR which imitates this by using the same `Scaler` object instantiated during the first iteration. Technically, LOC uses the same `Scaler` instantiated in the first iteration, but that's a moot point if LOC is already rescaling the values internally. In contrast, the 50/50 DiSCoVeR algorithm does well at optimizing both chemical novelty and performance.
+
+.. raw:: html
+   :file: sklearn-compare.html
