@@ -59,6 +59,7 @@ The 50/50 weighting split offers a good trade-off between performance and novelt
   <img src=https://user-images.githubusercontent.com/45469701/146947278-6399e996-ce9a-46bd-bda7-e3b4feedc525.png width=675>
 </a>
 
+We also ran some benchmarking against `sklearn.neighbors.LocalOutlierFactor` (novelty detection algorithm) using `mat2vec` and `mod_petti` featurizations. The interactive results are available [here](https://mat-discover.readthedocs.io/en/latest/figures.html#adaptive-design-comparison).
 
 ### Alternatives
 
