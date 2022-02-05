@@ -29,6 +29,7 @@ jobs:
       run: |
         pip install flit torch coveralls pytest # torch is CPU version
         flit install
+        pip install numba==0.53.* numpy==1.22.0 # deal with NumPy header incompatibility error
 
     - name: Pytest
       shell: bash -l {0}
