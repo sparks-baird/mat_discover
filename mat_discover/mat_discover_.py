@@ -611,12 +611,14 @@ class Discover:
             mn = min(min(self.train_dens), min(self.val_dens))
             self.train_dens = self.train_dens
             self.val_dens = self.val_dens
-            self.val_log_dens = np.log(self.val_dens + 1.001 - mn)
-            self.val_rad_neigh_avg = copy(self.val_dens)
-            self.val_k_neigh_avg = copy(self.val_dens)
+            pos_train_dens = self.train_dens + 1.001 - mn
+            pos_val_dens = self.val_dens + 1.001 - mn
+            self.val_log_dens = np.log(pos_val_dens)
+            self.val_rad_neigh_avg = copy(pos_val_dens)
+            self.val_k_neigh_avg = copy(pos_val_dens)
 
-            self.train_r_orig = 1 / self.train_dens
-            self.val_r_orig = 1 / self.val_dens
+            self.train_r_orig = 1 / (pos_train_dens)
+            self.val_r_orig = 1 / (pos_val_dens)
 
             pca = PCA(n_components=2)
             X_all = np.concatenate((X_train, X_val))
