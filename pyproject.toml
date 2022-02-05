@@ -32,6 +32,7 @@ dependencies = [
     "dill",
     "crabnet >=1.1.6",
     "chem_wasserstein >=1.0.8",
+    "composition_based_feature_vector",
     # "ElMD==0.4.8", #PyPI
     # "pymatgen",
     # "joblib",
@@ -50,6 +51,7 @@ test = [
     "sphinx==4.2.0",
     "myst-parser==0.15.2",
     "nbformat >=4.2.0", # for Jupyter Notebook in VS Code
+    "black >=22.1.0",
 ]
 # gpu = ["torch==1.9.1+cu111"]
 # cpu = ["torch"]

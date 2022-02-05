@@ -1,8 +1,26 @@
-"""Compare DiSCoVeR to random search."""
+"""Compare adaptive design between DiSCoVeR and sklearn's novelty detection algorithms.
+
+LocalOutlierFactor is chosen here instead of OneClassSVM because of the former's
+similarity with the DiSCoVeR algorithm in the use of estimated densities.
+
+For LocalOutlierFactor [1], two different featurizations are used to generate novelty
+scores. First is the `mat2vec` composition-based feature vector used by default in
+CrabNet's predictions, and second are the modified Pettifor feature "scalars" (i.e.
+scalar value for each element). Note that this is only for the novelty contribution;
+regression predictions are still produced as normal via CrabNet.
+
+For both DiSCoVeR and `LocalOutlierFactor`, we will use DiSCoVeR's default weighting of
+50/50 for novelty vs. performance.
+
+[1] https://scikit-learn.org/stable/modules/outlier_detection.html#novelty-detection-with-local-outlier-factor
+"""
 # %% imports
+from copy import deepcopy
 import dill as pickle
 from os.path import join
 import numpy as np
+
+from sklearn.neighbors import LocalOutlierFactor
 
 from mat_discover.utils.extraordinary import (
     extraordinary_split,
@@ -34,11 +52,20 @@ if dummy_run:
     n_iter = 3
     n_repeats = 1
 else:
-    n_iter = 900  # of objective function evaluations (e.g. wet-lab synthesis)
+    n_iter = 300  # of objective function evaluations (e.g. wet-lab synthesis)
     n_repeats = 1
 
+figure_dir = "figures"
+if dummy_run:
+    figure_dir = join(figure_dir, "dummy")
+
 name_mapper = {"target": "Bulk Modulus (GPa)"}
-extraordinary_histogram(train_df, val_df, labels=name_mapper)
+extraordinary_histogram(
+    train_df,
+    val_df,
+    labels=name_mapper,
+    fpath=join(figure_dir, "extraordinary_histogram"),
+)
 
 rand_experiments = []
 
@@ -58,9 +85,9 @@ for i in range(n_repeats + 4):
         )
     )
 
-novelty_experiments = []
+sklearn_mat2vec_experiments = []
 for i in range(n_repeats):
-    print(f"[NOVELTY-EXPERIMENT: {i}]")
+    print(f"[SKLEARN-MAT2VEC-EXPERIMENT: {i}]")
     adapt = Adapt(
         train_df,
         val_df,
@@ -68,11 +95,31 @@ for i in range(n_repeats):
         dummy_run=dummy_run,
         device="cuda",
         dist_device="cuda",
-        pred_weight=0,
+        novelty_learner=LocalOutlierFactor(novelty=True),
+        novelty_prop="mat2vec",
     )
-    novelty_experiments.append(
+    sklearn_mat2vec_experiments.append(
         adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
     )
+
+sklearn_modpetti_experiments = []
+for i in range(n_repeats):
+    print(f"[SKLEARN-MODPETTI-EXPERIMENT: {i}]")
+    adapt = Adapt(
+        train_df,
+        val_df,
+        timed=False,
+        dummy_run=dummy_run,
+        device="cuda",
+        dist_device="cuda",
+        novelty_learner=LocalOutlierFactor(novelty=True),
+        novelty_prop="mod_petti",
+    )
+    sklearn_modpetti_experiments.append(
+        adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
+    )
+
+# TODO: implement a naive Bayesian optimization
 
 equal_experiments = []
 for i in range(n_repeats):
@@ -89,27 +136,11 @@ for i in range(n_repeats):
         adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
     )
 
-performance_experiments = []
-for i in range(n_repeats):
-    print(f"[PERFORMANCE-EXPERIMENT: {i}]")
-    adapt = Adapt(
-        train_df,
-        val_df,
-        timed=False,
-        dummy_run=dummy_run,
-        device="cuda",
-        dist_device="cuda",
-        proxy_weight=0,
-    )
-    performance_experiments.append(
-        adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
-    )
-
 experiments = [
     rand_experiments,
-    novelty_experiments,
+    sklearn_mat2vec_experiments,
+    sklearn_modpetti_experiments,
     equal_experiments,
-    performance_experiments,
     # performance_experiments_check,
 ]
 
@@ -142,7 +173,7 @@ fig = make_subplots(
     rows=rows, cols=cols, shared_xaxes=True, shared_yaxes=True, vertical_spacing=0.02
 )
 
-x_pars = ["Random", "Novelty", "50/50", "Performance"]
+x_pars = ["Random", "LOF-mat2vec", "LOF-modpetti", "DiSCoVeR"]
 # x_pars = ["Random", "Performance", "Performance Check"]
 col_nums = [str(i) for i in range((rows - 1) * cols + 1, rows * cols + 1)]
 row_nums = [""] + [str(i) for i in list(range(cols + 1, rows * cols, cols))]
@@ -175,20 +206,15 @@ fig.update_traces(showlegend=False)
 fig.update_layout(height=300 * rows, width=300 * cols)
 fig.show()
 
-fig.write_html(join("figures", "ad-compare.html"))
+fig.write_html(join(figure_dir, "sklearn-compare.html"))
 
 
 fig2, scale = matplotlibify(
     fig, size=28, width_inches=3.5 * cols, height_inches=3.5 * rows
 )
-fig2.write_image(join("figures", "ad-compare.png"))
+fig2.write_image(join(figure_dir, "sklearn-compare.png"))
 
-with open("rand_novelty_equal_performance.pkl", "wb") as f:
+with open(join(figure_dir, "sklearn_novelty_equal_performance.pkl"), "wb") as f:
     pickle.dump(experiments, f)
 
-# TODO: val RMSE vs. iteration
-# TODO: elemental prevalence distribution (periodic table?)
-# TODO: chemical template distribution (need a package)
-# TODO: 3 different parameter weightings
-# TODO: interactive, selectable interface to change what is displayed
-# REVIEW: should I also include RobustScaler vs. MinMaxScaler?
+1 + 1
