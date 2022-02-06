@@ -1,0 +1,4 @@
+**/*.html linguist-vendored=false
+**/*.html linguist-detectable=false
+**/*.ipynb linguist-vendored=false
+**/*.ipynb linguist-detectable=false

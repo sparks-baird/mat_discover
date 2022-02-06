@@ -34,6 +34,23 @@ def is_pareto_efficient_simple(costs):
 
 
 def get_pareto_ind(proxy, target, reverse_x=True):
+    """Get Pareto front indices.
+
+    Parameters
+    ----------
+    proxy : 1d array
+        Chemical uniqueness proxy values (x-axis).
+    target : 1d array
+        Target property (i.e. performance) values (y-axis).
+    reverse_x : bool, optional
+        Whether to flip the x direction (i.e. Pareto front seeks maximization of target
+        and *minimization* of proxy), by default True
+
+    Returns
+    -------
+    pareto_ind : 2d array
+        Pareto front indices.
+    """
     # use reverse_x if using "peak"
     if reverse_x:
         inpt = [proxy, -target]
@@ -80,7 +97,7 @@ def pareto_plot(
         What kind of parity line to plot: "max-of-both", "max-of-each", or "none"
     """
     mx = np.max(df[color])
-    if color_continuous_scale is None and color_discrete_map is None:
+    if color_continuous_scale is None and color_discrete_map is None and mx >= 1:
         if isinstance(df[color].iloc[0], (int, np.integer)):
             # if mx < 24:
             #     df.loc[:, color] = df[color].astype(str)
@@ -108,10 +125,15 @@ def pareto_plot(
             scatter_color_kwargs = {
                 "color_continuous_scale": nipy_spectral  # px.colors.sequential.Blackbody_r
             }
+        elif isinstance(df[color].iloc[0], (float, np.float32, np.float64)):
+            scatter_color_kwargs = {}
+
     elif color_continuous_scale is not None:
         scatter_color_kwargs = {"color_continuous_scale": color_continuous_scale}
     elif color_discrete_map is not None:
         scatter_color_kwargs = {"color_discrete_sequence": color_discrete_map}
+    else:
+        scatter_color_kwargs = {}
 
     # trace order counts 0, 1, 2, ... instead of 0, 1, 10, 11
     df["color_num"] = df[color].astype(int)

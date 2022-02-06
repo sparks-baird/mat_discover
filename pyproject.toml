@@ -6,26 +6,37 @@ build-backend = "flit_core.buildapi"
 name = "mat_discover"
 authors = [{name = "Sterling G. Baird", email = "sterling.baird@utah.edu"}]
 readme = "README.md"
-classifiers = ["License :: OSI Approved :: MIT License"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Operating System :: OS Independent",
+]
 dynamic = ["version", "description"]
 
 dependencies = [
     "tqdm",
+    "pqdm", #PyPI
     "seaborn",
-    "pymatgen",
     "scipy",
     "hdbscan",
-    "numba>=0.53.1",
+    "cython", # for hdbscan 0.8.27 or similar
+    "numba >=0.53.1",
     "plotly",
     "kaleido",
     "pandas",
-    "matplotlib>=3.4.3",
-    "joblib",
-    "pqdm",
-    "ElMD==0.4.8",
-    "psutil",
+    "matplotlib >=3.4.3",
     "scikit_learn",
     "umap-learn",
+    "dill",
+    "crabnet >=1.2.2",
+    "chem_wasserstein >=1.0.8",
+    "composition_based_feature_vector",
+    # "ElMD==0.4.8", #PyPI
+    # "pymatgen",
+    # "joblib",
+    # "psutil",
     # for torch, run "set PIP_FIND_LINKS=https://download.pytorch.org/whl/torch_stable.html" before "flit install"
     # see also: https://github.com/takluyver/flit/issues/369
     # "torch==1.9.1+cu111", # e.g "1.9.1+cu111" or "1.7.1+cu110"
@@ -34,8 +45,13 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest",
-    "ElM2D==0.4.1",
+    "ElM2D==0.4.1", #PyPI
     "pytest-cov",
+    "pre-commit",
+    "sphinx==4.2.0",
+    "myst-parser==0.15.2",
+    "nbformat >=4.2.0", # for Jupyter Notebook in VS Code
+    "black >=22.1.0",
 ]
 # gpu = ["torch==1.9.1+cu111"]
 # cpu = ["torch"]

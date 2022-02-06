@@ -1,29 +1,21 @@
+"""Materials discovery using Earth Mover's Distance, DensMAP embeddings, and HDBSCAN*.
+
+Create distance matrix, apply densMAP, and create clusters via HDBSCAN* to search for
+interesting materials. For example, materials with high-target/low-density (density
+proxy) or high-target surrounded by materials with low targets (peak proxy).
 """
-Materials discovery using Earth Mover's Distance, densMAP embeddings, and HDBSCAN*.
-
-- create distance matrix
-- apply densMAP
-- create clusters via HDBSCAN*
-- search for interesting materials, for example:
-     - high-target/low-density
-     - materials with high-target surrounded by materials with low targets
-
-Run using elm2d_ environment.
-
-Created on Mon Sep  6 23:15:27 2021.
-
-@author: sterg
-"""
-import pickle
+# saving class objects: https://stackoverflow.com/a/37076668/13697228
+from copy import copy
+import dill as pickle
 from pathlib import Path
 from os.path import join
-
-# retrieve static file from package: https://stackoverflow.com/a/20885799/13697228
-from importlib.resources import open_text
+import gc
+from torch.cuda import empty_cache
 
 from warnings import warn
 from operator import attrgetter
-from mat_discover.ElM2D.utils.Timer import Timer, NoTimer
+
+from chem_wasserstein.utils.Timer import Timer, NoTimer
 
 import matplotlib.pyplot as plt
 
@@ -33,8 +25,9 @@ import numpy as np
 import pandas as pd
 from scipy.stats import multivariate_normal, wasserstein_distance
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
-from sklearn.model_selection import LeaveOneGroupOut, train_test_split
+from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.manifold import MDS
+from sklearn.decomposition import PCA
 from sklearn.metrics import mean_squared_error
 
 # from sklearn.decomposition import PCA
@@ -42,10 +35,16 @@ from sklearn.metrics import mean_squared_error
 import umap
 import hdbscan
 
-from mat_discover.ElM2D.ElM2D_ import ElM2D
+from ElMD import ElMD
+from chem_wasserstein.ElM2D_ import ElM2D
 
+# from crabnet.utils.composition import generate_features
+from composition_based_feature_vector.composition import generate_features
+from crabnet.train_crabnet import get_model
+
+from mat_discover.utils.data import data
 from mat_discover.utils.nearest_neigh import nearest_neigh_props
-from mat_discover.utils.pareto import pareto_plot, get_pareto_ind
+from mat_discover.utils.pareto import pareto_plot  # , get_pareto_ind
 from mat_discover.utils.plotting import (
     umap_cluster_scatter,
     cluster_count_hist,
@@ -53,10 +52,6 @@ from mat_discover.utils.plotting import (
     dens_scatter,
     dens_targ_scatter,
 )
-
-import torch
-
-from mat_discover.CrabNet.train_crabnet import get_model
 
 plt.rcParams.update(
     {
@@ -67,44 +62,80 @@ plt.rcParams.update(
     }
 )
 
-# use_cuda = torch.cuda.is_available()
-
-# plt.rcParams["text.usetex"] = True
-
 
 def my_mvn(mu_x, mu_y, r):
     """Calculate multivariate normal at (mu_x, mu_y) with constant radius, r."""
     return multivariate_normal([mu_x, mu_y], [[r, 0], [0, r]])
 
 
-def groupby_formula(df, how="max"):
-    """Group identical compositions together and preserve original indices.
-
-    See https://stackoverflow.com/a/49216427/13697228
+def cdf_sorting_error(y_true, y_pred, y_dummy=None):
+    """Cumulative distribution function sorting error via Wasserstein distance.
 
     Parameters
     ----------
-    df : DataFrame
-        At minimum should contain "formula" and "target" columns.
-    how : str, optional
-        How to perform the "groupby", either "mean" or "max", by default "max"
+    y_true, y_pred : list of (float or int or str)
+        True and predicted values to use for sorting error, respectively.
+    y_dummy : list of (float or int or str), optional
+        Dummy values to use to generate a scaled error, by default None
 
     Returns
     -------
-    DataFrame
-        The grouped DataFrame such that the original indices are preserved.
+    error, dummy_error, scaled_error : float
+        The unscaled, dummy, and scaled errors that describes the mismatch in sorting
+        between the CDFs of two lists. The scaled error represents the improvement
+        relative to the dummy error, such that `scaled_error = error / dummy_error`. If
+        `scaled_error > 1`, the sorting error is worse than if you took the average of
+        the `y_true` values as the `y_pred` values. If `scaled_error < 1`, it is better
+        than this "dummy" regressor. Scaled errors closer to 0 are better.
     """
-    grp_df = (
-        df.reset_index()
-        .groupby(by="formula")
-        .agg({"index": lambda x: tuple(x), "target": "max"})
-        .reset_index()
+    # Sorting "Error" Setup
+    n = len(y_true)
+    u = np.flip(np.cumsum(np.linspace(0, 1, n)))
+    v = u.copy()
+
+    if type(y_true[0]) is str:
+        lookup = {label: i for (i, label) in enumerate(y_true)}
+        df = pd.DataFrame({"y_true": y_true, "y_pred": y_pred})
+        df.y_true = df.y_true.map(lookup)
+        df.y_pred = df.y_pred.map(lookup)
+        y_true, y_pred = df.data
+
+    # sorting indices from high to low
+    sorter = np.flip(y_true.argsort())
+
+    # sort everything by same indices to preserve cluster order
+    u_weights = y_true[sorter]
+    v_weights = y_pred[sorter]
+
+    if y_dummy is None:
+        y_dummy = [np.mean(y_true)] * n
+    dummy_v_weights = y_dummy[sorter]
+
+    # Weighted distance between CDFs as proxy for "how well sorted" (i.e. sorting metric)
+    error = wasserstein_distance(u, v, u_weights=u_weights, v_weights=v_weights)
+
+    # Dummy Error (i.e. if you "guess" the mean of training targets)
+    dummy_error = wasserstein_distance(
+        u,
+        v,
+        u_weights=u_weights,
+        v_weights=dummy_v_weights,
     )
-    return grp_df
+
+    # Similar to Matbench "scaled_error"
+    scaled_error = error / dummy_error
+
+    return error, dummy_error, scaled_error
 
 
 class Discover:
-    """Class for ElM2D, dimensionality reduction, clustering, and plotting."""
+    """
+    A Materials Discovery class.
+
+    Uses chemical-based distances, dimensionality reduction, clustering,
+    and plotting to search for high performing, chemically unique compounds
+    relative to training data.
+    """
 
     def __init__(
         self,
@@ -116,13 +147,114 @@ class Discover:
         verbose: bool = True,
         mat_prop_name="test-property",
         dummy_run=False,
-        Scaler=RobustScaler,  # MinMaxScaler, Standard Scaler
-        figure_path="figures",
-        table_path="tables",
-        groupby_filter="max",
+        Scaler=RobustScaler,
+        figure_dir="figures",
+        table_dir="tables",
+        novelty_learner="discover",
+        novelty_prop="mod_petti",
+        # groupby_filter="max",
         pred_weight=1,
-        target="cuda",
+        proxy_weight=1,
+        device="cuda",
+        dist_device=None,
+        nscores=100,
     ):
+        """Initialize a Discover() class.
+
+        Parameters
+        ----------
+        timed : bool, optional
+            Whether or not timing is reported, by default True
+
+        dens_lambda : float, optional
+            "Controls the regularization weight of the density correlation term in
+            densMAP. Higher values prioritize density preservation over the UMAP
+            objective, and vice versa for values closer to zero. Setting this parameter
+            to zero is equivalent to running the original UMAP algorithm." Source:
+            https://umap-learn.readthedocs.io/en/latest/api.html, by default 1.0
+
+        plotting : bool, optional
+            Whether to create and save various compound-wise and cluster-wise figures,
+            by default False
+
+        pdf : bool, optional
+            Whether or not probability density function values are computed, by default
+            True
+
+        n_neighbors : int, optional
+            Number of neighbors to consider when computing k_neigh_avg (i.e. peak
+            proxy), by default 10
+
+        verbose : bool, optional
+            Whether to print verbose information, by default True
+
+        mat_prop_name : str, optional
+            A name that helps identify the training target property, by default
+            "test-property"
+
+        dummy_run : bool, optional
+            Whether to use MDS instead of UMAP to run quickly for small datasets. Note
+            that MDS takes longer for UMAP for large datasets, by default False
+
+        Scaler : str or class, optional
+            Scaler to use for weighted_score (i.e. weighted score of target and proxy
+            values) Target and proxy are separately scaled using Scaler before taking
+            the weighted sum. Possible values are "MinMaxScaler", "StandardScaler",
+            "RobustScaler", or an sklearn.preprocessing scaler class, by default RobustScaler.
+
+        figure_dir, table_dir : str, optional
+            Relative or absolute path to directory at which to save figures or tables,
+            by default "figures" and "tables", respectively. The directory will be
+            created if it does not exist already. `if dummy_run` then append "dummy" to
+            the folder via `os.path.join`.
+
+        pred_weight : int, optional
+            Weighting applied to the predicted, scaled target values, by default 1 (i.e.
+            equal weighting between predictions and proxies). For example, to weight the
+            predicted targets at twice that of the proxy values, set to 2 (while keeping
+            the default of `proxy_weight = 1`)
+
+        novelty_learner : str or sklearn Regressor, optional
+            Whether to use the DiSCoVeR algorithm (`"discover"`) or another learner for
+            novelty detection (e.g. `sklearn.neighbors.LocalOutlierFactor`). By default
+            "discover".
+
+        novelty_prop : str, optional
+            Which featurization scheme to use for determining novelty. `"mod_petti"` is
+            is currently the only supported/tested option for the DiSCoVeR
+            `novelty_learner` for speed considerations, though the other "linear"
+            featurizers should technically be compatible (untested). The "vector"
+            featurizers can be implemented, although with some code plumbing needed. See
+            ElM2D [1]_ and ElMD supported featurizers [2]_. Possible options for
+            `sklearn`-type `novelty_learner`-s are those supported by the CBFV [3]_
+            package (and assuming that all elements that appear in train/val datasets
+            are supported). By default "mod_petti".
+
+        proxy_weight : int, optional
+            Weighting applied to the predicted, scaled proxy values, by default 1 (i.e.
+            equal weighting between predictions and proxies when using default
+            `pred_weight = 1`). For example, to weight the predicted, scaled targets at
+            twice that of the proxy values, set to 2 while retaining `pred_weight = 1`.
+
+        device : str, optional
+            Which device to perform the computation on. Possible values are "cpu" and
+            "cuda", by default "cuda".
+
+        dist_device : str, optional
+            Which device to perform the computation on for the distance computations
+            specifically. Possible values are "cpu", "cuda", and None, by default None.
+            If None, default to `device`.
+
+        nscores : int, optional
+            Number of scores (i.e. compounds) to return in the CSV output files.
+
+        References
+        ----------
+
+        .. [1] https://github.com/lrcfmd/ElM2D
+        .. [2] https://github.com/lrcfmd/ElMD/tree/v0.4.7#elemental-similarity
+        .. [3] https://github.com/kaaiian/CBFV
+        """
         if timed:
             self.Timer = Timer
         else:
@@ -135,22 +267,42 @@ class Discover:
         self.verbose = verbose
         self.mat_prop_name = mat_prop_name
         self.dummy_run = dummy_run
-        self.Scaler = Scaler
-        self.groupby_filter = groupby_filter
-        self.figure_path = figure_path
-        self.table_path = table_path
+        if dummy_run:
+            figure_dir = join(figure_dir, "dummy")
+            table_dir = join(table_dir, "dummy")
+        self.figure_dir = figure_dir
+        self.table_dir = table_dir
+        self.novelty_learner = novelty_learner
+        self.novelty_prop = novelty_prop
         self.pred_weight = pred_weight
-        self.target = target
+        self.proxy_weight = proxy_weight
+        self.device = device
+        if dist_device is None:
+            self.dist_device = self.device
+        else:
+            self.dist_device = dist_device
 
-        if self.target == "cpu":
+        if type(Scaler) is str:
+            scalers = {
+                "MinMaxScaler": MinMaxScaler,
+                "StandardScaler": StandardScaler,
+                "RobustScaler": RobustScaler,
+            }
+            self.Scaler = scalers[Scaler]
+        else:
+            self.Scaler = Scaler
+
+        if self.device == "cpu":
             self.force_cpu = True
         else:
             self.force_cpu = False
+        self.nscores = nscores
 
-        self.mapper = ElM2D(target=self.target)  # type: ignore
+        self.mapper = ElM2D(target=self.dist_device)  # type: ignore
         self.dm = None
         # self.formula = None
         # self.target = None
+        self.crabnet_model = None
         self.train_formula = None
         self.train_target = None
         self.train_df = None
@@ -159,11 +311,11 @@ class Discover:
         self.pred_avg_targ = None
         self.train_avg_targ = None
 
-        # create dirs https://stackoverflow.com/a/273227/13697228
-        Path(figure_path).mkdir(parents=True, exist_ok=True)
-        Path(table_path).mkdir(parents=True, exist_ok=True)
+        # create dir https://stackoverflow.com/a/273227/13697228
+        Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
+        Path(self.table_dir).mkdir(parents=True, exist_ok=True)
 
-    def fit(self, train_df):
+    def fit(self, train_df, verbose=None, save=True):
         """Fit CrabNet model to training data.
 
         Parameters
@@ -171,23 +323,30 @@ class Discover:
         train_df : DataFrame
             Should contain "formula" and "target" columns.
         """
-        # collapse identical compositions
-        # train_df = groupby_formula(train_df, how=self.groupby_filter)
-
         # unpack
         self.train_df = train_df
         self.train_formula = train_df["formula"]
         self.train_target = train_df["target"]
 
+        if verbose is None:
+            verbose = self.verbose
         # TODO: remove the "val MAE", which is wrong (should be NaN or just not displayed)
         # turns out this is a bit more difficult because of use of self.data_loader
-        with Timer("train-CrabNet"):
-            self.crabnet_model = get_model(
-                mat_prop=self.mat_prop_name,
-                train_df=train_df,
-                learningcurve=False,
-                force_cpu=self.force_cpu,
-            )
+        if self.pred_weight != 0:
+            with self.Timer("train-CrabNet"):
+                if self.crabnet_model is not None:
+                    # deallocate CUDA memory https://discuss.pytorch.org/t/how-can-we-release-gpu-memory-cache/14530/28
+                    del self.crabnet_model
+                    gc.collect()
+                    empty_cache()
+                self.crabnet_model = get_model(
+                    mat_prop=self.mat_prop_name,
+                    train_df=train_df,
+                    learningcurve=False,
+                    force_cpu=self.force_cpu,
+                    verbose=verbose,
+                    save=save,
+                )
 
         # TODO: UMAP on new data (i.e. add metric != "precomputed" functionality)
 
@@ -197,45 +356,66 @@ class Discover:
         plotting=None,
         umap_random_state=None,
         pred_weight=None,
+        proxy_weight=None,
         dummy_run=None,
+        count_repeats=False,
+        return_peak=False,
     ):
         """Predict target and proxy for validation dataset.
 
         Parameters
         ----------
         val_df : DataFrame
-            Validation dataset containing "formula" and "target" (populate with 0's if not available).
+            Validation dataset containing at minimum "formula" and optionally "target"
+            (targets are populated with 0's if not available).
         plotting : bool, optional
             Whether to plot, by default None
         umap_random_state : int or None, optional
             The random seed to use for UMAP, by default None
         pred_weight : int, optional
-            The weight to assign to the predictions (proxy_weight is 1 by default), by default None.
-            If neither pred_weight nor self.pred_weight is specified, it defaults to 1.
-            When specified, pred_weight takes precedence over self.pred_weight.
+            The weight to assign to the scaled target predictions (`proxy_weight = 1`
+            by default), by default None. If neither `pred_weight` nor
+            `self.pred_weight` is specified, it defaults to 1.
+        proxy_weight : int, optional
+            The weight to assign to the scaled proxy predictions (`pred_weight` is 1 by
+            default), by default None. When specified, `proxy_weight` takes precedence
+            over `self.proxy_weight`. If neither `proxy_weight` nor `self.proxy_weight` is specified, it defaults to 1.
         dummy_run : bool, optional
-            Whether to use MDS in place of the (typically more expensive) DensMAP, by default None.
-            If neither dummy_run nor self.dummy_run is specified, it defaults to (effectively) being False.
-            When specified, dummy_run takes precedence over self.dummy_run.
+            Whether to use MDS in place of the (typically more expensive) DensMAP, by
+            default None. If neither dummy_run nor self.dummy_run is specified, it defaults to (effectively) being False. When specified, dummy_run takes precedence over self.dummy_run.
+        dm : 2D array, optional
+            Precomputed ElM2D distance matrix.
+        umap_trans, std_trans : DensMAP Mapper
+            Pre-specified DensMAP mappers for clustering and visualization, respectively, which contain embeddings and densities.
 
         Returns
         -------
         dens_score, peak_score
             Scaled discovery scores for density and peak proxies.
         """
-        # val_df = groupby_formula(val_df, how=self.groupby_filter)
+        if "target" not in val_df.columns:
+            val_df["target"] = np.nan
+
         self.val_df = val_df
 
         # CrabNet
         # TODO: parity plot
         crabnet_model = self.crabnet_model
         # CrabNet predict output format: (act, pred, formulae, uncert)
-        self.train_true, train_pred, _, self.train_sigma = crabnet_model.predict(
-            self.train_df
-        )
-        self.val_true, self.val_pred, _, self.val_sigma = crabnet_model.predict(
-            self.val_df
-        )
+        if self.pred_weight != 0:
+            self.train_true, train_pred, _, self.train_sigma = crabnet_model.predict(
+                self.train_df
+            )
+            self.val_true, self.val_pred, _, self.val_sigma = crabnet_model.predict(
+                self.val_df
+            )
+        else:
+            self.train_true, train_pred, self.train_sigma = [
+                np.zeros(self.train_df.shape[0])
+            ] * 3
+            self.val_true, self.val_pred, self.val_sigma = [
+                np.zeros(self.val_df.shape[0])
+            ] * 3
         pred = np.concatenate((train_pred, self.val_pred), axis=0)
 
         self.val_rmse = mean_squared_error(self.val_true, self.val_pred, squared=False)
@@ -253,105 +433,220 @@ class Discover:
         self.all_formula = pd.concat((train_formula, self.val_formula), axis=0)
         self.all_target = pd.concat((train_target, val_target), axis=0)
 
-        ntrain, nval = len(train_formula), len(self.val_formula)
-        ntot = ntrain + nval
-        train_ids, val_ids = np.arange(ntrain), np.arange(ntrain, ntot)
+        self.ntrain, self.nval = len(train_formula), len(self.val_formula)
+        self.ntot = self.ntrain + self.nval
+        train_ids, val_ids = np.arange(self.ntrain), np.arange(self.ntrain, self.ntot)
 
-        # distance matrix
-        with self.Timer("fit-wasserstein"):
-            self.mapper.fit(self.all_formula)
-            self.dm = self.mapper.dm
+        if self.proxy_weight != 0 and self.novelty_learner == "discover":
+            # distance matrix
+            with self.Timer("fit-wasserstein"):
+                self.mapper.fit(self.all_formula)
+                self.dm = self.mapper.dm
 
-        # TODO: look into UMAP via GPU
-        # TODO: create and use fast, built-in Wasserstein UMAP method
+            # TODO: look into UMAP via GPU
+            # TODO: create and use fast, built-in Wasserstein UMAP method
 
-        # UMAP (clustering and visualization) (or MDS for a quick run)
-        if (dummy_run is None and self.dummy_run) or dummy_run:
-            umap_trans = MDS(n_components=2, dissimilarity="precomputed").fit(self.dm)
-            std_trans = umap_trans
-            self.umap_emb = umap_trans.embedding_
-            self.std_emb = umap_trans.embedding_
-            self.umap_r_orig = np.random.rand(self.dm.shape[0])
-            self.std_r_orig = np.random.rand(self.dm.shape[0])
-        else:
-            umap_trans = self.umap_fit_cluster(self.dm, random_state=umap_random_state)
-            std_trans = self.umap_fit_vis(self.dm, random_state=umap_random_state)
-            self.umap_emb, self.umap_r_orig = self.extract_emb_rad(umap_trans)[:2]
-            self.std_emb, self.std_r_orig = self.extract_emb_rad(std_trans)[:2]
+            # UMAP (clustering and visualization) (or MDS for a quick run with small dataset)
+            if (dummy_run is None and self.dummy_run) or dummy_run:
+                with self.Timer("MDS"):
+                    umap_trans = MDS(n_components=2, dissimilarity="precomputed").fit(
+                        self.dm
+                    )
+                std_trans = umap_trans
+                self.umap_emb = umap_trans.embedding_
+                self.std_emb = umap_trans.embedding_
+                self.umap_r_orig = np.random.rand(self.dm.shape[0])
+                self.std_r_orig = np.random.rand(self.dm.shape[0])
+            else:
+                with self.Timer("DensMAP"):
+                    self.umap_trans = self.umap_fit_cluster(
+                        self.dm, random_state=umap_random_state
+                    )
+                    self.std_trans = self.umap_fit_vis(
+                        self.dm, random_state=umap_random_state
+                    )
+                    self.umap_emb, self.umap_r_orig = self.extract_emb_rad(
+                        self.umap_trans
+                    )[:2]
+                    self.std_emb, self.std_r_orig = self.extract_emb_rad(
+                        self.std_trans
+                    )[:2]
 
-        # HDBSCAN*
-        if (dummy_run is None and self.dummy_run) or dummy_run:
-            min_cluster_size = 5
-            min_samples = 1
-        else:
-            min_cluster_size = 50
-            min_samples = 1
-        clusterer = self.cluster(
-            self.umap_emb, min_cluster_size=min_cluster_size, min_samples=min_samples
-        )
-        self.labels = self.extract_labels_probs(clusterer)[0]
-
-        # np.unique while preserving order https://stackoverflow.com/a/12926989/13697228
-        lbl_ids = np.unique(self.labels, return_index=True)[1]
-        self.unique_labels = [self.labels[lbl_id] for lbl_id in sorted(lbl_ids)]
-
-        self.val_labels = self.labels[val_ids]
-
-        # Probability Density Function Summation
-        if self.pdf:
-            self.pdf_x, self.pdf_y, self.pdf_sum = self.mvn_prob_sum(
-                self.std_emb, self.std_r_orig
+            # HDBSCAN*
+            if (dummy_run is None and self.dummy_run) or dummy_run:
+                min_cluster_size = 5
+                min_samples = 1
+            else:
+                min_cluster_size = 50
+                min_samples = 1
+            clusterer = self.cluster(
+                self.umap_emb,
+                min_cluster_size=min_cluster_size,
+                min_samples=min_samples,
             )
+            self.labels = self.extract_labels_probs(clusterer)[0]
 
-        # validation density contributed by training densities
-        train_emb = self.umap_emb[:ntrain]
-        train_r_orig = self.umap_r_orig[:ntrain]
-        val_emb = self.umap_emb[ntrain:]
+            # np.unique while preserving order https://stackoverflow.com/a/12926989/13697228
+            lbl_ids = np.unique(self.labels, return_index=True)[1]
+            self.unique_labels = [self.labels[lbl_id] for lbl_id in sorted(lbl_ids)]
 
-        with self.Timer("train-val-pdf-summation"):
-            mvn_list = list(map(my_mvn, train_emb[:, 0], train_emb[:, 1], train_r_orig))
-            pdf_list = [mvn.pdf(val_emb) for mvn in mvn_list]
-            self.val_dens = np.sum(pdf_list, axis=0)
-            self.val_log_dens = np.log(self.val_dens)
+            self.val_labels = self.labels[val_ids]
 
-        # cluster-wise predicted average
-        cluster_pred = np.array(
-            [pred.ravel()[self.labels == lbl] for lbl in self.unique_labels],
-            dtype=object,
-        )
-        self.cluster_avg = np.vectorize(np.mean)(cluster_pred).reshape(-1, 1)
+            # Probability Density Function Summation
+            if self.pdf:
+                with self.Timer("gridded-pdf-summation"):
+                    self.pdf_x, self.pdf_y, self.pdf_sum = self.mvn_prob_sum(
+                        self.std_emb, self.std_r_orig
+                    )
 
-        # cluster-wise validation fraction
-        train_ct, val_ct = np.array(
-            [
+            # validation density contributed by training densities
+            train_emb = self.umap_emb[: self.ntrain]
+            train_r_orig = self.umap_r_orig[: self.ntrain]
+            val_emb = self.umap_emb[self.ntrain :]
+            val_r_orig = self.umap_r_orig[self.ntrain :]
+
+            if count_repeats:
+                counts = self.train_df["count"]
+                train_r_orig = [r / count for (r, count) in zip(train_r_orig, counts)]
+
+            self.train_df["emb"] = list(map(tuple, train_emb))
+            self.train_df["r_orig"] = train_r_orig
+            self.val_df["emb"] = list(map(tuple, val_emb))
+            self.val_df["r_orig"] = val_r_orig
+
+            with self.Timer("train-val-pdf-summation"):
+                # TODO: factor in repeats (df["count"]) with flag
+                mvn_list = list(
+                    map(my_mvn, train_emb[:, 0], train_emb[:, 1], train_r_orig)
+                )
+                pdf_list = [mvn.pdf(val_emb) for mvn in mvn_list]
+                self.val_dens = np.sum(pdf_list, axis=0)
+                self.val_log_dens = np.log(self.val_dens)
+
+            self.val_df["dens"] = self.val_dens
+
+            # cluster-wise predicted average
+            cluster_pred = np.array(
+                [pred.ravel()[self.labels == lbl] for lbl in self.unique_labels],
+                dtype=object,
+            )
+            self.cluster_avg = np.vectorize(np.mean)(cluster_pred).reshape(-1, 1)
+
+            # cluster-wise validation fraction
+            train_ct, val_ct = np.array(
                 [
-                    np.count_nonzero(self.labels[ids] == lbl)
-                    for lbl in self.unique_labels
+                    [
+                        np.count_nonzero(self.labels[ids] == lbl)
+                        for lbl in self.unique_labels
+                    ]
+                    for ids in [train_ids, val_ids]
                 ]
-                for ids in [train_ids, val_ids]
-            ]
-        )
-        self.val_frac = (val_ct / (train_ct + val_ct)).reshape(-1, 1)
+            )
+            self.val_frac = (val_ct / (train_ct + val_ct)).reshape(-1, 1)
 
-        # # Scale and weight the cluster data
-        # # REVIEW: Which Scaler to use? RobustScaler means no set limits on "score"
-        self.cluster_score = self.weighted_score(self.cluster_avg, self.val_frac)
+            # # Scale and weight the cluster data
+            # # REVIEW: Which Scaler to use? RobustScaler means no set limits on "score"
+            self.cluster_score = self.weighted_score(self.cluster_avg, self.val_frac)
 
-        # compound-wise scores (i.e. individual compounds)
-        self.rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
-            self.dm, pred
-        )
-        self.val_rad_neigh_avg = self.rad_neigh_avg_targ[val_ids]
-        self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
+            # compound-wise scores (i.e. individual compounds)
+            with self.Timer("nearest-neighbor-properties"):
+                self.rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
+                    self.dm, pred
+                )
+                self.val_rad_neigh_avg = self.rad_neigh_avg_targ[val_ids]
+                self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
+
+        elif self.proxy_weight == 0 and self.novelty_learner == "discover":
+            self.val_rad_neigh_avg = np.zeros_like(self.val_pred)
+            self.val_k_neigh_avg = np.zeros_like(self.val_pred)
+            self.val_dens = np.zeros_like(self.val_pred)
+
+            self.val_df["emb"] = list(
+                map(tuple, np.zeros((self.val_df.shape[0], 2)).tolist())
+            )
+            self.val_df["dens"] = np.zeros(self.val_df.shape[0])
+
+        elif self.proxy_weight != 0 and self.novelty_learner != "discover":
+            warn(
+                f"self.val_rad_neigh_avg` and `self.val_k_neigh_avg` are being assigned the same values as `val_dens` for compatibility reasons since a non-DiSCoVeR novelty learner was specified: {self.novelty_learner}."
+            )
+            # composition-based featurization
+            X_train = []
+            X_val = []
+            if self.novelty_prop == "mod_petti":
+                for comp in self.train_formula.tolist():
+                    X_train.append(ElMD(comp, metric=self.novelty_prop).feature_vector)
+                for comp in self.val_formula.tolist():
+                    X_val.append(ElMD(comp, metric=self.novelty_prop).feature_vector)
+                X_train = np.array(X_train)
+                X_val = np.array(X_val)
+            else:
+                train_df = pd.DataFrame(
+                    {
+                        "formula": self.train_formula,
+                        "target": np.zeros_like(self.train_formula),
+                    }
+                )
+                val_df = pd.DataFrame(
+                    {
+                        "formula": self.val_formula,
+                        "target": np.zeros_like(self.val_formula),
+                    }
+                )
+                X_train, y, formulae, skipped = generate_features(
+                    train_df, elem_prop=self.novelty_prop
+                )
+                X_val, y, formulae, skipped = generate_features(
+                    val_df, elem_prop=self.novelty_prop
+                )
+                # https://stackoverflow.com/a/30808571/13697228
+                X_train = X_train.filter(regex="avg_*")
+                X_val = X_val.filter(regex="avg_*")
+
+            # novelty
+            self.novelty_learner.fit(X_train)
+            self.val_labels = self.novelty_learner.predict(X_val)
+            self.train_dens = self.novelty_learner.negative_outlier_factor_
+            self.val_dens = self.novelty_learner.score_samples(X_val)
+            mn = min(min(self.train_dens), min(self.val_dens))
+            self.train_dens = self.train_dens
+            self.val_dens = self.val_dens
+            pos_train_dens = self.train_dens + 1.001 - mn
+            pos_val_dens = self.val_dens + 1.001 - mn
+            self.val_log_dens = np.log(pos_val_dens)
+            self.val_rad_neigh_avg = copy(pos_val_dens)
+            self.val_k_neigh_avg = copy(pos_val_dens)
+
+            self.train_r_orig = 1 / (pos_train_dens)
+            self.val_r_orig = 1 / (pos_val_dens)
+
+            pca = PCA(n_components=2)
+            X_all = np.concatenate((X_train, X_val))
+            pca.fit(X_all)
+            emb = pca.transform(X_all)
+            self.train_df["emb"] = list(map(tuple, emb[: self.ntrain]))
+            self.val_df["emb"] = list(map(tuple, emb[self.ntrain :]))
+            self.val_df["dens"] = self.val_dens
+            self.train_df["r_orig"] = self.train_r_orig
+            self.val_df["r_orig"] = self.val_r_orig
 
         self.rad_score = self.weighted_score(
-            self.val_pred, self.val_rad_neigh_avg, pred_weight=pred_weight
+            self.val_pred,
+            self.val_rad_neigh_avg,
+            pred_weight=pred_weight,
+            proxy_weight=proxy_weight,
         )
         self.peak_score = self.weighted_score(
-            self.val_pred, self.val_k_neigh_avg, pred_weight=pred_weight
+            self.val_pred,
+            self.val_k_neigh_avg,
+            pred_weight=pred_weight,
+            proxy_weight=proxy_weight,
         )
         self.dens_score = self.weighted_score(
-            self.val_pred, self.val_dens, pred_weight=pred_weight
+            self.val_pred,
+            self.val_dens,
+            pred_weight=pred_weight,
+            proxy_weight=proxy_weight,
         )
 
         # Plotting
@@ -362,11 +657,25 @@ class Discover:
         self.peak_score_df = self.sort(self.peak_score)
         self.dens_score_df = self.sort(self.dens_score)
 
+        # create dir https://stackoverflow.com/a/273227/13697228
+        Path(self.table_dir).mkdir(parents=True, exist_ok=True)
+
         self.merge()
 
-        return self.dens_score, self.peak_score
+        if return_peak:
+            return self.dens_score, self.peak_score
+        else:
+            return self.dens_score
 
-    def weighted_score(self, pred, proxy, pred_weight=None):
+    def weighted_score(
+        self,
+        pred,
+        proxy,
+        pred_weight=None,
+        proxy_weight=None,
+        pred_scaler=None,
+        proxy_scaler=None,
+    ):
         """Calculate weighted discovery score using the predicted target and proxy.
 
         Parameters
@@ -376,7 +685,9 @@ class Discover:
         proxy : 1D Array
             Predicted proxy values (e.g. density or peak proxies).
         pred_weight : int, optional
-            The weight to assign to the predictions (proxy_weight is 1 by default), by default 2
+            The weight to assign to the scaled predictions, by default 1
+        proxy_weight : int, optional
+            The weight to assign to the scaled proxies, by default 1
 
         Returns
         -------
@@ -388,13 +699,20 @@ class Discover:
         elif self.pred_weight is None and pred_weight is None:
             pred_weight = 1
 
+        if self.proxy_weight is not None and proxy_weight is None:
+            proxy_weight = self.proxy_weight
+        elif self.proxy_weight is None and proxy_weight is None:
+            proxy_weight = 1
+
         pred = pred.ravel().reshape(-1, 1)
         proxy = proxy.ravel().reshape(-1, 1)
         # Scale and weight the cluster data
-        pred_scaler = self.Scaler().fit(pred)
-        pred_scaled = pred_weight * pred_scaler.transform(pred)
-        proxy_scaler = self.Scaler().fit(-1 * proxy)
-        proxy_scaled = proxy_scaler.transform(-1 * proxy)
+        if pred_scaler is None:
+            self.pred_scaler = self.Scaler().fit(pred)
+        pred_scaled = pred_weight * self.pred_scaler.transform(pred)
+        if proxy_scaler is None:
+            self.proxy_scaler = self.Scaler().fit(-1 * proxy)
+        proxy_scaled = proxy_weight * self.proxy_scaler.transform(-1 * proxy)
 
         # combined cluster data
         comb_data = pred_scaled + proxy_scaled
@@ -404,31 +722,44 @@ class Discover:
         score = comb_scaler.transform(comb_data).ravel()
         return score
 
-    def sort(self, score):
+    def sort(self, score, proxy_name="density"):
         """Sort (rank) compounds by their proxy score.
 
         Parameters
         ----------
         score : 1D Array
-            Discovery scores.
+            Discovery scores for the given proxy given by `proxy_name`.
+
+        proxy_name : string, optional
+            Name of the proxy, by default "density". Possible values are "density"
+            (`self.val_dens`), "peak" (`self.k_neigh_avg`), and "radius"
+            (`self.val_rad_neigh_avg`).
 
         Returns
         -------
         DataFrame
-            Contains "formula", "prediction", "density", and "score".
+            Contains "formula", "prediction", `proxy_name`, and "score".
         """
+        proxy_lookup = {
+            "density": self.val_dens,
+            "peak": self.val_k_neigh_avg,
+            "radius": self.val_rad_neigh_avg,
+        }
+        proxy = proxy_lookup[proxy_name]
+
         score_df = pd.DataFrame(
             {
-                "formula": self.val_formula,
+                "formula": self.val_df.formula,
                 "prediction": self.val_pred,
-                "density": self.val_dens,
+                proxy_name: proxy,
                 "score": score,
+                "index": self.val_df["index"],
             }
         )
         score_df.sort_values("score", ascending=False, inplace=True)
         return score_df
 
-    def merge(self):
+    def merge(self, nscores=100):
         """Perform an outer merge of the density and peak proxy rankings.
 
         Returns
@@ -436,27 +767,29 @@ class Discover:
         DataFrame
             Outer merge of the two proxy rankings.
         """
-        self.dens_score_df.rename(columns={"score": "Density Score"}, inplace=True)
-        self.peak_score_df.rename(columns={"score": "Peak Score"}, inplace=True)
+        if self.nscores is not None:
+            nscores = self.nscores
+        dens_score_df = self.dens_score_df.rename(columns={"score": "Density Score"})
+        peak_score_df = self.peak_score_df.rename(columns={"score": "Peak Score"})
 
-        comb_score_df = self.dens_score_df[["formula", "Density Score"]].merge(
-            self.peak_score_df[["formula", "Peak Score"]], how="outer"
+        comb_score_df = dens_score_df[["formula", "Density Score"]].merge(
+            peak_score_df[["formula", "Peak Score"]], how="outer"
         )
 
-        comb_formula = self.dens_score_df.head(10)[["formula"]].merge(
-            self.peak_score_df.head(10)[["formula"]], how="outer"
+        comb_formula = dens_score_df.head(nscores)[["formula"]].merge(
+            peak_score_df.head(nscores)[["formula"]], how="outer"
         )
 
         self.comb_out_df = comb_score_df[np.isin(comb_score_df.formula, comb_formula)]
 
-        self.dens_score_df.head(10).to_csv(
-            join(self.table_path, "dens-score.csv"), index=False, float_format="%.3f"
+        dens_score_df.head(nscores).to_csv(
+            join(self.table_dir, "dens-score.csv"), index=False, float_format="%.3f"
         )
-        self.peak_score_df.head(10).to_csv(
-            join(self.table_path, "peak-score.csv"), index=False, float_format="%.3f"
+        peak_score_df.head(nscores).to_csv(
+            join(self.table_dir, "peak-score.csv"), index=False, float_format="%.3f"
         )
         self.comb_out_df.to_csv(
-            join(self.table_path, "comb-score.csv"), index=False, float_format="%.3f"
+            join(self.table_dir, "comb-score.csv"), index=False, float_format="%.3f"
         )
 
         return self.comb_out_df
@@ -483,8 +816,11 @@ class Discover:
         ValueError
             Needs to have at least one cluster. It is assumed that there will always be a non-cluster
             (i.e. unclassified points) if there is only 1 cluster.
-        """ """"""
 
+        Notes
+        -----
+        TODO: highest mean vs. highest single target value
+        """
         # TODO: remind people in documentation to use a separate Discover() instance if they wish to access fit *and* gcv attributes
         self.all_formula = df["formula"]
         self.all_target = df["target"]
@@ -538,6 +874,9 @@ class Discover:
         # Group Cross Validation
         # for train_index, val_index in logo.split(X_tv, y_tv, self.labels):
         # TODO: group cross-val parity plot
+        if self.verbose:
+            print("Number of iterations (i.e. clusters): ", self.n_clusters)
+
         avg_targ = [
             self.single_group_cross_val(X, y, train_index, val_index, i)
             for i, (train_index, val_index) in enumerate(logo.split(X, y, self.labels))
@@ -549,67 +888,39 @@ class Discover:
         lbl_ids = np.unique(self.labels, return_index=True)[1]
         self.avg_labels = [self.labels[lbl_id] for lbl_id in sorted(lbl_ids)]
 
-        # Sorting "Error" Setup
-        u = np.flip(np.cumsum(np.linspace(0, 1, len(self.true_avg_targ))))
-        v = u.copy()
-        # sorting indices from high to low
-        self.sorter = np.flip(self.true_avg_targ.argsort())
-
-        # sort everything by same indices to preserve cluster order
-        u_weights = self.true_avg_targ[self.sorter]
-        v_weights = self.pred_avg_targ[self.sorter]
-        dummy_v_weights = self.train_avg_targ[self.sorter]
-
-        # Weighted distance between CDFs as proxy for "how well sorted" (i.e. sorting metric)
-        self.error = wasserstein_distance(
-            u, v, u_weights=u_weights, v_weights=v_weights
+        self.error, self.dummy_error, self.scaled_error = cdf_sorting_error(
+            self.true_avg_targ, self.pred_avg_targ, y_dummy=self.train_avg_targ
         )
         if self.verbose:
-            print("Weighted group cross validation error =", self.error)
+            print("Weighted group cross validation error: ", self.error)
+            print("Weighted group cross validation scaled error: ", self.scaled_error)
 
-        # Dummy Error (i.e. if you "guess" the mean of training targets)
-        self.dummy_error = wasserstein_distance(
-            u,
-            v,
-            u_weights=u_weights,
-            v_weights=dummy_v_weights,
-        )
-
-        # Similar to Matbench "scaled_error"
-        self.scaled_error = self.error / self.dummy_error
-        if self.verbose:
-            print("Weighted group cross validation scaled error =", self.scaled_error)
         return self.scaled_error
 
     def single_group_cross_val(self, X, y, train_index, val_index, iter):
+        """Perform leave-one-cluster-out cross-validation.
+
+        Parameters
+        ----------
+        X : list of str
+            Chemical formulae.
+        y : 1d array of float
+            Target properties.
+        train_index, val_index : 1d array of int
+            Training and validation indices for a given split, respectively.
+        iter : int
+            Iteration (i.e. how many clusters have been processed so far).
+
+        Returns
+        -------
+        true_avg_targ, pred_avg_targ, train_avg_targ : 1d array of float
+            True, predicted, and training average targets for each of the clusters.
+            average target is used to create a "dummy" measure of performance (i.e. one
+            of the the simplest "models" you can use, the average of the training data).
         """
-        TODO: add proper docstring.
+        if self.verbose:
+            print("[Iteration: ", iter, "]")
 
-        how do I capture a "distinct material class of high targets" in a single number?
-
-        Average of the cluster targets vs. average of the cluster densities (or neigh_avg_targ)?
-
-        Except that cluster densities are constant. It seems I really might need to get
-        the forward transform via UMAP.
-        Or I could sum the densities from all the other clusters (i.e. training data)?
-        Or take the neigh_avg_targ from only the training data?
-
-
-        Two questions:
-        How well are the targets predicted for the val cluster?
-        How well did UMAP push the val cluster away from other clusters?
-
-        Then compare the trade-off between these two.
-
-
-        Or just see if the targets are predicted well based on how certain clusters were removed.
-
-        Then maybe just return the true mean of the targets and the predicted mean of the targets?
-
-        This will tell me which clusters are more interesting. Then I can start looking within
-        clusters at the trade-off between high-target and low-proxy to prioritize which materials
-        to look at first.
-        """
         Xn, yn = X.to_numpy(), y.to_numpy()
         X_train, X_val = Xn[train_index], Xn[val_index]
         y_train, y_val = yn[train_index], yn[val_index]
@@ -674,6 +985,26 @@ class Discover:
         return true_avg_targ, pred_avg_targ, train_avg_targ
 
     def cluster(self, umap_emb, min_cluster_size=50, min_samples=5):
+        """Cluster using HDBSCAN*.
+
+        Parameters
+        ----------
+        umap_emb : nD Array
+            DensMAP embedding coordinates.
+        min_cluster_size : int, optional
+            "The minimum size of clusters; single linkage splits that contain fewer
+            points than this will be considered points "falling out" of a cluster rather
+            than a cluster splitting into two new clusters." (source: HDBSCAN* docs), by
+            default 50
+        min_samples : int, optional
+            "The number of samples in a neighbourhood for a point to be considered a
+            core point." (source: HDBSCAN* docs), by default 5
+
+        Returns
+        -------
+        clusterer : HDBSCAN class
+            HDBSCAN clusterer fitted to UMAP embeddings.
+        """
         with self.Timer("HDBSCAN*"):
             clusterer = hdbscan.HDBSCAN(
                 min_samples=min_samples,
@@ -684,10 +1015,56 @@ class Discover:
         return clusterer
 
     def extract_labels_probs(self, clusterer):
+        """Extract cluster IDs (`labels`) and `probabilities` from HDBSCAN* `clusterer`.
+
+        Parameters
+        ----------
+        clusterer : HDBSCAN class
+            Instantiated HDBSCAN* class for clustering.
+
+        Returns
+        -------
+        labels_ : ndarray, shape (n_samples, )
+            "Cluster labels for each point in the dataset given to fit(). Noisy samples
+            are given the label -1." (source: HDBSCAN* docs)
+
+        probabilities_ : ndarray, shape (n_samples, )
+            "The strength with which each sample is a member of its assigned cluster.
+            Noise points have probability zero; points in clusters have values assigned
+            proportional to the degree that they persist as part of the cluster." (source: HDBSCAN* docs)
+        """
         labels, probabilities = attrgetter("labels_", "probabilities_")(clusterer)
         return labels, probabilities
 
-    def umap_fit_cluster(self, dm, random_state=None):
+    def umap_fit_cluster(self, dm, metric="precomputed", random_state=None):
+        """Perform DensMAP fitting for clustering.
+
+        See https://umap-learn.readthedocs.io/en/latest/clustering.html.
+
+        Parameters
+        ----------
+        dm : ndarray
+            Pairwise Element Mover's Distance (`ElMD`) matrix within a single set of
+            points.
+
+        metric : str
+            Which metric to use for DensMAP, by default "precomputed".
+
+        random_state: int, RandomState instance or None, optional (default: None)
+            "If int, random_state is the seed used by the random number generator; If
+            RandomState instance, random_state is the random number generator; If None,
+            the random number generator is the RandomState instance used by
+            `np.random`." (source: UMAP docs)
+
+        Returns
+        -------
+        umap_trans : UMAP class
+            A UMAP class fitted to `dm`.
+
+        See Also
+        --------
+        umap.UMAP : UMAP class.
+        """
         with self.Timer("fit-UMAP"):
             umap_trans = umap.UMAP(
                 densmap=True,
@@ -696,12 +1073,38 @@ class Discover:
                 n_neighbors=30,
                 min_dist=0,
                 n_components=2,
-                metric="precomputed",
+                metric=metric,
                 random_state=random_state,
+                low_memory=False,
             ).fit(dm)
         return umap_trans
 
-    def umap_fit_vis(self, X, random_state=None):
+    def umap_fit_vis(self, dm, random_state=None):
+        """Perform DensMAP fitting for visualization.
+
+        See https://umap-learn.readthedocs.io/en/latest/clustering.html.
+
+        Parameters
+        ----------
+        dm : ndarray
+            Pairwise Element Mover's Distance (`ElMD`) matrix within a single set of
+            points.
+
+        random_state: int, RandomState instance or None, optional (default: None)
+            "If int, random_state is the seed used by the random number generator; If
+            RandomState instance, random_state is the random number generator; If None,
+            the random number generator is the RandomState instance used by
+            `np.random`." (source: UMAP docs)
+
+        Returns
+        -------
+        std_trans : UMAP class
+            A UMAP class fitted to `dm`.
+
+        See Also
+        --------
+        umap.UMAP : UMAP class.
+        """
         with self.Timer("fit-vis-UMAP"):
             std_trans = umap.UMAP(
                 densmap=True,
@@ -709,7 +1112,8 @@ class Discover:
                 dens_lambda=self.dens_lambda,
                 metric="precomputed",
                 random_state=random_state,
-            ).fit(X)
+                low_memory=False,
+            ).fit(dm)
         return std_trans
 
     def extract_emb_rad(self, trans):
@@ -722,12 +1126,16 @@ class Discover:
 
         Returns
         -------
-        emb
+        emb :
             UMAP embedding
         r_orig
             original radii
         r_emb
             embedded radii
+
+        See Also
+        --------
+        umap.UMAP : UMAP class.
         """
         emb, r_orig_log, r_emb_log = attrgetter("embedding_", "rad_orig_", "rad_emb_")(
             trans
@@ -736,27 +1144,79 @@ class Discover:
         r_emb = np.exp(r_emb_log)
         return emb, r_orig, r_emb
 
-    def mvn_prob_sum(self, std_emb, r_orig, n=100):
+    def mvn_prob_sum(self, emb, r_orig, n=100):
+        """Gridded multivariate normal probability summation.
+
+        Parameters
+        ----------
+        emb : ndarray
+            Clustering embedding.
+        r_orig : 1d array
+            Original DensMAP radii.
+        n : int, optional
+            Number of points along the x and y axes (total grid points = n^2), by default 100
+
+        Returns
+        -------
+        x : 1d array
+            x-coordinates
+        y : 1d array
+            y-coordinates
+        pdf_sum : 1d array
+            summed densities at the (`x`, `y`) locations
+        """
         # multivariate normal probability summation
-        mn = np.amin(std_emb, axis=0)
-        mx = np.amax(std_emb, axis=0)
+        mn = np.amin(emb, axis=0)
+        mx = np.amax(emb, axis=0)
         x, y = np.mgrid[mn[0] : mx[0] : n * 1j, mn[1] : mx[1] : n * 1j]  # type: ignore
         pos = np.dstack((x, y))
 
         with self.Timer("pdf-summation"):
-            mvn_list = list(map(my_mvn, std_emb[:, 0], std_emb[:, 1], r_orig))
+            mvn_list = list(map(my_mvn, emb[:, 0], emb[:, 1], r_orig))
             pdf_list = [mvn.pdf(pos) for mvn in mvn_list]
             pdf_sum = np.sum(pdf_list, axis=0)
         return x, y, pdf_sum
 
-    def compute_log_density(self, std_r_orig=None):
-        if std_r_orig is None:
-            std_r_orig = self.std_r_orig
-        self.dens = 1 / std_r_orig
+    def compute_log_density(self, r_orig=None):
+        """Compute the log density based on the radii.
+
+        Parameters
+        ----------
+        r_orig : 1d array, optional
+            The original radii associated with the fitted DensMAP, by default None. If
+            None, then defaults to self.std_r_orig.
+
+        Returns
+        -------
+        self.dens, self.log_dens : 1d array
+            Densities and log densities associated with the original radii, respectively.
+
+        Notes
+        -----
+        Density is approximated as 1/r_orig
+        """
+        if r_orig is None:
+            r_orig = self.std_r_orig
+        self.dens = 1 / r_orig
         self.log_dens = np.log(self.dens)
         return self.dens, self.log_dens
 
     def plot(self, return_pareto_ind=False):
+        """Plot and save various cluster and Pareto front figures.
+
+        Parameters
+        ----------
+        return_pareto_ind : bool, optional
+            Whether to return the pareto front indices, by default False
+
+        Returns
+        -------
+        pk_pareto_ind, dens_pareto_ind : tuple of int
+            Pareto front indices for the peak and density proxies, respectively.
+        """
+        # create dir https://stackoverflow.com/a/273227/13697228
+        Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
+
         # peak pareto plot setup
         x = str(self.n_neighbors) + "_neigh_avg_targ (GPa)"
         y = "target (GPa)"
@@ -777,7 +1237,7 @@ class Discover:
             x=x,
             y=y,
             color="cluster ID",
-            fpath=join(self.figure_path, "pf-peak-proxy"),
+            fpath=join(self.figure_dir, "pf-peak-proxy"),
             pareto_front=True,
         )
 
@@ -798,26 +1258,77 @@ class Discover:
             x=x,
             y=y,
             color="cluster ID",
-            fpath=join(self.figure_path, "pf-train-contrib-proxy"),
+            fpath=join(self.figure_dir, "pf-train-contrib-proxy"),
             pareto_front=True,
             parity_type=None,
         )
 
         # Scatter plot colored by clusters
-        fig = umap_cluster_scatter(self.std_emb, self.labels)
+        fig = umap_cluster_scatter(
+            self.std_emb, self.labels, figure_dir=self.figure_dir
+        )
+
+        # Interactive scatter plot colored by clusters
+        x = "DensMAP Dim. 1"
+        y = "DensMAP Dim. 2"
+        umap_df = pd.DataFrame(
+            {
+                x: self.std_emb[:, 0],
+                y: self.std_emb[:, 1],
+                "cluster ID": self.labels,
+                "formula": self.all_formula,
+            }
+        )
+        fig = pareto_plot(
+            umap_df,
+            x=x,
+            y=y,
+            color="cluster ID",
+            fpath=join(self.figure_dir, "px-umap-cluster-scatter"),
+            pareto_front=False,
+            parity_type=None,
+        )
 
         # Histogram of cluster counts
-        fig = cluster_count_hist(self.labels)
+        fig = cluster_count_hist(self.labels, figure_dir=self.figure_dir)
 
         # Scatter plot colored by target values
-        fig = target_scatter(self.std_emb, self.all_target)
+        fig = target_scatter(self.std_emb, self.all_target, figure_dir=self.figure_dir)
+
+        # Interactive scatter plot colored by target values
+        x = "DensMAP Dim. 1"
+        y = "DensMAP Dim. 2"
+        targ_df = pd.DataFrame(
+            {
+                x: self.std_emb[:, 0],
+                y: self.std_emb[:, 1],
+                "target": self.all_target,
+                "formula": self.all_formula,
+            }
+        )
+        fig = pareto_plot(
+            targ_df,
+            x=x,
+            y=y,
+            color="target",
+            fpath=join(self.figure_dir, "px-targ-scatter"),
+            pareto_front=False,
+            parity_type=None,
+        )
 
         # PDF evaluated on grid of points
         if self.pdf:
-            fig = dens_scatter(self.pdf_x, self.pdf_y, self.pdf_sum)
+            fig = dens_scatter(
+                self.pdf_x, self.pdf_y, self.pdf_sum, figure_dir=self.figure_dir
+            )
 
             fig = dens_targ_scatter(
-                self.std_emb, self.all_target, self.pdf_x, self.pdf_y, self.pdf_sum
+                self.std_emb,
+                self.all_target,
+                self.pdf_x,
+                self.pdf_y,
+                self.pdf_sum,
+                figure_dir=self.figure_dir,
             )
 
         # dens pareto plot setup
@@ -840,7 +1351,7 @@ class Discover:
             dens_df,
             x=x,
             y=y,
-            fpath=join(self.figure_path, "pf-dens-proxy"),
+            fpath=join(self.figure_dir, "pf-dens-proxy"),
             parity_type=None,
             color="cluster ID",
             pareto_front=True,
@@ -862,7 +1373,7 @@ class Discover:
             y=y,
             hover_data=None,
             color="cluster ID",
-            fpath=join(self.figure_path, "pf-frac-proxy"),
+            fpath=join(self.figure_dir, "pf-frac-proxy"),
             pareto_front=True,
             reverse_x=False,
             parity_type=None,
@@ -887,7 +1398,7 @@ class Discover:
                 gcv_df,
                 x=x,
                 y=y,
-                fpath=join(self.figure_path, "gcv-pareto"),
+                fpath=join(self.figure_dir, "gcv-pareto"),
                 parity_type="max-of-both",
                 color="cluster ID",
                 pareto_front=False,
@@ -904,19 +1415,27 @@ class Discover:
 
     # TODO: write function to visualize Wasserstein metric (barchart with height = color)
 
-    def save(self, fpath="disc.pkl"):
-        """Save Discover() model.
+    def save(self, fpath="disc.pkl", dummy=False):
+        """Save Discover model.
 
         Parameters
         ----------
         fpath : str, optional
             Filepath to which to save, by default "disc.pkl"
+
+        See Also
+        --------
+        load : load a Discover model.
         """
+        if dummy is True:
+            warn("Dummy flag set to True. Overwriting fpath to dummy_disc.pkl")
+            fpath = "dummy_disc.pkl"
+
         with open(fpath, "wb") as f:
             pickle.dump(self, f)
 
     def load(self, fpath="disc.pkl"):
-        """Load Discover() model.
+        """Load Discover model.
 
         Parameters
         ----------
@@ -932,179 +1451,16 @@ class Discover:
             disc = pickle.load(f)
             return disc
 
-    def data(
-        self,
-        module,
-        fname="train.csv",
-        groupby=True,
-        dummy=False,
-        split=True,
-        val_size=0.2,
-        test_size=0.0,
-        random_state=42,
-    ):
-        """Grab data from within the subdirectories (modules) of mat_discover.
-
-        Parameters
-        ----------
-        module : Module
-            The module within mat_discover that contains e.g. "train.csv". For example,
-            from mat_discover.CrabNet.data.materials_data import elasticity
-        fname : str, optional
-            Filename of text file to open.
-        dummy : bool, optional
-            Whether to pare down the data to a small test set, by default False
-        groupby : bool, optional
-            Whether to use groupby_formula to filter identical compositions
-        split : bool, optional
-            Whether to split the data into train, val, and (optionally) test sets, by default True
-        val_size : float, optional
-            Validation dataset fraction, by default 0.2
-        test_size : float, optional
-            Test dataset fraction, by default 0.0
-        random_state : int, optional
-            seed to use for the train/val/test split, by default 42
-
-        Returns
-        -------
-        DataFrame
-            If split==False, then the full DataFrame is returned directly
-
-        DataFrame, DataFrame
-            If test_size == 0 and split==True, then training and validation DataFrames are returned.
-
-        DataFrame, DataFrame, DataFrame
-            If test_size > 0 and split==True, then training, validation, and test DataFrames are returned.
-        """
-
-        train_csv = open_text(module, fname)
-        df = pd.read_csv(train_csv)
-
-        if groupby:
-            df = groupby_formula(df, how="max")
-
-        if dummy:
-            ntot = min(100, len(df))
-            df = df.head(ntot)
-
-        if split:
-            if test_size > 0:
-                df, test_df = train_test_split(
-                    df, test_size=test_size, random_state=random_state
-                )
-
-            train_df, val_df = train_test_split(
-                df, test_size=val_size / (1 - test_size), random_state=random_state
-            )
-
-            if test_size > 0:
-                return train_df, val_df, test_df
-            else:
-                return train_df, val_df
-        else:
-            return df
+    def data(self, module, **data_kwargs):
+        return data(module, **data_kwargs)
 
 
-# %% CODE GRAVEYARD
-# remove dependence on paths
-# def load_data(self,
-#               folder = "C:/Users/sterg/Documents/GitHub/sparks-baird/ElM2D/CrabNet/model_predictions",
-#               name="elasticity_val_output.csv", # example_materials_property_val_output.csv
-#               ):
-#     fpath = join(folder, name)
-#     val_df = pd.read_csv(fpath)
-
-#     self.formula = val_df["composition"][0:20000]
-#     self.target = val_df["pred-0"][0:20000]
-
-# X_tv, X_test, y_tv, y_test = train_test_split(
-#     X, y, test_size=n_test_clusters, random_state=42
-# )
-
-# from CrabNet.crabnet.model import Model
-# from CrabNet.crabnet.kingcrab import CrabNet
-
-# model = Model(
-#     CrabNet(compute_device=compute_device).to(compute_device),
-#     verbose=False,
-# )
-
-# self.scores = [
-#     wasserstein_distance(u, v, u_weights=true_avg_targ, v_weights=pred_avg_targ)
-#     for true_avg_targ, pred_avg_targ in zip(true_avg_targs, pred_avg_targs)
-# ]
-
-# self.score = np.mean(self.scores)
-
-# if val_df is not None:
-#     cat_df = pd.concat((df, val_df), axis=0)
+# %% Code Graveyard
+# if dm is not None:
+#     skip_elmd = True
 # else:
-#     cat_df = df
-
-# REVIEW: whether to return ratio or fraction (maybe doesn't matter)
-# self.val_ratio = val_ct / train_ct
-
-# # unpack
-# if df is None and self.df is not None:
-#     df = self.df
-# elif df is None and self.df is None:
-#     raise SyntaxError(
-#         "df must be assigned via fit() or supplied to group_cross_val directly"
-#     )
-
-# self.val_score = self.score[val_ids]
-
-# val_target = np.array([np.nan] * len(val_formula))
-
-
-# # targets, nearest neighbors, and pareto front indices
-# true_targ = val_df["target"]
-# pred_targ = val_pred_df["pred-0"]
-# target_tmp = (train_df["target"], val_pred_df["pred-0"])
-# target = pd.concat(target_tmp, axis=0)
-
-# dummy_df = train_df.iloc[:1, :]
-# dummy_df["target"] = np.nan
-
-# frac_scaler = Scaler().fit(self.val_frac)
-# frac_scaled = frac_scaler.transform(self.val_frac)
-
-
-# y = self.val_pred.reshape(-1, 1)
-# pred_scaler2 = self.Scaler().fit(y)
-# pred_scaled2 = pred_weight * pred_scaler2.transform(y)
-# dens_scaler = self.Scaler().fit(-1 * self.val_dens.reshape(-1, 1))
-# dens_scaled = dens_scaler.transform(-1 * self.val_dens.reshape(-1, 1))
-
-# # combined compound validation data
-# comb_data2 = pred_scaled2 + dens_scaled
-# comb_scaler2 = self.Scaler().fit(comb_data2)
-# self.score = comb_scaler2.transform(comb_data2).ravel()
-
-# pred_scaler = self.Scaler().fit(self.cluster_avg)
-# pred_scaled = pred_weight * pred_scaler.transform(self.cluster_avg)
-# frac_scaled = self.val_frac  # already between 0 and 1
-
-# # combined cluster data
-# comb_data = pred_scaled + frac_scaled
-# comb_scaler = self.Scaler().fit(comb_data)
-
-# # cluster scores range between 0 and 1
-# self.cluster_score = comb_scaler.transform(comb_data)
-
-# self.unique_labels = np.unique(self.labels)
-
-# train CrabNet
-# train_pred_df, val_pred_df, test_pred_df = crabnet_main(
-#     mat_prop="elasticity",
-#     train_df=train_df,
-#     val_df=val_df,
-#     test_df=test_df,
-#     learningcurve=False,
-#     verbose=False,
-# )
-
-# true_targ = np.concatenate((train_true, val_true), axis=0)
-# pred_targ = np.concatenate((train_pred, val_pred), axis=0)
-
-# from CrabNet.train_crabnet import main as crabnet_main
+#     skip_elmd = False
+# if umap_trans is not None and std_trans is not None:
+#     skip_umap = True
+# else:
+#     skip_umap = False

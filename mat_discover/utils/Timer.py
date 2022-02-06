@@ -3,17 +3,18 @@ from time import time
 
 
 class Timer(object):
-    """
-    Simple timer class.
+    """Simple timer class.
 
     https://stackoverflow.com/a/5849861/13697228
+
     Usage
     -----
-    with Timer("description"):
-        # do stuff
+    >>> with Timer("add two numbers"):
+    ...    out = 56 + 74
     """
 
     def __init__(self, name=None):
+        """Assign name for Timer object."""
         self.name = name
 
     def __enter__(self):

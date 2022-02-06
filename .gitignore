@@ -146,4 +146,26 @@ data/all_struct_dicts.pkl
 data/elast_results.pkl
 data/elast_struct_dicts.pkl
 models/trained_models/example_materials_property.pth
+models/trained_models/test-property.pth# conda smithy ci-skeleton start
+*.pyc
+
+build_artifacts
+# conda smithy ci-skeleton end
 models/trained_models/test-property.pth
+mat_discover-feedstock/
+scratch/
+**/test-property.pth
+mat_discover/data/all_results.pkl
+mat_discover/data/elast_results.pkl
+mat_discover/data/elast_struct_dicts.pkl
+mat_discover/data/elasticity/**
+dummy_disc.pkl
+examples/tables/**
+examples/figures/**
+examples/models/**
+examples/hyperparameter_combinations/hyperparameter_combinations.ipynb
+mat_discover/data/thermoelectric-train.csv
+mat_discover/data/train.xlsx
+mat_discover/data/val.xlsx
+figures/dummy/**/*
+tables/dummy/**/*
