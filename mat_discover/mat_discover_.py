@@ -356,7 +356,9 @@ class Discover:
                 min_cluster_size = 50
                 min_samples = 1
             hdbscan_kwargs = dict(
-                min_samples=1, cluster_selection_epsilon=0.63, min_cluster_size=50
+                min_samples=min_samples,
+                cluster_selection_epsilon=0.63,
+                min_cluster_size=min_cluster_size,
             )
         self.hdbscan_kwargs = hdbscan_kwargs
 
@@ -892,7 +894,6 @@ class Discover:
         if (dummy_run is None and self.dummy_run) or dummy_run:
             umap_trans = MDS(n_components=2, dissimilarity="precomputed").fit(self.dm)
             self.umap_emb = umap_trans.embedding_
-            min_cluster_size = 5
         else:
             umap_trans = self.umap_fit_cluster(self.dm, random_state=umap_random_state)
             self.umap_emb = self.extract_emb_rad(umap_trans)[0]
@@ -1123,7 +1124,7 @@ class Discover:
         """
         if random_state is not None:
             self.umap_cluster_kwargs["random_state"] = random_state
-        if metric is not "precomputed":
+        if metric != "precomputed":
             self.umap_cluster_kwargs["metric"] = metric
         with self.Timer("fit-UMAP"):
             umap_trans = umap.UMAP(**self.umap_cluster_kwargs).fit(dm)
