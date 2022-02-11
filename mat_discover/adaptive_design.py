@@ -150,9 +150,9 @@ class Adapt(Discover):
 
         # append compound to train, remove from val, and reset indices
         # https://stackoverflow.com/a/12204428/13697228
-        move_row = self.val_df[self.val_df["index"] == next_index]
+        move_row = self.val_df[self.val_df.index == next_index]
         self.train_df = self.train_df.append(move_row, ignore_index=True)
-        self.val_df = self.val_df[self.val_df["index"] != next_index]
+        self.val_df = self.val_df[self.val_df.index != next_index]
         # self.val_df = self.val_df.drop(index=next_index)
 
         next_experiment[proxy_name] = next_proxy
