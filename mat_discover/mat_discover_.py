@@ -11,6 +11,7 @@ from pathlib import Path
 from os.path import join
 import gc
 from torch.cuda import empty_cache
+from typing import Optional
 
 from warnings import warn
 from operator import attrgetter
@@ -139,25 +140,28 @@ class Discover:
 
     def __init__(
         self,
-        timed: bool = True,
-        dens_lambda: float = 1.0,
-        plotting: bool = False,
-        pdf: bool = True,
-        n_neighbors: int = 10,
-        verbose: bool = True,
-        mat_prop_name="test-property",
-        dummy_run=False,
+        timed: Optional[bool] = True,
+        dens_lambda: Optional[float] = 1.0,
+        plotting: Optional[bool] = False,
+        pdf: Optional[bool] = True,
+        n_peak_neighbors: Optional[int] = 10,
+        verbose: Optional[bool] = True,
+        mat_prop_name: Optional[str] = "test-property",
+        dummy_run: Optional[bool] = False,
         Scaler=RobustScaler,
-        figure_dir="figures",
-        table_dir="tables",
-        novelty_learner="discover",
-        novelty_prop="mod_petti",
+        figure_dir: Optional[str] = "figures",
+        table_dir: Optional[str] = "tables",
+        novelty_learner: Optional = "discover",
+        novelty_prop: Optional = "mod_petti",
         # groupby_filter="max",
-        pred_weight=1,
-        proxy_weight=1,
-        device="cuda",
+        pred_weight: Optional = 1,
+        proxy_weight: Optional = 1,
+        device: Optional[str] = "cuda",
         dist_device=None,
-        nscores=100,
+        nscores: Optional[int] = 100,
+        umap_cluster_kwargs: Optional[dict] = None,
+        umap_vis_kwargs: Optional[dict] = None,
+        hdbscan_kwargs: Optional[dict] = None,
     ):
         """Initialize a Discover() class.
 
@@ -181,7 +185,7 @@ class Discover:
             Whether or not probability density function values are computed, by default
             True
 
-        n_neighbors : int, optional
+        n_peak_neighbors : int, optional
             Number of neighbors to consider when computing k_neigh_avg (i.e. peak
             proxy), by default 10
 
@@ -248,6 +252,22 @@ class Discover:
         nscores : int, optional
             Number of scores (i.e. compounds) to return in the CSV output files.
 
+        umap_cluster_kwargs, umap_vis_kwargs : dict, optional
+            `umap.UMAP` kwargs that are passed directly into the UMAP embedder that is
+            used for clustering and visualization, respectively. By default None. See
+            `basic UMAP parameters
+            <https://umap-learn.readthedocs.io/en/latest/parameters.html>`_ and the
+            `UMAP API
+            <https://umap-learn.readthedocs.io/en/latest/api.html#umap.umap_.UMAP>`_. If
+            this contains `dens_lambda` or `n_neighbors` keys, the values in the passed dictionary will take precedence over the corresponding `Discover` kwargs.
+
+        hdbscan_kwargs: dict, optional
+            `hdbscan.HDBSCAN` kwargs that are passed directly into the HDBSCAN
+            clusterer. By default, None. See `Parameter Selection for HDBSCAN*
+            <https://hdbscan.readthedocs.io/en/latest/parameter_selection.html>`_ and
+            the `HDBSCAN API
+            <https://hdbscan.readthedocs.io/en/latest/api.html#hdbscan.hdbscan_.HDBSCAN>`_.
+
         References
         ----------
 
@@ -263,7 +283,7 @@ class Discover:
         self.dens_lambda = dens_lambda
         self.plotting = plotting
         self.pdf = pdf
-        self.n_neighbors = n_neighbors
+        self.n_peak_neighbors = n_peak_neighbors
         self.verbose = verbose
         self.mat_prop_name = mat_prop_name
         self.dummy_run = dummy_run
@@ -297,6 +317,42 @@ class Discover:
         else:
             self.force_cpu = False
         self.nscores = nscores
+
+        if umap_cluster_kwargs is None:
+            umap_cluster_kwargs = dict(
+                densmap=True,
+                output_dens=True,
+                dens_lambda=self.dens_lambda,
+                n_neighbors=30,
+                min_dist=0,
+                n_components=2,
+                metric="precomputed",
+                random_state=None,
+                low_memory=False,
+            )
+        else:
+            if "dens_lambda" not in umap_cluster_kwargs:
+                umap_cluster_kwargs["dens_lambda"] = self.dens_lambda
+            else:
+                self.dens_lambda = umap_cluster_kwargs["dens_lambda"]
+        self.umap_cluster_kwargs = umap_cluster_kwargs
+
+        if umap_vis_kwargs is None:
+            umap_vis_kwargs = dict(
+                densmap=True,
+                output_dens=True,
+                dens_lambda=self.dens_lambda,
+                metric="precomputed",
+                random_state=None,
+                low_memory=False,
+            )
+        self.umap_vis_kwargs = umap_vis_kwargs
+
+        if hdbscan_kwargs is None:
+            hdbscan_kwargs = dict(
+                min_samples=1, cluster_selection_epsilon=0.63, min_cluster_size=50
+            )
+        self.hdbscan_kwargs = hdbscan_kwargs
 
         self.mapper = ElM2D(target=self.dist_device)  # type: ignore
         self.dm = None
@@ -353,13 +409,13 @@ class Discover:
     def predict(
         self,
         val_df,
-        plotting=None,
+        plotting: bool = None,
         umap_random_state=None,
         pred_weight=None,
         proxy_weight=None,
-        dummy_run=None,
-        count_repeats=False,
-        return_peak=False,
+        dummy_run: bool = None,
+        count_repeats: bool = False,
+        return_peak: bool = False,
     ):
         """Predict target and proxy for validation dataset.
 
@@ -382,16 +438,22 @@ class Discover:
             over `self.proxy_weight`. If neither `proxy_weight` nor `self.proxy_weight` is specified, it defaults to 1.
         dummy_run : bool, optional
             Whether to use MDS in place of the (typically more expensive) DensMAP, by
-            default None. If neither dummy_run nor self.dummy_run is specified, it defaults to (effectively) being False. When specified, dummy_run takes precedence over self.dummy_run.
-        dm : 2D array, optional
-            Precomputed ElM2D distance matrix.
-        umap_trans, std_trans : DensMAP Mapper
-            Pre-specified DensMAP mappers for clustering and visualization, respectively, which contain embeddings and densities.
+            default None. If neither dummy_run nor self.dummy_run is specified, it
+            defaults to (effectively) being False. When specified, dummy_run takes
+            precedence over self.dummy_run.
+        count_repeats : bool, optional
+            Whether repeat chemical formulae should intensify the local density (i.e.
+            decrease the novelty) or not. By default False.
+        return_peak : bool, optional
+            Whether or not to return the peak scores in addition to the density-based
+            scores. By default, False.
+
 
         Returns
         -------
         dens_score, peak_score
-            Scaled discovery scores for density and peak proxies.
+            Scaled discovery scores for density and peak proxies. Returns only
+            `dens_score` if return_peak is False, which is the default.
         """
         if "target" not in val_df.columns:
             val_df["target"] = np.nan
@@ -551,7 +613,7 @@ class Discover:
             # compound-wise scores (i.e. individual compounds)
             with self.Timer("nearest-neighbor-properties"):
                 self.rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
-                    self.dm, pred
+                    self.dm, pred, n_neighbors=self.n_peak_neighbors
                 )
                 self.val_rad_neigh_avg = self.rad_neigh_avg_targ[val_ids]
                 self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
@@ -753,7 +815,7 @@ class Discover:
                 "prediction": self.val_pred,
                 proxy_name: proxy,
                 "score": score,
-                "index": self.val_df["index"],
+                "index": self.val_df.index,
             }
         )
         score_df.sort_values("score", ascending=False, inplace=True)
@@ -1006,12 +1068,7 @@ class Discover:
             HDBSCAN clusterer fitted to UMAP embeddings.
         """
         with self.Timer("HDBSCAN*"):
-            clusterer = hdbscan.HDBSCAN(
-                min_samples=min_samples,
-                cluster_selection_epsilon=0.63,
-                min_cluster_size=min_cluster_size,
-                # allow_single_cluster=True,
-            ).fit(umap_emb)
+            clusterer = hdbscan.HDBSCAN(**self.hdbscan_kwargs).fit(umap_emb)
         return clusterer
 
     def extract_labels_probs(self, clusterer):
@@ -1065,18 +1122,12 @@ class Discover:
         --------
         umap.UMAP : UMAP class.
         """
+        if random_state is not None:
+            self.umap_cluster_kwargs["random_state"] = random_state
+        if metric is not "precomputed":
+            self.umap_cluster_kwargs["metric"] = metric
         with self.Timer("fit-UMAP"):
-            umap_trans = umap.UMAP(
-                densmap=True,
-                output_dens=True,
-                dens_lambda=self.dens_lambda,
-                n_neighbors=30,
-                min_dist=0,
-                n_components=2,
-                metric=metric,
-                random_state=random_state,
-                low_memory=False,
-            ).fit(dm)
+            umap_trans = umap.UMAP(**self.umap_cluster_kwargs).fit(dm)
         return umap_trans
 
     def umap_fit_vis(self, dm, random_state=None):
@@ -1105,15 +1156,10 @@ class Discover:
         --------
         umap.UMAP : UMAP class.
         """
+        if random_state is not None:
+            self.umap_vis_kwargs["random_state"] = random_state
         with self.Timer("fit-vis-UMAP"):
-            std_trans = umap.UMAP(
-                densmap=True,
-                output_dens=True,
-                dens_lambda=self.dens_lambda,
-                metric="precomputed",
-                random_state=random_state,
-                low_memory=False,
-            ).fit(dm)
+            std_trans = umap.UMAP(**self.umap_vis_kwargs).fit(dm)
         return std_trans
 
     def extract_emb_rad(self, trans):
