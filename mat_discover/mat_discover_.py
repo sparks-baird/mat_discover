@@ -541,7 +541,7 @@ class Discover:
                     )[:2]
 
             # HDBSCAN*
-            clusterer = self.cluster(self.umap_emb, **self.hdbscan_kwargs)
+            clusterer = self.cluster(self.umap_emb)
             self.labels = self.extract_labels_probs(clusterer)[0]
 
             # np.unique while preserving order https://stackoverflow.com/a/12926989/13697228
@@ -896,10 +896,9 @@ class Discover:
         else:
             umap_trans = self.umap_fit_cluster(self.dm, random_state=umap_random_state)
             self.umap_emb = self.extract_emb_rad(umap_trans)[0]
-            min_cluster_size = 50
 
         # HDBSCAN*
-        clusterer = self.cluster(self.umap_emb, min_cluster_size=min_cluster_size)
+        clusterer = self.cluster(self.umap_emb)
         self.labels = self.extract_labels_probs(clusterer)[0]
 
         # Group Cross Validation Setup
@@ -1042,7 +1041,7 @@ class Discover:
 
         return true_avg_targ, pred_avg_targ, train_avg_targ
 
-    def cluster(self, umap_emb, min_cluster_size=50, min_samples=5):
+    def cluster(self, umap_emb, min_cluster_size=50, min_samples=1):
         """Cluster using HDBSCAN*.
 
         Parameters
@@ -1056,13 +1055,17 @@ class Discover:
             default 50
         min_samples : int, optional
             "The number of samples in a neighbourhood for a point to be considered a
-            core point." (source: HDBSCAN* docs), by default 5
+            core point." (source: HDBSCAN* docs), by default 1
 
         Returns
         -------
         clusterer : HDBSCAN class
             HDBSCAN clusterer fitted to UMAP embeddings.
         """
+        if min_cluster_size != 50:
+            self.hdbscan_kwargs["min_cluster_size"] = min_cluster_size
+        if min_samples != 1:
+            self.hdbscan_kwargs["min_samples"] = min_samples
         with self.Timer("HDBSCAN*"):
             clusterer = hdbscan.HDBSCAN(**self.hdbscan_kwargs).fit(umap_emb)
         return clusterer
