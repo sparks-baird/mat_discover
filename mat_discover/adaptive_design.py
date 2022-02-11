@@ -125,7 +125,7 @@ class Adapt(Discover):
             next_formula, next_proxy, next_score = [
                 proxy_df[name].values[0] for name in ["formula", proxy_name, "score"]
             ]
-            next_index = proxy_df.index[0]
+            next_index = proxy_df.index.tolist()[0]
             next_target, next_emb, next_dens = [
                 self.val_df[self.val_df.index == next_index][name].values[0]
                 for name in ["target", "emb", "dens"]
