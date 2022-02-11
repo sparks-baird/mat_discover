@@ -132,9 +132,8 @@ class Adapt(Discover):
             ]
         else:
             sample = self.val_df.sample(1)
-            next_formula, next_target, next_index = sample[
-                ["formula", "target", "index"]
-            ].values[0]
+            next_formula, next_target = sample[["formula", "target"]].values[0]
+            next_index = sample.index[0]
             next_proxy = np.nan
             next_score = np.nan
             next_emb = np.nan

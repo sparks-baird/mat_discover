@@ -26,7 +26,7 @@ assert adapt.train_df.shape[0] == 102
 assert adapt.val_df.shape[0] == 98
 assert second_experiment["formula"] != first_experiment["formula"]
 second_emb = second_experiment["emb"]
-assert adapt.train_df[adapt.train_df.index == first_index].emb.iloc[0] == first_emb
+assert adapt.train_df[adapt.train_df.index == first_index]["emb"][0] == first_emb
 assert np.all(adapt.val_df.index != first_index)
 
 # third experiment, which reuses the DensMAP densities
