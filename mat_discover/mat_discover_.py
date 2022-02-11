@@ -349,6 +349,12 @@ class Discover:
         self.umap_vis_kwargs = umap_vis_kwargs
 
         if hdbscan_kwargs is None:
+            if self.dummy_run:
+                min_cluster_size = 5
+                min_samples = 1
+            else:
+                min_cluster_size = 50
+                min_samples = 1
             hdbscan_kwargs = dict(
                 min_samples=1, cluster_selection_epsilon=0.63, min_cluster_size=50
             )
@@ -535,16 +541,8 @@ class Discover:
                     )[:2]
 
             # HDBSCAN*
-            if (dummy_run is None and self.dummy_run) or dummy_run:
-                min_cluster_size = 5
-                min_samples = 1
-            else:
-                min_cluster_size = 50
-                min_samples = 1
             clusterer = self.cluster(
-                self.umap_emb,
-                min_cluster_size=min_cluster_size,
-                min_samples=min_samples,
+                self.umap_emb, **self.hdbscan_kwargs
             )
             self.labels = self.extract_labels_probs(clusterer)[0]
 
