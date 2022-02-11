@@ -1,6 +1,6 @@
 plotly==5.5.0
 pqdm==0.1.0
-scipy==1.7.3
+scipy==1.8.0
 dill==0.3.4
 hdbscan==0.8.27
 pandas==1.4.0
