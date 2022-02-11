@@ -541,9 +541,7 @@ class Discover:
                     )[:2]
 
             # HDBSCAN*
-            clusterer = self.cluster(
-                self.umap_emb, **self.hdbscan_kwargs
-            )
+            clusterer = self.cluster(self.umap_emb, **self.hdbscan_kwargs)
             self.labels = self.extract_labels_probs(clusterer)[0]
 
             # np.unique while preserving order https://stackoverflow.com/a/12926989/13697228
