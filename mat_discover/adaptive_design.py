@@ -123,8 +123,7 @@ class Adapt(Discover):
             proxy_df_name = proxy_lookup[proxy_name]
             proxy_df = getattr(self, proxy_df_name)
             next_formula, next_proxy, next_score = [
-                proxy_df[name].values[0]
-                for name in ["formula", proxy_name, "score"]
+                proxy_df[name].values[0] for name in ["formula", proxy_name, "score"]
             ]
             next_index = proxy_df.index[0]
             next_target, next_emb, next_dens = [
