@@ -18,7 +18,7 @@ first_experiment = adapt.suggest_first_experiment()
 assert adapt.train_df.shape[0] == 101
 assert adapt.val_df.shape[0] == 99
 first_emb = first_experiment["emb"]
-first_index = first_experiment.index
+first_index = first_experiment["index"]
 
 # next experiment, which reuses the DensMAP densities
 second_experiment = adapt.suggest_next_experiment()
