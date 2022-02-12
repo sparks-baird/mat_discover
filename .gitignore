@@ -162,6 +162,7 @@ mat_discover/data/elasticity/**
 dummy_disc.pkl
 examples/tables/**
 examples/figures/**
+!examples/cluster-example-output.png
 examples/models/**
 examples/hyperparameter_combinations/hyperparameter_combinations.ipynb
 mat_discover/data/thermoelectric-train.csv
