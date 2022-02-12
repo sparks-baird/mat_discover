@@ -1264,7 +1264,7 @@ class Discover:
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
 
         # peak pareto plot setup
-        x = str(self.n_neighbors) + "_neigh_avg_targ (GPa)"
+        x = str(self.n_peak_neighbors) + "_neigh_avg_targ (GPa)"
         y = "target (GPa)"
         # TODO: plot for val data only (fixed?)
         peak_df = pd.DataFrame(
