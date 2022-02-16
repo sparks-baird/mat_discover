@@ -45,9 +45,9 @@ jobs:
     - name: Test with pytest
       env:
         NUMBA_ENABLE_CUDASIM: "1"
-      shell: python
+      shell: bash -l {0}
       run: |
-        pytest
+        python -m pytest
         
 #     - name: publish-to-conda # requires setup.py file
 #       uses: fcakyon/conda-publish-action@v1.3
