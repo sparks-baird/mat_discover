@@ -41,11 +41,11 @@ jobs:
         sudo python3 -m flit install
     - name: Install dependencies on Windows
       shell: bash -l {0}
-      if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
+      if: startsWith(matrix.os, 'windows')
       run: |
-        python3 -m pip install flit torch
-        python3 -m pip install numba==0.53.* numpy==1.22.0
-        python3 -m flit install
+        python -m pip install flit torch
+        python -m pip install numba==0.53.* numpy==1.22.0
+        python -m flit install
     - name: Test with pytest
       env:
         NUMBA_ENABLE_CUDASIM: 1
