@@ -32,7 +32,7 @@ jobs:
       shell: bash -l {0}
       run: |
         python3 -m pip install --upgrade pip
-    - name: Install dependencies on MacOS or Ubuntu
+    - name: Install dependencies on MacOS or Ubuntu and test with Pytest
       shell: bash -l {0}
       if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
       run: |
@@ -40,7 +40,9 @@ jobs:
         sudo -E python3 -m pip install flit torch
         sudo -E python3 -m pip install numba==0.53.* numpy==1.22.0
         sudo -E flit install
-    - name: Install dependencies on Windows
+        export NUMBA_ENABLE_CUDASIM=1
+        python -m pytest
+    - name: Install dependencies on Windows and test with Pytest
       shell: bash -l {0}
       if: startsWith(matrix.os, 'windows')
       run: |
@@ -48,11 +50,7 @@ jobs:
         python -m pip install flit torch
         python -m pip install numba==0.53.* numpy==1.22.0
         python -m flit install
-    - name: Test with pytest
-      env:
-        NUMBA_ENABLE_CUDASIM: 1
-      shell: bash -l {0}
-      run: |
+        set NUMBA_ENABLE_CUDASIM=1
         python3 -m pytest
         
 #     - name: publish-to-conda # requires setup.py file
