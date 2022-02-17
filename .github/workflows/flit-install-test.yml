@@ -9,12 +9,13 @@ on:
     - 'pyproject.toml'
 
 jobs:
-  linux-pytest:
-    runs-on: ubuntu-latest
+  pytest:
+    runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 5
-      fail-fast: true
+      max-parallel: 9
+      fail-fast: false
       matrix:
+         os: [ubuntu-latest, macos-latest, windows-latest]
          python-version: ['3.7', '3.8', '3.9']
 
     steps:
@@ -27,25 +28,30 @@ jobs:
     - name: Check Black code style
       uses: psf/black@stable #https://black.readthedocs.io/en/stable/integrations/github_actions.html
     
-    - name: Upgrade pip
+    - name: Upgrade pip, install dependencies
       shell: bash -l {0}
       run: |
-        python -m pip install --upgrade pip
-    - name: Install dependencies
+        python3 -m pip install --upgrade pip
+    - name: Install dependencies on MacOS or Ubuntu and test with Pytest
       shell: bash -l {0}
+      if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
       run: |
-        pip install flit torch
-        pip install numba==0.53.* numpy==1.22.0
-        # pip install psutil==5.8.0 virtualenv==20.11.0 Pygments==2.11.1 zipp==3.6.0 jsonschema==4.3.2 attrs==21.3.0
-        # pip install oldest-supported-numpy # might need to go into pyproject.toml requires instead
-        # pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
-        # flit install --deps production --extras test
-        flit install
-    - name: Test with pytest
-      shell: bash -l {0}
-      run: |
-        export NUMBA_ENABLE_CUDASIM="1"
+        export FLIT_ROOT_INSTALL=1
+        sudo -E python3 -m pip install flit torch
+        sudo -E python3 -m pip install numba==0.53.* numpy==1.22.0
+        sudo -E flit install
+        export NUMBA_ENABLE_CUDASIM=1
         python -m pytest
+    - name: Install dependencies on Windows and test with Pytest
+      shell: bash -l {0}
+      if: startsWith(matrix.os, 'windows')
+      run: |
+        # https://stackoverflow.com/questions/61558780/python-testing-with-github-actions-on-windows
+        python -m pip install flit torch
+        python -m pip install numba==0.53.* numpy==1.22.0
+        python -m flit install
+        set NUMBA_ENABLE_CUDASIM=1
+        python3 -m pytest
         
 #     - name: publish-to-conda # requires setup.py file
 #       uses: fcakyon/conda-publish-action@v1.3
@@ -56,3 +62,8 @@ jobs:
 
 #       with:
 #         submodules: recursive
+
+        # pip install psutil==5.8.0 virtualenv==20.11.0 Pygments==2.11.1 zipp==3.6.0 jsonschema==4.3.2 attrs==21.3.0
+        # pip install oldest-supported-numpy # might need to go into pyproject.toml requires instead
+        # pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
+        # flit install --deps production --extras test
