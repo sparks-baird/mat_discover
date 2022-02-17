@@ -31,19 +31,17 @@ jobs:
     - name: Upgrade pip, install dependencies
       shell: bash -l {0}
       run: |
-        sudo pip3 install --upgrade pip
+        python3 -m pip install --upgrade pip
     - name: Install dependencies
-      env:
-        FLIT_ROOT_INSTALL: 1
       shell: bash -l {0}
       run: |
-        sudo pip3 install flit torch
-        sudo pip3 install numba==0.53.* numpy==1.22.0
+        python3 -m pip install flit torch
+        python3 -m pip install numba==0.53.* numpy==1.22.0
         # pip install psutil==5.8.0 virtualenv==20.11.0 Pygments==2.11.1 zipp==3.6.0 jsonschema==4.3.2 attrs==21.3.0
         # pip install oldest-supported-numpy # might need to go into pyproject.toml requires instead
         # pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
         # flit install --deps production --extras test
-        sudo flit install
+        python3 -m flit install
     - name: Test with pytest
       env:
         NUMBA_ENABLE_CUDASIM: 1
