@@ -69,3 +69,14 @@ Python class trickery and imports from multiple files?
 .. literalinclude:: ../../examples/bare_bones.py
     :caption: `/examples/bare_bones.py <https://github.com/sparks-baird/mat_discover/blob/main/examples/bare_bones.py>`_
     :language: python
+    
+Cluster Plot
+------------
+You may be primarily interested in generating cluster labels for your data and visualizing the clusters. For this example, a Google Colab version is included for ease of use |Cluster Plot|.
+
+.. literalinclude:: ../../examples/bare_bones.py
+    :caption: `/examples/elmd_densmap_cluster.py <https://github.com/sparks-baird/mat_discover/blob/main/examples/elmd_densmap_cluster.py>`_
+    :language: python
+    
+.. |Cluster Plot| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/sparks-baird/mat_discover/blob/main/examples/elmd_densmap_cluster_colab.ipynb
