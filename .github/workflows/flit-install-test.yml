@@ -36,10 +36,10 @@ jobs:
       shell: bash -l {0}
       if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
       run: |
-        sudo export FLIT_ROOT_INSTALL=1
-        sudo python3 -m pip install flit torch
-        sudo python3 -m pip install numba==0.53.* numpy==1.22.0
-        sudo python3 -m flit install
+        export FLIT_ROOT_INSTALL=1
+        sudo -E python3 -m pip install flit torch
+        sudo -E python3 -m pip install numba==0.53.* numpy==1.22.0
+        sudo -E flit install
     - name: Install dependencies on Windows
       shell: bash -l {0}
       if: startsWith(matrix.os, 'windows')
