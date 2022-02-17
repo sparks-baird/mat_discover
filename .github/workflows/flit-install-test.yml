@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       max-parallel: 9
-      fail-fast: true
+      fail-fast: false
       matrix:
          os: [ubuntu-latest, macos-latest, windows-latest]
          python-version: ['3.7', '3.8', '3.9']
@@ -31,7 +31,7 @@ jobs:
     - name: Upgrade pip, install dependencies
       shell: bash -l {0}
       run: |
-        python -m pip install --upgrade pip
+        python3 -m pip install --upgrade pip
     - name: Install dependencies
       shell: bash -l {0}
       run: |
@@ -45,9 +45,9 @@ jobs:
     - name: Test with pytest
       env:
         NUMBA_ENABLE_CUDASIM: 1
-      shell: bash
+      shell: bash -l {0}
       run: |
-        python -m pytest
+        python3 -m pytest
         
 #     - name: publish-to-conda # requires setup.py file
 #       uses: fcakyon/conda-publish-action@v1.3
