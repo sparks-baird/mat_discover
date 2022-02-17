@@ -31,7 +31,7 @@ jobs:
     - name: Upgrade pip, install dependencies
       shell: bash -l {0}
       run: |
-        python3 -m pip --user install --upgrade pip
+        python3 -m pip3 install --user --upgrade pip3
     - name: Install dependencies
       shell: bash -l {0}
       run: |
