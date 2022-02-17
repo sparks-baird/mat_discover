@@ -33,6 +33,8 @@ jobs:
       run: |
         sudo pip3 install --upgrade pip
     - name: Install dependencies
+      env:
+        FLIT_ROOT_INSTALL: 1
       shell: bash -l {0}
       run: |
         sudo pip3 install flit torch
