@@ -41,7 +41,7 @@ jobs:
         sudo -E python3 -m pip install numba==0.53.* numpy==1.22.0
         sudo -E flit install
         export NUMBA_ENABLE_CUDASIM=1
-        python -m pytest
+        python3 -m pytest
     - name: Install dependencies on Windows and test with Pytest
       shell: bash -l {0}
       if: startsWith(matrix.os, 'windows')
