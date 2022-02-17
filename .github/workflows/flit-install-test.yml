@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       max-parallel: 9
-      fail-fast: false
+      fail-fast: true
       matrix:
          os: [ubuntu-latest, macos-latest, windows-latest]
          python-version: ['3.7', '3.8', '3.9']
@@ -32,24 +32,19 @@ jobs:
       shell: bash {0}
       run: |
         pip install --upgrade pip
-    - name: Install dependencies on MacOS or Ubuntu and test with Pytest
+        pip install flit torch
+        pip install numba==0.53.* numpy==1.22.0
+        flit install
+    - name: Test with Pytest on MacOS or Ubuntu
       shell: bash {0}
       if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
       run: |
-        export FLIT_ROOT_INSTALL=1
-        pip install flit torch
-        pip install numba==0.53.* numpy==1.22.0
-        flit install
         export NUMBA_ENABLE_CUDASIM=1
         python -m pytest
-    - name: Install dependencies on Windows and test with Pytest
+    - name: Test with Pytest on Windows
       shell: bash {0}
       if: startsWith(matrix.os, 'windows')
       run: |
-        # https://stackoverflow.com/questions/61558780/python-testing-with-github-actions-on-windows
-        pip install flit torch
-        pip install numba==0.53.* numpy==1.22.0
-        flit install
         set NUMBA_ENABLE_CUDASIM=1
         python -m pytest
         
@@ -67,3 +62,7 @@ jobs:
 # pip install oldest-supported-numpy # might need to go into pyproject.toml requires instead
 # pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
 # flit install --deps production --extras test
+
+# NOTES:
+# needed to use python instead of python3 for Windows https://stackoverflow.com/questions/61558780/python-testing-with-github-actions-on-windows
+# also needed to remove the -l from the shell so it didn't interfere with MacOS PATH calling Python 2.7
