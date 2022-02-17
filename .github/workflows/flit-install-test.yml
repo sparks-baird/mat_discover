@@ -31,27 +31,27 @@ jobs:
     - name: Upgrade pip, install dependencies
       shell: bash -l {0}
       run: |
-        python3 -m pip install --upgrade pip
+        pip install --upgrade pip
     - name: Install dependencies on MacOS or Ubuntu and test with Pytest
       shell: bash -l {0}
       if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
       run: |
         export FLIT_ROOT_INSTALL=1
-        python3 -m pip install flit torch
-        python3 -m pip install numba==0.53.* numpy==1.22.0
-        python3 -m flit install
+        pip install flit torch
+        pip install numba==0.53.* numpy==1.22.0
+        flit install
         export NUMBA_ENABLE_CUDASIM=1
-        python3 -m pytest
+        python -m pytest
     - name: Install dependencies on Windows and test with Pytest
       shell: bash -l {0}
       if: startsWith(matrix.os, 'windows')
       run: |
         # https://stackoverflow.com/questions/61558780/python-testing-with-github-actions-on-windows
-        python -m pip install flit torch
-        python -m pip install numba==0.53.* numpy==1.22.0
-        python -m flit install
+        pip install flit torch
+        pip install numba==0.53.* numpy==1.22.0
+        flit install
         set NUMBA_ENABLE_CUDASIM=1
-        python3 -m pytest
+        python -m pytest
         
 #     - name: publish-to-conda # requires setup.py file
 #       uses: fcakyon/conda-publish-action@v1.3
@@ -63,7 +63,7 @@ jobs:
 #       with:
 #         submodules: recursive
 
-        # pip install psutil==5.8.0 virtualenv==20.11.0 Pygments==2.11.1 zipp==3.6.0 jsonschema==4.3.2 attrs==21.3.0
-        # pip install oldest-supported-numpy # might need to go into pyproject.toml requires instead
-        # pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
-        # flit install --deps production --extras test
+# pip install psutil==5.8.0 virtualenv==20.11.0 Pygments==2.11.1 zipp==3.6.0 jsonschema==4.3.2 attrs==21.3.0
+# pip install oldest-supported-numpy # might need to go into pyproject.toml requires instead
+# pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
+# flit install --deps production --extras test
