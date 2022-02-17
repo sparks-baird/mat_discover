@@ -29,11 +29,11 @@ jobs:
       uses: psf/black@stable #https://black.readthedocs.io/en/stable/integrations/github_actions.html
     
     - name: Upgrade pip, install dependencies
-      shell: bash
+      shell: bash -l {0}
       run: |
         python -m pip install --upgrade pip
     - name: Install dependencies
-      shell: bash
+      shell: bash -l {0}
       run: |
         pip install flit torch
         pip install numba==0.53.* numpy==1.22.0
