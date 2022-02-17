@@ -12,8 +12,8 @@ jobs:
   linux-pytest:
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 5
-      fail-fast: false
+      max-parallel: 9
+      fail-fast: true
       matrix:
          os: [ubuntu-latest, macos-latest, windows-latest]
          python-version: ['3.7', '3.8', '3.9']
@@ -28,12 +28,12 @@ jobs:
     - name: Check Black code style
       uses: psf/black@stable #https://black.readthedocs.io/en/stable/integrations/github_actions.html
     
-    - name: Upgrade pip
-      shell: bash -l {0}
+    - name: Upgrade pip, install dependencies
+      shell: bash
       run: |
         python -m pip install --upgrade pip
     - name: Install dependencies
-      shell: bash -l {0}
+      shell: bash
       run: |
         pip install flit torch
         pip install numba==0.53.* numpy==1.22.0
@@ -44,8 +44,8 @@ jobs:
         flit install
     - name: Test with pytest
       env:
-        NUMBA_ENABLE_CUDASIM: "1"
-      shell: bash -l {0}
+        NUMBA_ENABLE_CUDASIM: 1
+      shell: bash
       run: |
         python -m pytest
         
