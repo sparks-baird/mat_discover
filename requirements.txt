@@ -6,7 +6,7 @@ hdbscan==0.8.28
 pandas==1.4.1
 umap_learn==0.5.2
 matplotlib==3.5.1
-chem_wasserstein==1.0.8
+chem_wasserstein==1.0.9
 crabnet==1.2.1
 conda-souschef==2.1.1
 scikit-learn==1.0.2
