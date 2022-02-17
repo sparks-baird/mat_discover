@@ -32,8 +32,7 @@ A materials discovery algorithm geared towards exploring high performance candid
 
 <sup>Bulk modulus values overlaid on DensMAP densities (cropped).</sup>
 
-We describe the DiSCoVeR algorithm, how to install `mat_discover`, and basic usage (e.g.
-`fit`/`predict`, custom or built-in datasets, adaptive design). [Interactive plots](https://mat-discover.readthedocs.io/en/latest/figures.html) for several types of
+We describe the DiSCoVeR algorithm, how to install `mat_discover`, and basic usage (`fit`/`predict`, custom or built-in datasets, adaptive design, and cluster plots). [Interactive plots](https://mat-discover.readthedocs.io/en/latest/figures.html) for several types of
 Pareto front plots are available via [the `mat_discover` documentation](https://mat-discover.readthedocs.io/en/latest/). We also describe how
 to contribute, what to do if you run into bugs or have questions, and citation information. The [`mat_discover` docs](https://mat-discover.readthedocs.io/en/latest/) have more, such as [examples](https://mat-discover.readthedocs.io/en/latest/examples.html) (including a [teaching example](https://mat-discover.readthedocs.io/en/latest/examples.html#bare-bones)), the [interactive figures](https://mat-discover.readthedocs.io/en/latest/figures.html#figures) mentioned, and the [Python API](https://mat-discover.readthedocs.io/en/latest/modules.html).
 
@@ -308,6 +307,12 @@ n_iter = 100
 adapt.closed_loop_adaptive_design(n_experiments=n_iter, print_experiment=False)
 ```
 However, as the name suggests, the closed loop approach does not allow you to input data after each suggested experiment.
+
+### Cluster Plots
+To quickly determine ElMD+DensMAP+HDBSCAN* cluster labels, make the following interactive cluster plot for your data, and export a "paper-ready" PNG image, you can [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://github.com/sparks-baird/mat_discover/blob/main/examples/elmd_densmap_cluster_colab.ipynb) or see the (nearly identical) example in [`elmd_densmap_cluster.ipynb`](https://github.com/sparks-baird/mat_discover/blob/main/examples/elmd_densmap_cluster.py).
+
+[<img src=https://user-images.githubusercontent.com/45469701/154414034-d4bfbc7c-d7bc-4cdf-9123-c5b5098b786e.png width=850>](https://colab.research.google.com/github/sparks-baird/mat_discover/blob/cluster-example/examples/elmd_densmap_cluster_colab.ipynb#scrollTo=3At5TC0gixl3)
+
 
 ## Developing and Contributing
 
