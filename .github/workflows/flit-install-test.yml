@@ -35,13 +35,13 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
-        pip install --user flit torch
-        pip install --user numba==0.53.* numpy==1.22.0
+        pip3 install flit torch
+        pip3 install numba==0.53.* numpy==1.22.0
         # pip install psutil==5.8.0 virtualenv==20.11.0 Pygments==2.11.1 zipp==3.6.0 jsonschema==4.3.2 attrs==21.3.0
         # pip install oldest-supported-numpy # might need to go into pyproject.toml requires instead
         # pip install torch==1.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
         # flit install --deps production --extras test
-        flit install --user
+        flit install
     - name: Test with pytest
       env:
         NUMBA_ENABLE_CUDASIM: 1
