@@ -33,6 +33,8 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip
     - name: Install dependencies on MacOS or Ubuntu
+      env:
+        FLIT_ROOT_INSTALL: 1
       shell: bash -l {0}
       if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
       run: |
