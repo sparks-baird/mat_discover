@@ -29,11 +29,11 @@ jobs:
       uses: psf/black@stable #https://black.readthedocs.io/en/stable/integrations/github_actions.html
     
     - name: Upgrade pip, install dependencies
-      shell: bash -l {0}
+      shell: bash {0}
       run: |
         pip install --upgrade pip
     - name: Install dependencies on MacOS or Ubuntu and test with Pytest
-      shell: bash -l {0}
+      shell: bash {0}
       if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
       run: |
         export FLIT_ROOT_INSTALL=1
@@ -43,7 +43,7 @@ jobs:
         export NUMBA_ENABLE_CUDASIM=1
         python -m pytest
     - name: Install dependencies on Windows and test with Pytest
-      shell: bash -l {0}
+      shell: bash {0}
       if: startsWith(matrix.os, 'windows')
       run: |
         # https://stackoverflow.com/questions/61558780/python-testing-with-github-actions-on-windows
