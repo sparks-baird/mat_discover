@@ -45,6 +45,7 @@ jobs:
       shell: bash -l {0}
       if: startsWith(matrix.os, 'windows')
       run: |
+        # https://stackoverflow.com/questions/61558780/python-testing-with-github-actions-on-windows
         python -m pip install flit torch
         python -m pip install numba==0.53.* numpy==1.22.0
         python -m flit install
