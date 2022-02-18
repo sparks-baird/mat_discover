@@ -362,10 +362,11 @@ question, please ask! I won't bite. Pull requests are welcome and encouraged.
 
 ## Citing
 
-The preprint is hosted on ChemRxiv:
-> Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8-v3](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3). This content is a preprint and has not been peer-reviewed.
+The peer-reviewed, open-access article is published in Digital Discovery.
 
-The BibTeX citation for is as follows:
+> Baird, S. G.; Diep, T. Q.; Sparks, T. D. DiSCoVeR: A Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. Digital Discovery 2022. https://doi.org/10.1039/D1DD00028D.
+
+The BibTeX citation is as follows:
 ```bib
 @article{bairdDiSCoVeRMaterialsDiscovery2022,
   title = {{{DiSCoVeR}}: A {{Materials Discovery Screening Tool}} for {{High Performance}}, {{Unique Chemical Compositions}}},
@@ -381,6 +382,9 @@ The BibTeX citation for is as follows:
   langid = {english},
 }
 ```
+
+The preprint is hosted on ChemRxiv:
+> Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8-v3](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3). This content is a preprint and has not been peer-reviewed.
 
 The citation for the preprint is as follows:
 ```bib
