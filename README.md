@@ -36,7 +36,7 @@ We describe the DiSCoVeR algorithm, how to install `mat_discover`, and basic usa
 Pareto front plots are available via [the `mat_discover` documentation](https://mat-discover.readthedocs.io/en/latest/). We also describe how
 to contribute, what to do if you run into bugs or have questions, and citation information. The [`mat_discover` docs](https://mat-discover.readthedocs.io/en/latest/) have more, such as [examples](https://mat-discover.readthedocs.io/en/latest/examples.html) (including a [teaching example](https://mat-discover.readthedocs.io/en/latest/examples.html#bare-bones)), the [interactive figures](https://mat-discover.readthedocs.io/en/latest/figures.html#figures) mentioned, and the [Python API](https://mat-discover.readthedocs.io/en/latest/modules.html).
 
-The article ([ChemRxiv](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3)) has been [accepted at Digital Discovery](https://dx.doi.org/10.1039/D1DD00028D) (2021-02-03). See [Citing](README.md#citing).
+The article is [published at Digital Discovery](https://dx.doi.org/10.1039/D1DD00028D). See [Citing](README.md#citing).
 
 ## DiSCoVeR Workflow
 
