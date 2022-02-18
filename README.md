@@ -36,7 +36,7 @@ We describe the DiSCoVeR algorithm, how to install `mat_discover`, and basic usa
 Pareto front plots are available via [the `mat_discover` documentation](https://mat-discover.readthedocs.io/en/latest/). We also describe how
 to contribute, what to do if you run into bugs or have questions, and citation information. The [`mat_discover` docs](https://mat-discover.readthedocs.io/en/latest/) have more, such as [examples](https://mat-discover.readthedocs.io/en/latest/examples.html) (including a [teaching example](https://mat-discover.readthedocs.io/en/latest/examples.html#bare-bones)), the [interactive figures](https://mat-discover.readthedocs.io/en/latest/figures.html#figures) mentioned, and the [Python API](https://mat-discover.readthedocs.io/en/latest/modules.html).
 
-The article ([ChemRxiv](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3)) has been accepted at [Digital Discovery](https://www.rsc.org/journals-books-databases/about-journals/digital-discovery/) (2021-02-03). See [Citing](README.md#citing).
+The article ([ChemRxiv](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3)) has been [accepted at Digital Discovery](https://dx.doi.org/10.1039/D1DD00028D) (2021-02-03). See [Citing](README.md#citing).
 
 ## DiSCoVeR Workflow
 
@@ -365,8 +365,24 @@ question, please ask! I won't bite. Pull requests are welcome and encouraged.
 The preprint is hosted on ChemRxiv:
 > Baird S, Diep T, Sparks T. DiSCoVeR: a Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. ChemRxiv 2021. [doi:10.33774/chemrxiv-2021-5l2f8-v3](https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3). This content is a preprint and has not been peer-reviewed.
 
-The BibTeX citation is as follows:
+The BibTeX citation for is as follows:
+```bib
+@article{bairdDiSCoVeRMaterialsDiscovery2022,
+  title = {{{DiSCoVeR}}: A {{Materials Discovery Screening Tool}} for {{High Performance}}, {{Unique Chemical Compositions}}},
+  shorttitle = {{{DiSCoVeR}}},
+  author = {Baird, Sterling Gregory and Diep, Tran Q. and Sparks, Taylor D.},
+  year = {2022},
+  month = feb,
+  journal = {Digital Discovery},
+  publisher = {{RSC}},
+  issn = {2635-098X},
+  doi = {10.1039/D1DD00028D},
+  abstract = {We present Descending from Stochastic Clustering Variance Regression (DiSCoVeR) (https://github.com/sparks-baird/mat_discover), a Python tool for identifying and assessing high-performing, chemically unique compositions relative to existing compounds using a combination of a chemical distance metric, density-aware dimensionality reduction, clustering, and a regression model. In this work, we create pairwise distance matrices between compounds via Element Mover's Distance (ElMD) and use these to create 2D density-aware embeddings for chemical compositions via Density-preserving Uniform Manifold Approximation and Projection (DensMAP). Because ElMD assigns distances between compounds that are more chemically intuitive than Euclidean-based distances, the compounds can then be clustered into chemically homogeneous clusters via Hierarchical Density-based Spatial Clustering of Applications with Noise (HDBSCAN*). In combination with performance predictions via Compositionally-Restricted Attention-Based Network (CrabNet), we introduce several new metrics for materials discovery and validate DiSCoVeR on Materials Project bulk moduli using compound-wise and cluster-wise validation methods. We visualize these via multi-objective Pareto front plots and assign a weighted score to each composition that encompasses the trade-off between performance and density-based chemical uniqueness. In addition to density-based metrics, we explore an additional uniqueness proxy related to property gradients in DensMAP space. As a validation study, we use DiSCoVeR to screen materials for both performance and uniqueness to extrapolate to new chemical spaces. Top-10 rankings are provided for the compound-wise density and property gradient uniqueness proxies. Top-ranked compounds can be further curated via literature searches, physics-based simulations, and/or experimental synthesis. Finally, we compare DiSCoVeR against the naive baseline of random search for several parameter combinations in an adaptive design scheme. To our knowledge, this is the first time automated screening has been performed with explicit emphasis on discovering high-performing, novel materials.},
+  langid = {english},
+}
+```
 
+The citation for the preprint is as follows:
 ```bib
 @article{baird_diep_sparks_2021,
 place={Cambridge},
