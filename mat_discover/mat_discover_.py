@@ -4,55 +4,55 @@ Create distance matrix, apply densMAP, and create clusters via HDBSCAN* to searc
 interesting materials. For example, materials with high-target/low-density (density
 proxy) or high-target surrounded by materials with low targets (peak proxy).
 """
+import gc
+
 # saving class objects: https://stackoverflow.com/a/37076668/13697228
 from copy import copy
-import dill as pickle
-from pathlib import Path
-from os.path import join
-import gc
-from torch.cuda import empty_cache
-from typing import Optional
-
-from warnings import warn
 from operator import attrgetter
+from os.path import join
+from os import PathLike
+from pathlib import Path
+from typing import Optional, Union, List
+from warnings import warn
 
-from chem_wasserstein.utils.Timer import Timer, NoTimer
-
+import dill as pickle
+import hdbscan
 import matplotlib.pyplot as plt
-
-# from ml_matrics import density_scatter
-
 import numpy as np
 import pandas as pd
-from scipy.stats import multivariate_normal, wasserstein_distance
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.manifold import MDS
-from sklearn.decomposition import PCA
-from sklearn.metrics import mean_squared_error
-
-# from sklearn.decomposition import PCA
-
 import umap
-import hdbscan
-
-from ElMD import ElMD
 from chem_wasserstein.ElM2D_ import ElM2D
+from chem_wasserstein.utils.Timer import NoTimer, Timer
 
 # from crabnet.utils.composition import generate_features
 from composition_based_feature_vector.composition import generate_features
 from crabnet.train_crabnet import get_model
+from crabnet.model import Model
+from ElMD import ElMD
+from scipy.stats import multivariate_normal, wasserstein_distance
+from sklearn.decomposition import PCA
+from sklearn.manifold import MDS
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import LeaveOneGroupOut
+from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
+from torch.cuda import empty_cache
 
 from mat_discover.utils.data import data
 from mat_discover.utils.nearest_neigh import nearest_neigh_props
 from mat_discover.utils.pareto import pareto_plot  # , get_pareto_ind
 from mat_discover.utils.plotting import (
-    umap_cluster_scatter,
     cluster_count_hist,
-    target_scatter,
     dens_scatter,
     dens_targ_scatter,
+    target_scatter,
+    umap_cluster_scatter,
 )
+
+# from ml_matrics import density_scatter
+
+
+# from sklearn.decomposition import PCA
+
 
 plt.rcParams.update(
     {
@@ -140,25 +140,25 @@ class Discover:
 
     def __init__(
         self,
-        timed: Optional[bool] = True,
-        dens_lambda: Optional[float] = 1.0,
-        plotting: Optional[bool] = False,
-        pdf: Optional[bool] = True,
-        n_peak_neighbors: Optional[int] = 10,
-        verbose: Optional[bool] = True,
-        mat_prop_name: Optional[str] = "test-property",
-        dummy_run: Optional[bool] = False,
+        timed: bool = True,
+        dens_lambda: float = 1.0,
+        plotting: bool = False,
+        pdf: bool = True,
+        n_peak_neighbors: int = 10,
+        verbose: bool = True,
+        mat_prop_name: str = "test-property",
+        dummy_run: bool = False,
         Scaler=RobustScaler,
-        figure_dir: Optional[str] = "figures",
-        table_dir: Optional[str] = "tables",
-        novelty_learner: Optional = "discover",
-        novelty_prop: Optional = "mod_petti",
+        figure_dir: Union[str, PathLike[str]] = "figures",
+        table_dir: Union[str, PathLike[str]] = "tables",
+        novelty_learner: str = "discover",
+        novelty_prop: str = "mod_petti",
         # groupby_filter="max",
-        pred_weight: Optional = 1,
-        proxy_weight: Optional = 1,
-        device: Optional[str] = "cuda",
-        dist_device=None,
-        nscores: Optional[int] = 100,
+        pred_weight: float = 1.0,
+        proxy_weight: float = 1.0,
+        device: str = "cuda",
+        dist_device: Optional[str] = None,
+        nscores: int = 100,
         umap_cluster_kwargs: Optional[dict] = None,
         umap_vis_kwargs: Optional[dict] = None,
         hdbscan_kwargs: Optional[dict] = None,
@@ -270,7 +270,6 @@ class Discover:
 
         References
         ----------
-
         .. [1] https://github.com/lrcfmd/ElM2D
         .. [2] https://github.com/lrcfmd/ElMD/tree/v0.4.7#elemental-similarity
         .. [3] https://github.com/kaaiian/CBFV
@@ -363,17 +362,15 @@ class Discover:
         self.hdbscan_kwargs = hdbscan_kwargs
 
         self.mapper = ElM2D(target=self.dist_device)  # type: ignore
-        self.dm = None
-        # self.formula = None
-        # self.target = None
-        self.crabnet_model = None
-        self.train_formula = None
-        self.train_target = None
-        self.train_df = None
-        self.val_df = None
-        self.true_avg_targ = None
-        self.pred_avg_targ = None
-        self.train_avg_targ = None
+        self.dm: Optional[np.ndarray] = None
+        self.crabnet_model: Optional[Model] = None
+        self.train_formula: Optional[pd.Series] = None
+        self.train_target: Optional[pd.Series] = None
+        self.train_df: Optional[pd.DataFrame] = None
+        self.val_df: Optional[pd.DataFrame] = None
+        self.true_avg_targ: Optional[np.ndarray] = None
+        self.pred_avg_targ: Optional[np.ndarray] = None
+        self.train_avg_targ: Optional[np.ndarray] = None
 
         # create dir https://stackoverflow.com/a/273227/13697228
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
@@ -468,11 +465,18 @@ class Discover:
 
         self.val_df = val_df
 
+        assert (
+            self.train_df is not None
+        ), "`self.train_df` is None. Did you run `disc.fit(train_df)` already?"
+
         # CrabNet
         # TODO: parity plot
         crabnet_model = self.crabnet_model
         # CrabNet predict output format: (act, pred, formulae, uncert)
         if self.pred_weight != 0:
+            assert (
+                crabnet_model is not None
+            ), "`crabnet_model is None. Did you run `disc.fit(train_df)` already?"
             self.train_true, train_pred, _, self.train_sigma = crabnet_model.predict(
                 self.train_df
             )
@@ -513,6 +517,7 @@ class Discover:
                 self.mapper.fit(self.all_formula)
                 self.dm = self.mapper.dm
 
+            assert self.dm is not None, "`self.dm` is None despite [fit-wasserstein]"
             # TODO: look into UMAP via GPU
             # TODO: create and use fast, built-in Wasserstein UMAP method
 
@@ -631,9 +636,12 @@ class Discover:
                 f"self.val_rad_neigh_avg` and `self.val_k_neigh_avg` are being assigned the same values as `val_dens` for compatibility reasons since a non-DiSCoVeR novelty learner was specified: {self.novelty_learner}."
             )
             # composition-based featurization
-            X_train = []
-            X_val = []
+            X_train: Union[pd.DataFrame, np.ndarray, List] = []
+            X_val: Union[pd.DataFrame, np.ndarray, List] = []
+            assert self.train_formula is not None
             if self.novelty_prop == "mod_petti":
+                assert isinstance(X_train, list)
+                assert isinstance(X_val, list)
                 for comp in self.train_formula.tolist():
                     X_train.append(ElMD(comp, metric=self.novelty_prop).feature_vector)
                 for comp in self.val_formula.tolist():
@@ -660,10 +668,12 @@ class Discover:
                     val_df, elem_prop=self.novelty_prop
                 )
                 # https://stackoverflow.com/a/30808571/13697228
+                assert isinstance(X_train, pd.DataFrame)
                 X_train = X_train.filter(regex="avg_*")
                 X_val = X_val.filter(regex="avg_*")
 
             # novelty
+            assert not isinstance(self.novelty_learner, str)
             self.novelty_learner.fit(X_train)
             self.val_labels = self.novelty_learner.predict(X_val)
             self.train_dens = self.novelty_learner.negative_outlier_factor_
@@ -1263,120 +1273,93 @@ class Discover:
         # create dir https://stackoverflow.com/a/273227/13697228
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
 
-        # peak pareto plot setup
-        x = str(self.n_peak_neighbors) + "_neigh_avg_targ (GPa)"
-        y = "target (GPa)"
-        # TODO: plot for val data only (fixed?)
-        peak_df = pd.DataFrame(
+        fig, pk_pareto_ind = self.pf_peak_proxy()
+        fig, frac_pareto_ind = self.pf_train_contrib_proxy()
+
+        self.umap_cluster_scatter()
+        self.px_umap_cluster_scatter()
+
+        self.px_targ_scatter()
+
+        # PDF evaluated on grid of points
+        if self.pdf:
+            self.dens_scatter()
+            self.dens_targ_scatter()
+
+        self.pf_dens_proxy()
+        self.pf_frac_proxy()
+
+        # Group cross-validation parity plot
+        if self.true_avg_targ is not None:
+            dens_pareto_ind = self.gcv_pareto()
+        else:
+            warn("Skipping group cross-validation plot")
+
+        if return_pareto_ind:
+            return pk_pareto_ind, dens_pareto_ind
+
+    def target_scatter(self):
+        # Scatter plot colored by target values
+        fig = target_scatter(self.std_emb, self.all_target, figure_dir=self.figure_dir)
+
+    def cluster_count_hist(self):
+        # Histogram of cluster counts
+        fig = cluster_count_hist(self.labels, figure_dir=self.figure_dir)
+
+    def gcv_pareto(self):
+        # x = "$E_\\mathrm{avg,true}$ (GPa)"
+        # y = "$E_\\mathrm{avg,pred}$ (GPa)"
+        x = "true cluster avg target (GPa)"
+        y = "pred cluster avg target (GPa)"
+        gcv_df = pd.DataFrame(
             {
-                x: self.val_k_neigh_avg,
-                y: self.val_pred,
-                "formula": self.val_formula,
-                "Peak height (GPa)": self.val_pred - self.val_k_neigh_avg,
-                "cluster ID": self.val_labels,
+                x: self.true_avg_targ,
+                y: self.pred_avg_targ,
+                "formula": None,
+                "cluster ID": np.array(self.avg_labels),
             }
         )
-        # peak pareto plot
-        # TODO: double check if cluster labels are correct between the two pareto plots
-        fig, pk_pareto_ind = pareto_plot(
-            peak_df,
+        fig, dens_pareto_ind = pareto_plot(
+            gcv_df,
             x=x,
             y=y,
+            fpath=join(self.figure_dir, "gcv-pareto"),
+            parity_type="max-of-both",
             color="cluster ID",
-            fpath=join(self.figure_dir, "pf-peak-proxy"),
-            pareto_front=True,
+            pareto_front=False,
+            reverse_x=False,
         )
+        # fig = group_cv_parity(
+        #     self.true_avg_targ, self.pred_avg_targ, self.avg_labels
+        # )
 
-        x = "log validation density"
-        y = "validation predictions (GPa)"
-        # cluster-wise average vs. cluster-wise validation log-density
+        return dens_pareto_ind
+
+    def pf_frac_proxy(self):
+        # cluster-wise average vs. cluster-wise validation fraction
+        x = "cluster-wise validation fraction"
+        y = "cluster-wise average target (GPa)"
         frac_df = pd.DataFrame(
             {
-                x: self.val_log_dens.ravel(),
-                y: self.val_pred.ravel(),
-                "cluster ID": self.val_labels,
-                "formula": self.val_formula,
+                x: self.val_frac.ravel(),
+                y: self.cluster_avg.ravel(),
+                "cluster ID": self.unique_labels,
             }
         )
-        # FIXME: manually set the lower and upper bounds of the cmap here (or convert to dict)
         fig, frac_pareto_ind = pareto_plot(
             frac_df,
             x=x,
             y=y,
+            hover_data=None,
             color="cluster ID",
-            fpath=join(self.figure_dir, "pf-train-contrib-proxy"),
+            fpath=join(self.figure_dir, "pf-frac-proxy"),
             pareto_front=True,
+            reverse_x=False,
             parity_type=None,
+            xrange=[0, 1],
         )
 
-        # Scatter plot colored by clusters
-        fig = umap_cluster_scatter(
-            self.std_emb, self.labels, figure_dir=self.figure_dir
-        )
-
-        # Interactive scatter plot colored by clusters
-        x = "DensMAP Dim. 1"
-        y = "DensMAP Dim. 2"
-        umap_df = pd.DataFrame(
-            {
-                x: self.std_emb[:, 0],
-                y: self.std_emb[:, 1],
-                "cluster ID": self.labels,
-                "formula": self.all_formula,
-            }
-        )
-        fig = pareto_plot(
-            umap_df,
-            x=x,
-            y=y,
-            color="cluster ID",
-            fpath=join(self.figure_dir, "px-umap-cluster-scatter"),
-            pareto_front=False,
-            parity_type=None,
-        )
-
-        # Histogram of cluster counts
-        fig = cluster_count_hist(self.labels, figure_dir=self.figure_dir)
-
-        # Scatter plot colored by target values
-        fig = target_scatter(self.std_emb, self.all_target, figure_dir=self.figure_dir)
-
-        # Interactive scatter plot colored by target values
-        x = "DensMAP Dim. 1"
-        y = "DensMAP Dim. 2"
-        targ_df = pd.DataFrame(
-            {
-                x: self.std_emb[:, 0],
-                y: self.std_emb[:, 1],
-                "target": self.all_target,
-                "formula": self.all_formula,
-            }
-        )
-        fig = pareto_plot(
-            targ_df,
-            x=x,
-            y=y,
-            color="target",
-            fpath=join(self.figure_dir, "px-targ-scatter"),
-            pareto_front=False,
-            parity_type=None,
-        )
-
-        # PDF evaluated on grid of points
-        if self.pdf:
-            fig = dens_scatter(
-                self.pdf_x, self.pdf_y, self.pdf_sum, figure_dir=self.figure_dir
-            )
-
-            fig = dens_targ_scatter(
-                self.std_emb,
-                self.all_target,
-                self.pdf_x,
-                self.pdf_y,
-                self.pdf_sum,
-                figure_dir=self.figure_dir,
-            )
-
+    def pf_dens_proxy(self):
         # dens pareto plot setup
         dens, log_dens = self.compute_log_density()
 
@@ -1403,61 +1386,122 @@ class Discover:
             pareto_front=True,
         )
 
-        x = "cluster-wise validation fraction"
-        y = "cluster-wise average target (GPa)"
-        # cluster-wise average vs. cluster-wise validation fraction
-        frac_df = pd.DataFrame(
+    def dens_targ_scatter(self):
+        fig = dens_targ_scatter(
+            self.std_emb,
+            self.all_target,
+            self.pdf_x,
+            self.pdf_y,
+            self.pdf_sum,
+            figure_dir=self.figure_dir,
+        )
+
+    def dens_scatter(self):
+        fig = dens_scatter(
+            self.pdf_x, self.pdf_y, self.pdf_sum, figure_dir=self.figure_dir
+        )
+
+    def px_targ_scatter(self):
+        # Interactive scatter plot colored by target values
+        x = "DensMAP Dim. 1"
+        y = "DensMAP Dim. 2"
+        targ_df = pd.DataFrame(
             {
-                x: self.val_frac.ravel(),
-                y: self.cluster_avg.ravel(),
-                "cluster ID": self.unique_labels,
+                x: self.std_emb[:, 0],
+                y: self.std_emb[:, 1],
+                "target": self.all_target,
+                "formula": self.all_formula,
             }
         )
+        fig = pareto_plot(
+            targ_df,
+            x=x,
+            y=y,
+            color="target",
+            fpath=join(self.figure_dir, "px-targ-scatter"),
+            pareto_front=False,
+            parity_type=None,
+        )
+
+    def px_umap_cluster_scatter(self):
+        # Interactive scatter plot colored by clusters
+        x = "DensMAP Dim. 1"
+        y = "DensMAP Dim. 2"
+        umap_df = pd.DataFrame(
+            {
+                x: self.std_emb[:, 0],
+                y: self.std_emb[:, 1],
+                "cluster ID": self.labels,
+                "formula": self.all_formula,
+            }
+        )
+        fig = pareto_plot(
+            umap_df,
+            x=x,
+            y=y,
+            color="cluster ID",
+            fpath=join(self.figure_dir, "px-umap-cluster-scatter"),
+            pareto_front=False,
+            parity_type=None,
+        )
+
+    def umap_cluster_scatter(self):
+        # Scatter plot colored by clusters
+        fig = umap_cluster_scatter(
+            self.std_emb, self.labels, figure_dir=self.figure_dir
+        )
+
+    def _pf_peak_proxy(self):
+        # peak pareto plot setup
+        x = str(self.n_peak_neighbors) + "_neigh_avg_targ (GPa)"
+        y = "target (GPa)"
+        # TODO: plot for val data only (fixed?)
+        peak_df = pd.DataFrame(
+            {
+                x: self.val_k_neigh_avg,
+                y: self.val_pred,
+                "formula": self.val_formula,
+                "Peak height (GPa)": self.val_pred - self.val_k_neigh_avg,
+                "cluster ID": self.val_labels,
+            }
+        )
+        # peak pareto plot
+        # TODO: double check if cluster labels are correct between the two pareto plots
+        fig, pk_pareto_ind = pareto_plot(
+            peak_df,
+            x=x,
+            y=y,
+            color="cluster ID",
+            fpath=join(self.figure_dir, "pf-peak-proxy"),
+            pareto_front=True,
+        )
+
+        return fig, pk_pareto_ind
+
+    def _pf_train_contrib_proxy(self):
+        x = "log validation density"
+        y = "validation predictions (GPa)"
+        # cluster-wise average vs. cluster-wise validation log-density
+        frac_df = pd.DataFrame(
+            {
+                x: self.val_log_dens.ravel(),
+                y: self.val_pred.ravel(),
+                "cluster ID": self.val_labels,
+                "formula": self.val_formula,
+            }
+        )
+        # FIXME: manually set the lower and upper bounds of the cmap here (or convert to dict)
         fig, frac_pareto_ind = pareto_plot(
             frac_df,
             x=x,
             y=y,
-            hover_data=None,
             color="cluster ID",
-            fpath=join(self.figure_dir, "pf-frac-proxy"),
+            fpath=join(self.figure_dir, "pf-train-contrib-proxy"),
             pareto_front=True,
-            reverse_x=False,
             parity_type=None,
-            xrange=[0, 1],
         )
 
-        # Group cross-validation parity plot
-        if self.true_avg_targ is not None:
-            # x = "$E_\\mathrm{avg,true}$ (GPa)"
-            # y = "$E_\\mathrm{avg,pred}$ (GPa)"
-            x = "true cluster avg target (GPa)"
-            y = "pred cluster avg target (GPa)"
-            gcv_df = pd.DataFrame(
-                {
-                    x: self.true_avg_targ,
-                    y: self.pred_avg_targ,
-                    "formula": None,
-                    "cluster ID": np.array(self.avg_labels),
-                }
-            )
-            fig, dens_pareto_ind = pareto_plot(
-                gcv_df,
-                x=x,
-                y=y,
-                fpath=join(self.figure_dir, "gcv-pareto"),
-                parity_type="max-of-both",
-                color="cluster ID",
-                pareto_front=False,
-                reverse_x=False,
-            )
-            # fig = group_cv_parity(
-            #     self.true_avg_targ, self.pred_avg_targ, self.avg_labels
-            # )
-        else:
-            warn("Skipping group cross-validation plot")
-
-        if return_pareto_ind:
-            return pk_pareto_ind, dens_pareto_ind
+        return fig, frac_pareto_ind
 
     # TODO: write function to visualize Wasserstein metric (barchart with height = color)
 
@@ -1498,6 +1542,39 @@ class Discover:
             return disc
 
     def data(self, module, **data_kwargs):
+        """Grab data from within the subdirectories (modules) of mat_discover.
+
+        Parameters
+        ----------
+        module : Module
+            The module within mat_discover that contains e.g. "train.csv". For example,
+            from crabnet.data.materials_data import elasticity
+        fname : str, optional
+            Filename of text file to open.
+        dummy : bool, optional
+            Whether to pare down the data to a small test set, by default False
+        groupby : bool, optional
+            Whether to use groupby_formula to filter identical compositions
+        split : bool, optional
+            Whether to split the data into train, val, and (optionally) test sets, by default True
+        val_size : float, optional
+            Validation dataset fraction, by default 0.2
+        test_size : float, optional
+            Test dataset fraction, by default 0.0
+        random_state : int, optional
+            seed to use for the train/val/test split, by default 42
+
+        Returns
+        -------
+        DataFrame
+            If split==False, then the full DataFrame is returned directly
+
+        DataFrame, DataFrame
+            If test_size == 0 and split==True, then training and validation DataFrames are returned.
+
+        DataFrame, DataFrame, DataFrame
+            If test_size > 0 and split==True, then training, validation, and test DataFrames are returned.
+        """
         return data(module, **data_kwargs)
 
 
@@ -1510,3 +1587,6 @@ class Discover:
 #     skip_umap = True
 # else:
 #     skip_umap = False
+
+# self.formula = None
+# self.target = None
