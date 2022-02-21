@@ -10,6 +10,7 @@ Test DISCOVER algorithm.
      - high mean cluster target/high fraction of validation points within cluster
 """
 # %% imports
+from pathlib import Path
 import pandas as pd
 
 from crabnet.data.materials_data import elasticity
@@ -27,6 +28,7 @@ def test_mat_discover():
     disc = Discover(dummy_run=True)
     train_df, val_df = disc.data(elasticity, fname="train.csv", dummy=True)
     disc.fit(train_df)
+
     score = disc.predict(val_df, umap_random_state=42)
     cat_df = pd.concat((train_df, val_df), axis=0)
     disc.group_cross_val(cat_df, umap_random_state=42)
@@ -34,6 +36,48 @@ def test_mat_discover():
     disc.plot()
     # disc.save() #doesn't work with pytest for some reason (pickle: object not the same)
     # disc.load()
+
+
+def test_plotting():
+    """Ensure the individual plotting functions run successfully.
+
+    This does not involve checking to verify that the output is correct, and
+    additionally it uses a `dummy_run` and `dummy` such that MDS is used on a small
+    dataset rather than UMAP on a large dataset (for faster runtimes).
+    """
+    disc = Discover(dummy_run=True)
+    train_df, val_df = disc.data(elasticity, fname="train.csv", dummy=True)
+    disc.fit(train_df)
+
+    score = disc.predict(val_df, umap_random_state=42)
+    cat_df = pd.concat((train_df, val_df), axis=0)
+    disc.group_cross_val(cat_df, umap_random_state=42)
+
+    # create dir https://stackoverflow.com/a/273227/13697228
+    Path(disc.figure_dir).mkdir(parents=True, exist_ok=True)
+
+    fig, pk_pareto_ind = disc.pf_peak_proxy()
+    fig, frac_pareto_ind = disc.pf_train_contrib_proxy()
+
+    disc.umap_cluster_scatter()
+    disc.px_umap_cluster_scatter()
+
+    # Histogram of cluster counts
+    fig = cluster_count_hist(disc.labels, figure_dir=disc.figure_dir)
+
+    # Scatter plot colored by target values
+    fig = target_scatter(disc.std_emb, disc.all_target, figure_dir=disc.figure_dir)
+    disc.px_targ_scatter()
+
+    # PDF evaluated on grid of points
+    disc.dens_scatter()
+    disc.dens_targ_scatter()
+
+    disc.pf_dens_proxy()
+    disc.pf_frac_proxy()
+
+    # Group cross-validation parity plot
+    dens_pareto_ind = disc.gcv_pareto()
 
 
 def test_sklearn_modpetti():
