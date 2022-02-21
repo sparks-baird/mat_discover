@@ -11,7 +11,6 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-from warnings import warn
 from os.path import dirname, abspath, join
 import sys
 import sphinx_rtd_theme  # noqa
@@ -66,7 +65,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns: list = []
 
 # https://sublime-and-sphinx-guide.readthedocs.io/en/latest/code_blocks.html
 pygments_style = "sphinx"
