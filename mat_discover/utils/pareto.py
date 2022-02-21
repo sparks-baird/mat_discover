@@ -8,6 +8,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
+from mat_discover.utils.plotting import matplotlibify
 
 
 def is_pareto_efficient_simple(costs):
@@ -154,9 +155,6 @@ def pareto_plot(
 
     if pareto_front:
         pareto_ind = get_pareto_ind(proxy, target, reverse_x=reverse_x)
-
-        # pf_hover_data = df.loc[:, hover_data].iloc[pareto_ind]
-        # fig.add_scatter(x=proxy[pareto_ind], y=target[pareto_ind])
         # Add scatter trace with medium sized markers
         sorter = np.flip(np.argsort(target.iloc[pareto_ind]))
         fig.add_scatter(
@@ -193,58 +191,18 @@ def pareto_plot(
     if fpath is not None:
         fig.write_html(fpath + ".html")
 
-    # make it look more like matplotlib
-    # modified from: https://medium.com/swlh/formatting-a-plotly-figure-with-matplotlib-style-fa56ddd97539)
-    font_dict = dict(family="Arial", size=24, color="black")
-
-    # app = QApplication(sys.argv)
-    # screen = app.screens()[0]
-    # dpi = screen.physicalDotsPerInch()
-    # app.quit()
-    dpi = 142
-
-    fig.update_layout(
-        font=font_dict,
-        plot_bgcolor="white",
-        width=3.5 * dpi,
-        height=3.5 * dpi,
-        margin=dict(r=40, t=20, b=10),
-    )
-
-    fig.update_yaxes(
-        showline=True,  # add line at x=0
-        linecolor="black",  # line color
-        linewidth=2.4,  # line size
-        ticks="inside",  # ticks outside axis
-        tickfont=font_dict,  # tick label font
-        mirror="allticks",  # add ticks to top/right axes
-        tickwidth=2.4,  # tick width
-        tickcolor="black",  # tick color
-    )
-
-    fig.update_xaxes(
-        showline=True,
-        showticklabels=True,
-        linecolor="black",
-        linewidth=2.4,
-        ticks="inside",
-        tickfont=font_dict,
-        mirror="allticks",
-        tickwidth=2.4,
-        tickcolor="black",
-    )
-    fig.update(layout_coloraxis_showscale=False)
+    fig, scale = matplotlibify(fig)
 
     if xrange is not None:
         fig.update_xaxes(range=xrange)
 
     # saving
     if fpath is not None:
-        width_inches = 3.5
-        width_default_px = fig.layout.width
-        targ_dpi = 300
-        scale = width_inches / (width_default_px / dpi) * (targ_dpi / dpi)
-
         fig.write_image(fpath + ".png", scale=scale)
 
     return fig, pareto_ind
+
+
+# %% Code Graveyard
+# pf_hover_data = df.loc[:, hover_data].iloc[pareto_ind]
+# fig.add_scatter(x=proxy[pareto_ind], y=target[pareto_ind])
