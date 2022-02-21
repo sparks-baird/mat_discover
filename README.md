@@ -33,8 +33,9 @@ A materials discovery algorithm geared towards exploring high performance candid
 <sup>Bulk modulus values overlaid on DensMAP densities (cropped).</sup>
 
 [The documentation](https://mat-discover.readthedocs.io/) describes the DiSCoVeR algorithm, how to install `mat_discover`, and basic usage (`fit`/`predict`, custom or built-in datasets, adaptive design, and cluster plots). [Interactive plots](https://mat-discover.readthedocs.io/en/latest/figures.html) for several types of
-Pareto front plots are available. We also describe how to contribute, and what to do if you run into bugs or have questions. Various [examples](https://mat-discover.readthedocs.io/en/latest/examples.html) (including a [teaching example](https://mat-discover.readthedocs.io/en/latest/examples.html#bare-bones)), the [interactive figures](https://mat-discover.readthedocs.io/en/latest/figures.html#figures) mentioned, and the [Python API](https://mat-discover.readthedocs.io/en/latest/modules.html) are also hosted at https://mat-discover.readthedocs.io. The article is [published at Digital Discovery](https://dx.doi.org/10.1039/D1DD00028D). If you find this useful, please consider citing:
+Pareto front plots are available. We also describe how to contribute, and what to do if you run into bugs or have questions. Various [examples](https://mat-discover.readthedocs.io/en/latest/examples.html) (including a [teaching example](https://mat-discover.readthedocs.io/en/latest/examples.html#bare-bones)), the [interactive figures](https://mat-discover.readthedocs.io/en/latest/figures.html#figures) mentioned, and the [Python API](https://mat-discover.readthedocs.io/en/latest/modules.html) are also hosted at https://mat-discover.readthedocs.io. The article is [published at Digital Discovery](https://dx.doi.org/10.1039/D1DD00028D). If you find this useful, please consider citing as follows:
 
+## Citing
 > Baird, S. G.; Diep, T. Q.; Sparks, T. D. DiSCoVeR: A Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. Digital Discovery 2022. https://doi.org/10.1039/D1DD00028D.
 
 ```bib
