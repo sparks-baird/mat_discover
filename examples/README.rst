@@ -74,7 +74,7 @@ Cluster Plot
 ------------
 You may be primarily interested in generating cluster labels for your data and visualizing the clusters. For this example, a Google Colab version is included for ease of use |Cluster Plot|.
 
-.. literalinclude:: ../../examples/bare_bones.py
+.. literalinclude:: ../../examples/elmd_densmap_cluster.py
     :caption: `/examples/elmd_densmap_cluster.py <https://github.com/sparks-baird/mat_discover/blob/main/examples/elmd_densmap_cluster.py>`_
     :language: python
     
