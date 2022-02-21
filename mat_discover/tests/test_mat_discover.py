@@ -63,10 +63,10 @@ def test_plotting():
     disc.px_umap_cluster_scatter()
 
     # Histogram of cluster counts
-    fig = cluster_count_hist(disc.labels, figure_dir=disc.figure_dir)
+    fig = disc.cluster_count_hist(disc.labels, figure_dir=disc.figure_dir)
 
     # Scatter plot colored by target values
-    fig = target_scatter(disc.std_emb, disc.all_target, figure_dir=disc.figure_dir)
+    fig = disc.target_scatter(disc.std_emb, disc.all_target, figure_dir=disc.figure_dir)
     disc.px_targ_scatter()
 
     # PDF evaluated on grid of points
