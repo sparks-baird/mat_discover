@@ -83,8 +83,8 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 html_logo = "discover-logo.png"
 html_theme_options = {
-    "logo_only": True,
-    "display_version": False,
+    "logo_only": False,
+    "display_version": True,
 }
 
 html_extra_path = ["googlea441f484329a8f75.html"]
