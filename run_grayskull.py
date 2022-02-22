@@ -1,6 +1,7 @@
 """Touch up the conda recipe from grayskull using conda-souschef."""
 from souschef.recipe import Recipe
 import os
+from warnings import warn
 from os.path import join
 from pathlib import Path
 from shutil import copyfile
@@ -17,7 +18,11 @@ my_recipe = Recipe(load_file=fpath)
 my_recipe["requirements"]["host"].append("flit")
 my_recipe["build"].add_section("noarch")
 my_recipe["build"]["noarch"] = "python"
-del my_recipe["requirements"]["build"]
+try:
+    del my_recipe["requirements"]["build"]
+except Exception as e:
+    print(e)
+    pass
 my_recipe["requirements"]["run"].replace("kaleido", "python-kaleido")
 my_recipe["requirements"]["run"].append("pytorch >=1.9.0")
 my_recipe["requirements"]["run"].append("cudatoolkit <11.4")
