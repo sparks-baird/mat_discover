@@ -1299,14 +1299,15 @@ class Discover:
             return pk_pareto_ind, dens_pareto_ind
 
     def target_scatter(self):
-        # Scatter plot colored by target values
+        """Scatter plot of DensMAP embeddings colored by target values."""
         fig = target_scatter(self.std_emb, self.all_target, figure_dir=self.figure_dir)
 
     def cluster_count_hist(self):
-        # Histogram of cluster counts
+        """Histogram of cluster counts colored by cluster label."""
         fig = cluster_count_hist(self.labels, figure_dir=self.figure_dir)
 
     def gcv_pareto(self):
+        """Cluster-wise group cross-validation parity plot."""
         # x = "$E_\\mathrm{avg,true}$ (GPa)"
         # y = "$E_\\mathrm{avg,pred}$ (GPa)"
         x = "true cluster avg target (GPa)"
@@ -1336,7 +1337,7 @@ class Discover:
         return dens_pareto_ind
 
     def pf_frac_proxy(self):
-        # cluster-wise average vs. cluster-wise validation fraction
+        """Cluster-wise average vs. cluster-wise validation fraction Pareto plot."""
         x = "cluster-wise validation fraction"
         y = "cluster-wise average target (GPa)"
         frac_df = pd.DataFrame(
@@ -1360,7 +1361,7 @@ class Discover:
         )
 
     def pf_dens_proxy(self):
-        # dens pareto plot setup
+        """Dens proxy pareto plot."""
         dens, log_dens = self.compute_log_density()
 
         x = "log density"
@@ -1373,7 +1374,6 @@ class Discover:
                 "cluster ID": self.labels,
             }
         )
-        # dens pareto plot
         # FIXME: manually set the lower and upper bounds of the cmap here (or convert to dict)
         # TODO: make the colorscale discrete
         fig, dens_pareto_ind = pareto_plot(
@@ -1387,6 +1387,7 @@ class Discover:
         )
 
     def dens_targ_scatter(self):
+        """Target value scatter plot (colored by target value) overlay on densities."""
         fig = dens_targ_scatter(
             self.std_emb,
             self.all_target,
@@ -1397,11 +1398,13 @@ class Discover:
         )
 
     def dens_scatter(self):
+        """Density scatter plot."""
         fig = dens_scatter(
             self.pdf_x, self.pdf_y, self.pdf_sum, figure_dir=self.figure_dir
         )
 
     def px_targ_scatter(self):
+        """Interactive targ_scatter plot."""
         # Interactive scatter plot colored by target values
         x = "DensMAP Dim. 1"
         y = "DensMAP Dim. 2"
@@ -1424,7 +1427,7 @@ class Discover:
         )
 
     def px_umap_cluster_scatter(self):
-        # Interactive scatter plot colored by clusters
+        """Interactive scatter plot colored by clusters."""
         x = "DensMAP Dim. 1"
         y = "DensMAP Dim. 2"
         umap_df = pd.DataFrame(
@@ -1446,13 +1449,13 @@ class Discover:
         )
 
     def umap_cluster_scatter(self):
-        # Scatter plot colored by clusters
+        """Scatter plot colored by clusters."""
         fig = umap_cluster_scatter(
             self.std_emb, self.labels, figure_dir=self.figure_dir
         )
 
-    def _pf_peak_proxy(self):
-        # peak pareto plot setup
+    def pf_peak_proxy(self):
+        """Peak proxy pareto plot."""
         x = str(self.n_peak_neighbors) + "_neigh_avg_targ (GPa)"
         y = "target (GPa)"
         # TODO: plot for val data only (fixed?)
@@ -1478,7 +1481,8 @@ class Discover:
 
         return fig, pk_pareto_ind
 
-    def _pf_train_contrib_proxy(self):
+    def pf_train_contrib_proxy(self):
+        """Training contribution to validation log density pareto plot."""
         x = "log validation density"
         y = "validation predictions (GPa)"
         # cluster-wise average vs. cluster-wise validation log-density
