@@ -176,7 +176,7 @@ fig.update_traces(showlegend=False)
 fig.update_layout(height=300 * rows, width=300 * cols)
 # https://stackoverflow.com/a/62215075/13697228
 offline.plot(fig)
-#fig.show()
+# fig.show()
 
 fig.write_html(join("figures", "ad-compare.html"))
 
