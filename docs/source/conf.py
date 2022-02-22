@@ -48,6 +48,9 @@ release = mat_discover.__version__
 
 # -- General configuration ---------------------------------------------------
 
+# https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#directive-option-automodule-special-members https://stackoverflow.com/a/61732050/13697228
+autodoc_default_options = {"special-members": "__init__"}
+
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
