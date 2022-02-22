@@ -8,7 +8,7 @@ on:
     - 'requirements.txt'
     - 'pyproject.toml'
     branches:
-    - "*"
+    - "**"
     tags-ignore:
     - "*.*.*"
 
