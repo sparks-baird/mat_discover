@@ -6,6 +6,9 @@ on:
     - '**.py'
 #     - 'pyproject.toml'
 #       - '!**/*.md'
+    tags-ignore:
+    - "*.*.*"
+  workflow_dispatch:
 
 jobs:
   linux-pytest:
