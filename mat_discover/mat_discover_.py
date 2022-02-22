@@ -12,7 +12,7 @@ from operator import attrgetter
 from os.path import join
 from os import PathLike
 from pathlib import Path
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Mapping
 from warnings import warn
 
 import dill as pickle
@@ -159,9 +159,9 @@ class Discover:
         device: str = "cuda",
         dist_device: Optional[str] = None,
         nscores: int = 100,
-        umap_cluster_kwargs: Optional[dict] = None,
-        umap_vis_kwargs: Optional[dict] = None,
-        hdbscan_kwargs: Optional[dict] = None,
+        umap_cluster_kwargs: Optional[Mapping] = None,
+        umap_vis_kwargs: Optional[Mapping] = None,
+        hdbscan_kwargs: Optional[Mapping] = None,
     ):
         """Initialize a Discover() class.
 
