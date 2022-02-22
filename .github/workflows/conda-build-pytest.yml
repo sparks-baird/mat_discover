@@ -6,6 +6,8 @@ on:
     - '**.py'
 #     - 'pyproject.toml'
 #       - '!**/*.md'
+    branches:
+    - "**"
     tags-ignore:
     - "*.*.*"
   workflow_dispatch:
