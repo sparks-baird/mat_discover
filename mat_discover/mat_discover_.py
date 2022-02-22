@@ -12,7 +12,7 @@ from operator import attrgetter
 from os.path import join
 from os import PathLike
 from pathlib import Path
-from typing import Optional, Union, List, Mapping
+from typing import TYPE_CHECKING, Optional, Union, List, Mapping
 from warnings import warn
 
 import dill as pickle
@@ -129,6 +129,12 @@ def cdf_sorting_error(y_true, y_pred, y_dummy=None):
     return error, dummy_error, scaled_error
 
 
+if TYPE_CHECKING:
+    pathtype = PathLike[str]
+else:
+    pathtype = PathLike
+
+
 class Discover:
     """
     A Materials Discovery class.
@@ -149,8 +155,8 @@ class Discover:
         mat_prop_name: str = "test-property",
         dummy_run: bool = False,
         Scaler=RobustScaler,
-        figure_dir: Union[str, PathLike[str]] = "figures",
-        table_dir: Union[str, PathLike[str]] = "tables",
+        figure_dir: Union[str, pathtype] = "figures",
+        table_dir: Union[str, pathtype] = "tables",
         novelty_learner: str = "discover",
         novelty_prop: str = "mod_petti",
         # groupby_filter="max",
