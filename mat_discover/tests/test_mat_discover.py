@@ -50,8 +50,6 @@ def test_plotting():
     disc.fit(train_df)
 
     score = disc.predict(val_df, umap_random_state=42)
-    cat_df = pd.concat((train_df, val_df), axis=0)
-    disc.group_cross_val(cat_df, umap_random_state=42)
 
     # create dir https://stackoverflow.com/a/273227/13697228
     Path(disc.figure_dir).mkdir(parents=True, exist_ok=True)
@@ -63,10 +61,10 @@ def test_plotting():
     disc.px_umap_cluster_scatter()
 
     # Histogram of cluster counts
-    fig = disc.cluster_count_hist(disc.labels, figure_dir=disc.figure_dir)
+    fig = disc.cluster_count_hist()
 
     # Scatter plot colored by target values
-    fig = disc.target_scatter(disc.std_emb, disc.all_target, figure_dir=disc.figure_dir)
+    fig = disc.target_scatter()
     disc.px_targ_scatter()
 
     # PDF evaluated on grid of points
@@ -75,9 +73,6 @@ def test_plotting():
 
     disc.pf_dens_proxy()
     disc.pf_frac_proxy()
-
-    # Group cross-validation parity plot
-    dens_pareto_ind = disc.gcv_pareto()
 
 
 def test_sklearn_modpetti():
@@ -124,5 +119,6 @@ def test_sklearn_mat2vec():
 
 if __name__ == "__main__":
     test_mat_discover()
+    test_plotting()
     test_sklearn_modpetti()
     test_sklearn_mat2vec()
