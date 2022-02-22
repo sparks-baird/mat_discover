@@ -170,3 +170,4 @@ mat_discover/data/train.xlsx
 mat_discover/data/val.xlsx
 figures/dummy/**/*
 tables/dummy/**/*
+temp-plot.html
