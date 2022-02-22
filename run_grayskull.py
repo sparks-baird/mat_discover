@@ -22,6 +22,7 @@ try:
     del my_recipe["requirements"]["build"]
 except Exception as e:
     print(e)
+    warn("couldn't delete build section (probably because it didn't exist)")
     pass
 my_recipe["requirements"]["run"].replace("kaleido", "python-kaleido")
 my_recipe["requirements"]["run"].append("pytorch >=1.9.0")
