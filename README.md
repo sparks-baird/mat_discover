@@ -69,3 +69,10 @@ If you use this software, in addition to the above reference, please also cite t
   url          = {https://doi.org/10.5281/zenodo.6116258}
 }
 ```
+
+If you use this software as an installed dependency in another GitHub repository, please add `mat_discover` to a `requirements.txt` file in your repository via e.g.:
+```bash
+pip install pipreqs
+pipreqs .
+```
+For an example, see [`requirements.txt`](requirements.txt).
