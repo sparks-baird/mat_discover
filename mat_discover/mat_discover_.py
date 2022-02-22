@@ -1337,7 +1337,9 @@ class Discover:
         return dens_pareto_ind
 
     def pf_frac_proxy(self):
-        """Cluster-wise average vs. cluster-wise validation fraction Pareto plot."""
+        """Cluster-wise average vs. cluster-wise validation fraction Pareto plot.
+
+        In other words, the average performance of a cluster vs. cluster novelty."""
         x = "cluster-wise validation fraction"
         y = "cluster-wise average target (GPa)"
         frac_df = pd.DataFrame(
@@ -1361,7 +1363,7 @@ class Discover:
         )
 
     def pf_dens_proxy(self):
-        """Dens proxy pareto plot."""
+        """True targets vs. dens proxy pareto plot (both training and validation)."""
         dens, log_dens = self.compute_log_density()
 
         x = "log density"
@@ -1398,13 +1400,13 @@ class Discover:
         )
 
     def dens_scatter(self):
-        """Density scatter plot."""
+        """Density scatter plot, with densities computed via probability density fn."""
         fig = dens_scatter(
             self.pdf_x, self.pdf_y, self.pdf_sum, figure_dir=self.figure_dir
         )
 
     def px_targ_scatter(self):
-        """Interactive targ_scatter plot."""
+        """Interactive `targ_scatter` plot."""
         # Interactive scatter plot colored by target values
         x = "DensMAP Dim. 1"
         y = "DensMAP Dim. 2"
@@ -1427,7 +1429,7 @@ class Discover:
         )
 
     def px_umap_cluster_scatter(self):
-        """Interactive scatter plot colored by clusters."""
+        """Interactive scatter plot of DensMAP embeddings colored by clusters."""
         x = "DensMAP Dim. 1"
         y = "DensMAP Dim. 2"
         umap_df = pd.DataFrame(
@@ -1449,13 +1451,16 @@ class Discover:
         )
 
     def umap_cluster_scatter(self):
-        """Scatter plot colored by clusters."""
+        """Static scatter plot colored by clusters."""
         fig = umap_cluster_scatter(
             self.std_emb, self.labels, figure_dir=self.figure_dir
         )
 
     def pf_peak_proxy(self):
-        """Peak proxy pareto plot."""
+        """Predicted target vs. peak proxy pareto plot.
+
+        Peak proxy gives an idea of how "surprising" the performance is (i.e. a local
+        peak in the ElMD space)."""
         x = str(self.n_peak_neighbors) + "_neigh_avg_targ (GPa)"
         y = "target (GPa)"
         # TODO: plot for val data only (fixed?)
@@ -1482,7 +1487,11 @@ class Discover:
         return fig, pk_pareto_ind
 
     def pf_train_contrib_proxy(self):
-        """Training contribution to validation log density pareto plot."""
+        """Predicted target vs train contribution to validation log density pareto plot.
+
+        This is only for the validation data. Training data contribution to validation
+        log density is a proxy for chemical novelty (i.e. how novel is a given
+        validation datapoint relative to the training data)."""
         x = "log validation density"
         y = "validation predictions (GPa)"
         # cluster-wise average vs. cluster-wise validation log-density
