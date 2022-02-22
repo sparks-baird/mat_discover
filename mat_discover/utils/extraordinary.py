@@ -1,4 +1,5 @@
 from os.path import join
+from plotly import offline
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -62,7 +63,9 @@ def extraordinary_histogram(
         log_y=log_y,
     )
 
-    fig.show()
+    # https://stackoverflow.com/a/62215075/13697228
+    offline.plot(fig)
+    # fig.show()
 
     if fpath is not None:
         fig.write_html(fpath + ".html")

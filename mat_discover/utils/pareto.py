@@ -5,6 +5,7 @@ from os.path import join
 # from PyQt5.QtWidgets import QApplication
 
 import numpy as np
+from plotly import offline
 import plotly.express as px
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
@@ -186,7 +187,8 @@ def pareto_plot(
     if reverse_x:
         fig.update_layout(xaxis=dict(autorange="reversed"))
 
-    fig.show()
+    offline.plot(fig)
+    # fig.show()
 
     if fpath is not None:
         fig.write_html(fpath + ".html")

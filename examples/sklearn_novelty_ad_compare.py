@@ -33,6 +33,7 @@ from mat_discover.adaptive_design import Adapt
 
 from mat_discover.utils.plotting import matplotlibify
 from plotly.subplots import make_subplots
+from plotly import offline
 import plotly.graph_objects as go
 
 # %% setup
@@ -204,7 +205,8 @@ for row_num, y_name in zip(row_nums, y_names):
 
 fig.update_traces(showlegend=False)
 fig.update_layout(height=300 * rows, width=300 * cols)
-fig.show()
+offline.plot(fig)
+# fig.show()
 
 fig.write_html(join(figure_dir, "sklearn-compare.html"))
 

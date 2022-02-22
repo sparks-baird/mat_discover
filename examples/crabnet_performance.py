@@ -19,6 +19,7 @@ from mat_discover.utils.data import data
 from mat_discover.adaptive_design import Adapt
 
 from plotly.subplots import make_subplots
+from plotly import offline
 import plotly.graph_objects as go
 
 # %% setup
@@ -146,7 +147,9 @@ for row_num, y_name in zip(row_nums, y_names):
 
 fig.update_traces(showlegend=False)
 fig.update_layout(height=300 * rows, width=300 * cols)
-fig.show()
+# https://stackoverflow.com/a/62215075/13697228
+offline.plot(fig)
+# fig.show()
 
 with open("crabnet_performance.pkl", "wb") as f:
     pickle.dump(experiments, f)
