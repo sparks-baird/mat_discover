@@ -39,7 +39,7 @@ Cluster Properties
 Cluster Count Histogram
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-\ :raw-html-m2r:`<br>`
+:raw-html-m2r:`<br>`
 :raw-html-m2r:`<img src="https://github.com/sparks-baird/mat_discover/blob/main/figures/cluster-count-hist.png?raw=true" alt="Cluster Count Histogram" width=350>`
 
 DensMAP Embeddings Colored by Cluster
