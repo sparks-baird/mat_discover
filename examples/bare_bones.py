@@ -32,7 +32,7 @@ from crabnet.utils.data import get_data
 train_df, val_df = get_data(elasticity, fname="train.csv")
 
 # %% 2. CrabNet predictions
-crabnet_model = CrabNet(learningcurve=False)
+crabnet_model = CrabNet(losscurve=False, learningcurve=False)
 crabnet_model.fit(train_df)
 
 train_pred, train_sigma, train_true = crabnet_model.predict(

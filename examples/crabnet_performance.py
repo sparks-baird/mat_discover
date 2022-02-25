@@ -67,7 +67,7 @@ for i in range(n_repeats):
     perf_val_df = deepcopy(val_df)
     next_experiments = []
     for j in tqdm(range(n_iter)):
-        crabnet_model = CrabNet(verbose=False, learningcurve=False)
+        crabnet_model = CrabNet(verbose=False, losscurve=False, learningcurve=False)
         crabnet_model.fit(perf_train_df)
         val_pred, val_sigma, val_true = crabnet_model.predict(
             perf_val_df, return_uncertainty=True, return_true=True
