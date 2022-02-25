@@ -93,7 +93,7 @@ def join_wasserstein(U, V, Uw, Vw):
 train_df, val_df = get_data(elasticity, fname="train.csv", dummy=True)
 
 # %% 2. CrabNet predictions
-crabnet_model = CrabNet()
+crabnet_model = CrabNet(learningcurve=False)
 crabnet_model.fit(train_df)
 
 train_pred, train_sigma, train_true = crabnet_model.predict(
