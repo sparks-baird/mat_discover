@@ -172,3 +172,4 @@ figures/dummy/**/*
 tables/dummy/**/*
 temp-plot.html
 models/trained_models/UnnamedModel.pth
+figures/lc_data/UnnamedModel_lc.csv
