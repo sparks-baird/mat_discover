@@ -30,7 +30,7 @@ dependencies = [
     "scikit_learn",
     "umap-learn",
     "dill",
-    "crabnet >=2.0.2,<3.0.0",
+    "crabnet >=2.0.3,<3.0.0",
     "chem_wasserstein >=1.0.8,<2.0.0",
     "composition_based_feature_vector",
     # "ElMD==0.4.8", #PyPI
