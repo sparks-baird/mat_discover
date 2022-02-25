@@ -3,7 +3,7 @@ Use CrabNet outside of DiSCoVeR to do optimization; compare with random search.
 
 # TODO: incorporate CrabNet uncertainty into search
 """
-from crabnet.train_crabnet import get_model
+from crabnet.crabnet_ import CrabNet
 
 # %% imports
 from tqdm import tqdm
@@ -15,7 +15,7 @@ from mat_discover.adaptive_design import ad_experiments_metrics
 from mat_discover.utils.extraordinary import extraordinary_split
 
 from crabnet.data.materials_data import elasticity
-from mat_discover.utils.data import data
+from mat_discover.utils.data import get_data
 from mat_discover.adaptive_design import Adapt
 
 from plotly.subplots import make_subplots
@@ -23,7 +23,7 @@ from plotly import offline
 import plotly.graph_objects as go
 
 # %% setup
-train_df, val_df = data(elasticity, "train.csv", dummy=False, random_state=42)
+train_df, val_df = get_data(elasticity, "train.csv", dummy=False, random_state=42)
 train_df, val_df, extraordinary_thresh = extraordinary_split(
     train_df, val_df, random_state=42
 )
@@ -67,10 +67,11 @@ for i in range(n_repeats):
     perf_val_df = deepcopy(val_df)
     next_experiments = []
     for j in tqdm(range(n_iter)):
-        crabnet_model = get_model(
-            train_df=perf_train_df, verbose=False, learningcurve=False
+        crabnet_model = CrabNet(verbose=False, learningcurve=False)
+        crabnet_model.fit(perf_train_df)
+        val_pred, val_sigma, val_true = crabnet_model.predict(
+            perf_val_df, return_uncertainty=True, return_true=True
         )
-        val_true, val_pred, _, val_sigma = crabnet_model.predict(perf_val_df)
         perf_val_df["pred"] = val_pred
         perf_val_df["sigma"] = val_sigma
         idx = perf_val_df.pred.idxmax()

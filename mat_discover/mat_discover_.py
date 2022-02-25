@@ -26,8 +26,7 @@ from chem_wasserstein.utils.Timer import NoTimer, Timer
 
 # from crabnet.utils.composition import generate_features
 from composition_based_feature_vector.composition import generate_features
-from crabnet.train_crabnet import get_model
-from crabnet.model import Model
+from crabnet.crabnet_ import CrabNet
 from ElMD import ElMD
 from scipy.stats import multivariate_normal, wasserstein_distance
 from sklearn.decomposition import PCA
@@ -369,7 +368,7 @@ class Discover:
 
         self.mapper = ElM2D(target=self.dist_device)  # type: ignore
         self.dm: Optional[np.ndarray] = None
-        self.crabnet_model: Optional[Model] = None
+        self.crabnet_model: Optional[CrabNet] = None
         self.train_formula: Optional[pd.Series] = None
         self.train_target: Optional[pd.Series] = None
         self.train_df: Optional[pd.DataFrame] = None
@@ -406,14 +405,14 @@ class Discover:
                     del self.crabnet_model
                     gc.collect()
                     empty_cache()
-                self.crabnet_model = get_model(
+                self.crabnet_model = CrabNet(
                     mat_prop=self.mat_prop_name,
-                    train_df=train_df,
                     learningcurve=False,
                     force_cpu=self.force_cpu,
                     verbose=verbose,
                     save=save,
                 )
+                self.crabnet_model.fit(train_df)
 
         # TODO: UMAP on new data (i.e. add metric != "precomputed" functionality)
 
@@ -483,11 +482,11 @@ class Discover:
             assert (
                 crabnet_model is not None
             ), "`crabnet_model is None. Did you run `disc.fit(train_df)` already?"
-            self.train_true, train_pred, _, self.train_sigma = crabnet_model.predict(
-                self.train_df
+            train_pred, self.train_sigma, self.train_true = crabnet_model.predict(
+                self.train_df, return_uncertainty=True, return_true=True
             )
-            self.val_true, self.val_pred, _, self.val_sigma = crabnet_model.predict(
-                self.val_df
+            self.val_pred, self.val_sigma, self.val_true = crabnet_model.predict(
+                self.val_df, return_uncertainty=True, return_true=True
             )
         else:
             self.train_true, train_pred, self.train_sigma = [
@@ -1005,20 +1004,26 @@ class Discover:
 
         # test_df = pd.DataFrame({"formula": X_test, "property": y_test})
 
-        self.crabnet_model = get_model(
+        self.crabnet_model = CrabNet(
             mat_prop=self.mat_prop_name,
-            train_df=train_df,
             val_df=val_df,
             learningcurve=False,
             verbose=False,
             force_cpu=self.force_cpu,
         )
+        self.crabnet_model.fit(train_df)
 
         # CrabNet predict output format: (act, pred, formulae, uncert)
-        train_true, train_pred, _, train_sigma = self.crabnet_model.predict(train_df)
-        val_true, val_pred, _, val_sigma = self.crabnet_model.predict(val_df)
+        train_pred, train_sigma, train_true = self.crabnet_model.predict(
+            train_df, return_uncertainty=True, return_true=True
+        )
+        val_pred, val_sigma, val_true = self.crabnet_model.predict(
+            val_df, return_uncertainty=True, return_true=True
+        )
         if test_df is not None:
-            _, test_pred, _, test_sigma = self.crabnet_model.predict(test_df)
+            test_pred, test_sigma = self.crabnet_model.predict(
+                test_df, return_uncertainty=True
+            )
 
         true_avg_targ = np.mean(val_true)
         pred_avg_targ = np.mean(val_pred)

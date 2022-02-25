@@ -24,19 +24,24 @@ from sklearn.preprocessing import RobustScaler
 import umap
 
 from chem_wasserstein.ElM2D_ import ElM2D
-from crabnet.train_crabnet import get_model
+from crabnet.crabnet_ import CrabNet
 from crabnet.data.materials_data import elasticity
-from crabnet.model import data
+from crabnet.utils.data import get_data
 
 # %% 1. Data
-train_df, val_df = data(elasticity, fname="train.csv")
+train_df, val_df = get_data(elasticity, fname="train.csv")
 
 # %% 2. CrabNet predictions
-crabnet_model = get_model(train_df=train_df)
+crabnet_model = CrabNet()
+crabnet_model.fit(train_df)
 
-train_true, train_pred, _, train_sigma = crabnet_model.predict(train_df)
+train_pred, train_sigma, train_true = crabnet_model.predict(
+    train_df, return_uncertainty=True, return_true=True
+)
 
-val_true, val_pred, _, val_sigma = crabnet_model.predict(val_df)
+val_pred, val_sigma, val_true = crabnet_model.predict(
+    val_df, return_uncertainty=True, return_true=True
+)
 
 pred = np.concatenate((train_pred, val_pred), axis=0)
 

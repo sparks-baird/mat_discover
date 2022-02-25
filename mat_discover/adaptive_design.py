@@ -69,7 +69,7 @@ class Adapt(Discover):
                 self.predict(self.val_df, **predict_kwargs)
             else:
                 if self.crabnet_model is not None:
-                    val_true, self.val_pred, _, val_sigma = self.crabnet_model.predict(
+                    self.val_pred, val_sigma, val_true = self.crabnet_model.predict(
                         self.val_df
                     )
                 else:
