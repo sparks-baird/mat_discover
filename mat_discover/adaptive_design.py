@@ -58,7 +58,7 @@ class Adapt(Discover):
     ):
         if not random_search:
             if fit:
-                self.fit(self.train_df, verbose=fit_verbose, save=False)
+                self.fit(self.train_df, verbose=fit_verbose)
             elif self.crabnet_model is None:
                 self.crabnet_model = DummyCrabNet()
                 # raise ValueError(
