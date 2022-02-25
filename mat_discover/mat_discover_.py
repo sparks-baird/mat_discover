@@ -1018,7 +1018,6 @@ class Discover:
 
         self.crabnet_model = CrabNet(
             mat_prop=self.mat_prop_name,
-            val_df=val_df,
             losscurve=False,
             learningcurve=False,
             verbose=False,
