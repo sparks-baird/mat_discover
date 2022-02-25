@@ -164,6 +164,7 @@ class Discover:
         device: str = "cuda",
         dist_device: Optional[str] = None,
         nscores: int = 100,
+        crabnet_kwargs: Optional[Mapping] = None,
         umap_cluster_kwargs: Optional[Mapping] = None,
         umap_vis_kwargs: Optional[Mapping] = None,
         hdbscan_kwargs: Optional[Mapping] = None,
@@ -257,6 +258,12 @@ class Discover:
         nscores : int, optional
             Number of scores (i.e. compounds) to return in the CSV output files.
 
+        crabnet_kwargs : dict, optional
+            `crabnet.crabnet_.CrabNet` kwargs that are passed directly into the CrabNet
+            model. By default None. For example, you can specify the number of epochs
+            as {"epochs", 40} (may be useful to decrease # epochs for smaller datasets). See `CrabNet() API
+            <https://crabnet.readthedocs.io/en/latest/crabnet.html#crabnet.crabnet_.CrabNet>`_.
+
         umap_cluster_kwargs, umap_vis_kwargs : dict, optional
             `umap.UMAP` kwargs that are passed directly into the UMAP embedder that is
             used for clustering and visualization, respectively. By default None. See
@@ -294,6 +301,9 @@ class Discover:
         if dummy_run:
             figure_dir = join(figure_dir, "dummy")
             table_dir = join(table_dir, "dummy")
+            self.epochs = 5
+        else:
+            self.epochs = None
         self.figure_dir = figure_dir
         self.table_dir = table_dir
         self.novelty_learner = novelty_learner
@@ -409,6 +419,7 @@ class Discover:
                     mat_prop=self.mat_prop_name,
                     learningcurve=False,
                     force_cpu=self.force_cpu,
+                    epochs=self.epochs,
                     verbose=verbose,
                     save=save,
                 )
@@ -1010,6 +1021,7 @@ class Discover:
             learningcurve=False,
             verbose=False,
             force_cpu=self.force_cpu,
+            epochs=self.epochs,
         )
         self.crabnet_model.fit(train_df)
 
