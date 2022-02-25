@@ -171,3 +171,4 @@ mat_discover/data/val.xlsx
 figures/dummy/**/*
 tables/dummy/**/*
 temp-plot.html
+models/trained_models/UnnamedModel.pth
