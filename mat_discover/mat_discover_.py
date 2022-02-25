@@ -1614,17 +1614,3 @@ class Discover:
             If test_size > 0 and split==True, then training, validation, and test DataFrames are returned.
         """
         return data(module, **data_kwargs)
-
-
-# %% Code Graveyard
-# if dm is not None:
-#     skip_elmd = True
-# else:
-#     skip_elmd = False
-# if umap_trans is not None and std_trans is not None:
-#     skip_umap = True
-# else:
-#     skip_umap = False
-
-# self.formula = None
-# self.target = None
