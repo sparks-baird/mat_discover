@@ -33,6 +33,9 @@ np.random.seed(42)
 dummy_run = False
 if dummy_run:
     val_df = val_df.iloc[:100]
+    epochs = 5
+else:
+    epochs = None
 
 # name_mapper = {"target": "Bulk Modulus (GPa)"}
 # extraordinary_histogram(train_df, val_df, labels=name_mapper)
@@ -67,7 +70,9 @@ for i in range(n_repeats):
     perf_val_df = deepcopy(val_df)
     next_experiments = []
     for j in tqdm(range(n_iter)):
-        crabnet_model = CrabNet(verbose=False, losscurve=False, learningcurve=False)
+        crabnet_model = CrabNet(
+            verbose=False, losscurve=False, learningcurve=False, epochs=epochs
+        )
         crabnet_model.fit(perf_train_df)
         val_pred, val_sigma, val_true = crabnet_model.predict(
             perf_val_df, return_uncertainty=True, return_true=True
