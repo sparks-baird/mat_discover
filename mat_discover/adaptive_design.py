@@ -70,7 +70,7 @@ class Adapt(Discover):
             else:
                 if self.crabnet_model is not None:
                     self.val_pred, val_sigma, val_true = self.crabnet_model.predict(
-                        self.val_df
+                        self.val_df, return_uncertainty=True, return_true=True
                     )
                 else:
                     self.val_pred = np.zeros(self.val_df.shape[0])
