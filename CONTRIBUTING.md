@@ -11,8 +11,8 @@ This project was developed primarily in [Python in Visual Studio Code](https://c
 - [`pipreqs`](https://github.com/bndr/pipreqs) was used as a starting point for [`requirements.txt`](https://github.com/sparks-baird/mat_discover/blob/main/requirements.txt)
 - [`flit`](https://flit.readthedocs.io/en/latest/) is used as a starting point for [`pyproject.toml`](https://github.com/sparks-baird/mat_discover/blob/main/pyproject.toml), 
 to perform local installation, and to publish to PyPI
-- [`conda env export --from-history -f environment.yml`](https://stackoverflow.com/a/64288844/13697228) was used as a starting point for `environment.yml`
-- [`grayskull`](https://github.com/conda-incubator/grayskull) and [`conda-souschef`](https://github.com/marcelotrevisani/souschef) are used to generate and tweak `meta.yaml`,
+- [`conda env export --from-history -f environment.yml`](https://stackoverflow.com/a/64288844/13697228) was used as a starting point for [`environment.yml`](https://github.com/sparks-baird/mat_discover/blob/main/environment.yml)
+- [`grayskull`](https://github.com/conda-incubator/grayskull) and [`conda-souschef`](https://github.com/marcelotrevisani/souschef) are used to generate and tweak [`meta.yaml`](https://github.com/sparks-baird/mat_discover/blob/main/mat_discover/meta.yaml),
   respectively, for publishing to Anaconda. See [this `conda-souschef` issue](https://github.com/marcelotrevisani/souschef/issues/32) for additional details.
 - A variety of GitHub actions are used (see [workflows](https://github.com/sparks-baird/.github/workflows))
 - [`pytest`](https://docs.pytest.org/en/7.0.x/) is used for testing
