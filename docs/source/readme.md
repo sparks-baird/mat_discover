@@ -277,43 +277,6 @@ To quickly determine ElMD+DensMAP+HDBSCAN* cluster labels, make the following in
 
 [<img src=https://user-images.githubusercontent.com/45469701/154414034-d4bfbc7c-d7bc-4cdf-9123-c5b5098b786e.png width=850>](https://colab.research.google.com/github/sparks-baird/mat_discover/blob/cluster-example/examples/elmd_densmap_cluster_colab.ipynb#scrollTo=3At5TC0gixl3)
 
-
-## Developing and Contributing
-
-This project was developed primarily in [Python in Visual Studio Code](https://code.visualstudio.com/docs/languages/python) using `black`, `mypy`, `pydocstyle`, `kite`, other tools, and various community extensions. Some other notable tools used in this project are:
-
-- Miniconda
-- `pipreqs` was used as a starting point for `requirements.txt`
-- `flit` is used to create `pyproject.toml` to publish to PyPI
-- `conda env export --from-history -f environment.yml` was used as a starting point for `environment.yml`
-- `grayskull` and `conda-souschef` are used to generate and tweak `meta.yaml`,
-  respectively, for publishing to Anaconda (if you know how to get this up on
-  conda-forge, help is welcome 😉)
-- A variety of GitHub actions are used (see [workflows](https://github.com/sparks-baird/.github/workflows))
-- `pytest` is used for testing
-- `numba` is used to accelerate the Wasserstein distance matrix computations via CPU or GPU
-
-<!-- - `conda-smithy` is used to create a feedstock for `conda-forge` -->
-
-For simple changes, navigate to github.com/sparks-baird/mat_discover, click on the
-relevant file (e.g. `README.md`), and look for the pencil (✏️). GitHub will walk you
-through the rest.
-
-To help with in-depth development, you will need to [install from
-source](README.md#from-source). Note that when using a `conda` environment
-(recommended), you may avoid certain issues down the road by opening VS Code via an
-Anaconda command prompt and entering the command `code` (at least until the VS Code devs
-fix some of the issues associated with opening it "normally"). For example, in Windows,
-press the "Windows" key, type "anaconda", and open "Anaconda Powershell Prompt
-(miniconda3)" or similar. Then type `code` and press enter. To build the docs, first install `sphinx` and `sphinx_rtd_theme`. Then run:
-
-```bash
-cd docs/
-make html
-```
-
-And open `docs/build/index.html` (e.g. via `start index.html` on Windows)
-
 ## Bugs, Questions, and Suggestions
 
 If you find a bug or have suggestions for documentation please [open an
