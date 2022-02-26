@@ -35,6 +35,7 @@ properties and a custom validation set of potential candidates. All in just a fe
    readme
    examples
    figures
+   contributing
    modules
 
 Indices and tables
