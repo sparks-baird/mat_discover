@@ -22,10 +22,13 @@ to perform local installation, and to publish to PyPI
 
 <!-- - `conda-smithy` is used to create a feedstock for `conda-forge` -->
 
-For simple changes (e.g. quick-fix in documentation), navigate to github.com/sparks-baird/mat_discover, click on the
+For simple changes (e.g. quick-fix in documentation), navigate to https://github.com/sparks-baird/mat_discover, click on the
 relevant file (e.g. `README.md`), and look for the pencil (✏️). GitHub will walk you through the rest.
 
 ## Development
+This goes over installation and, if desired, VS Code Settings Sync.
+
+### Installation
 To help with development, we suggest that you [install from source](README.md#from-source). Note that when using a `conda` environment
 (recommended), you may avoid certain issues down the road by opening VS Code via an
 Anaconda command prompt and entering the command `code` (at least until the VS Code devs
@@ -47,6 +50,7 @@ From the [`flit` docs](https://flit.readthedocs.io/en/latest/cmdline.html):
 > Create a `.pth` file in site-packages rather than copying the module, so you can test changes without reinstalling.
 > This is a less elegant alternative to `--symlink`, but it works on Windows, which typically doesn’t allow symlinks.
 
+### Settings Sync
 This should ensure that your setup is similar to the one used for development and testing. `flit` is also used to publish new PyPI versions
 and to prep metadata for `grayskull` which creates `conda` recipes that are used to publish to Anaconda. Additionally, you may find it useful to use my
 "secret sauce" list of VS Code extensions and settings by using the [Settings Sync](https://marketplace.visualstudio.com/items?itemName=Shan.code-settings-sync)
