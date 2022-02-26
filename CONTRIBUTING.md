@@ -1,3 +1,4 @@
+# Contributing
 Thank you for your interest in contributing to `mat_discover`! We're glad you found this resource, and we hope it will be of use to you.
 We welcome any contributions you might be willing to add, including suggestions, reporting bugs, or contributions to the codebase.
 
