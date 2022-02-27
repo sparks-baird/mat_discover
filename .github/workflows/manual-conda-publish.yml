@@ -62,7 +62,7 @@ jobs:
           run: |
             git config --global user.name 'sgbaird'
             git config --global user.email 'sgbaird@users.noreply.github.com'
-            git commit -am "update meta.yaml via grayskull and conda-souschef" meta.yaml
+            git commit -am "update meta.yaml via grayskull and conda-souschef"
             git push
 
         - name: Upload to coveralls
