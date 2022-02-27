@@ -1,6 +1,5 @@
 {% set name = "mat_discover" %}
-{% set version = "2.0.1" %}
-
+{% set version = "2.1.4" %}
 
 package:
   name: {{ name|lower }}
@@ -8,23 +7,22 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/mat_discover-{{ version }}.tar.gz
-  sha256: d3159fab1d681db471f55717232cebf8ab7fa9170c0c533d81a044f5eaa1319b
+  sha256: 07bbd18076d7c5a7fdfcd9a3ebf94a572d9803488be6291f3b7355283c130232
 
 build:
-  number: 0
   script: {{ PYTHON }} -m pip install . -vv
+  number: 0
 
   noarch: python
 requirements:
   host:
     - pip
-    - flit
     - python
+    - flit
   run:
-    - chem_wasserstein >=1.0.8
-    - cudatoolkit <11.4
-    - pytorch >=1.9.0
-    - crabnet >=1.1.6
+    - chem_wasserstein >=1.0.8,<2.0.0
+    - composition_based_feature_vector
+    - crabnet >=2.0.3,<3.0.0
     - cython
     - dill
     - hdbscan
@@ -32,7 +30,7 @@ requirements:
     - matplotlib-base >=3.4.3
     - numba >=0.53.1
     - pandas
-    - plotly
+    - plotly >=5.6.0
     - pqdm
     - python
     - scikit-learn
@@ -41,6 +39,8 @@ requirements:
     - tqdm
     - umap-learn
 
+    - pytorch >=1.9.0
+    - cudatoolkit <11.4
 test:
   imports:
     - mat_discover
@@ -58,4 +58,4 @@ about:
 
 extra:
   recipe-maintainers:
-    - sgbaird
+    - AddYourGitHubIdHere
