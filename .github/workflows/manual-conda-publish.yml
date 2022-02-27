@@ -34,12 +34,6 @@ jobs:
             pip install -U pip
             pip install conda-souschef ElM2D==0.4.1
             flit install
-            
-        - name: Pytest
-          shell: bash -l {0}
-          run: |
-            export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
-            coverage run --source=mat_discover -m pytest
 
         - name: Build and publish
           shell: bash -l {0}
@@ -56,6 +50,12 @@ jobs:
             conda build .
             conda install --use-local mat_discover
             cd ..
+
+        - name: Pytest
+          shell: bash -l {0}
+          run: |
+            export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
+            coverage run --source=mat_discover -m pytest
 
         - name: Commit and push meta.yaml
           shell: bash -l {0}
