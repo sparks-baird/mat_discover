@@ -572,6 +572,7 @@ class Discover:
             lbl_ids = np.unique(self.labels, return_index=True)[1]
             self.unique_labels = [self.labels[lbl_id] for lbl_id in sorted(lbl_ids)]
 
+            self.train_labels = self.labels[train_ids]
             self.val_labels = self.labels[val_ids]
 
             # Probability Density Function Summation
