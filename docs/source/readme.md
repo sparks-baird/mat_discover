@@ -165,8 +165,6 @@ disc.save()
 print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
 ```
 
-> ⚠️ ignore the "validation" mean absolute error (MAE) command line output during `disc.fit(train_df)` ⚠️
-
 See
 [mat_discover_example.py](https://github.com/sparks-baird/examples/mat_discover_example.py),
 [![Open In Colab
