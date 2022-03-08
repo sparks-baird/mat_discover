@@ -54,19 +54,18 @@ Pareto front plots are available. We also describe how to contribute, and what t
 }
 ```
 
-If you use this software, in addition to the above reference, please also cite the Zenodo DOI:
-> Sterling Baird. (2022). sparks-baird/mat_discover: Release 2.1.2 (2.1.2). Zenodo. https://doi.org/10.5281/zenodo.6116258
+If you use this software, in addition to the above reference, please also cite the Zenodo DOI and state the version that you used:
+> Sterling Baird. (2022). sparks-baird/mat_discover. Zenodo. https://doi.org/10.5281/zenodo.5594678
 
 ```bib
 @software{sterling_baird_2022_6116258,
   author       = {Sterling Baird},
-  title        = {sparks-baird/mat\_discover: Release 2.1.2},
+  title        = {sparks-baird/mat\_discover},
   month        = feb,
   year         = 2022,
   publisher    = {Zenodo},
-  version      = {2.1.2},
-  doi          = {10.5281/zenodo.6116258},
-  url          = {https://doi.org/10.5281/zenodo.6116258}
+  doi          = {10.5281/zenodo.5594678},
+  url          = {https://doi.org/10.5281/zenodo.5594678}
 }
 ```
 
@@ -75,4 +74,4 @@ If you use this software as an installed dependency in another GitHub repository
 pip install pipreqs
 pipreqs .
 ```
-For an example, see [`requirements.txt`](requirements.txt).
+`pipreqs` generates (at least a starting point) for a `requirements.txt` file based on import statements in your working directory and subfolders. For an example, see [`requirements.txt`](requirements.txt).
