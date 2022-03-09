@@ -12,7 +12,7 @@ from operator import attrgetter
 from os.path import join
 from os import PathLike
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union, List, Mapping
+from typing import TYPE_CHECKING, MutableMapping, Optional, Union, List, Mapping
 from warnings import warn
 
 import dill as pickle
@@ -164,10 +164,10 @@ class Discover:
         device: str = "cuda",
         dist_device: Optional[str] = None,
         nscores: int = 100,
-        crabnet_kwargs: Optional[Mapping] = None,
-        umap_cluster_kwargs: Optional[Mapping] = None,
-        umap_vis_kwargs: Optional[Mapping] = None,
-        hdbscan_kwargs: Optional[Mapping] = None,
+        crabnet_kwargs: Optional[MutableMapping] = None,
+        umap_cluster_kwargs: Optional[MutableMapping] = None,
+        umap_vis_kwargs: Optional[MutableMapping] = None,
+        hdbscan_kwargs: Optional[MutableMapping] = None,
     ):
         """Initialize a Discover() class.
 
@@ -301,7 +301,7 @@ class Discover:
         if dummy_run:
             figure_dir = join(figure_dir, "dummy")
             table_dir = join(table_dir, "dummy")
-            self.epochs = 5
+            self.epochs: Optional[int] = 5
         else:
             self.epochs = None
         self.figure_dir = figure_dir
@@ -331,6 +331,18 @@ class Discover:
         else:
             self.force_cpu = False
         self.nscores = nscores
+
+        self.crabnet_kwargs = dict(
+            mat_prop=self.mat_prop_name,
+            losscurve=False,
+            learningcurve=False,
+            verbose=self.verbose,
+            force_cpu=self.force_cpu,
+            epochs=self.epochs,
+        )
+        if crabnet_kwargs is not None:
+            for key, value in crabnet_kwargs.items():
+                self.crabnet_kwargs[key] = value
 
         if umap_cluster_kwargs is None:
             umap_cluster_kwargs = dict(
@@ -391,7 +403,7 @@ class Discover:
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
         Path(self.table_dir).mkdir(parents=True, exist_ok=True)
 
-    def fit(self, train_df, verbose=None, save=True):
+    def fit(self, train_df):
         """Fit CrabNet model to training data.
 
         Parameters
@@ -404,10 +416,6 @@ class Discover:
         self.train_formula = train_df["formula"]
         self.train_target = train_df["target"]
 
-        if verbose is None:
-            verbose = self.verbose
-        # TODO: remove the "val MAE", which is wrong (should be NaN or just not displayed)
-        # turns out this is a bit more difficult because of use of self.data_loader
         if self.pred_weight != 0:
             with self.Timer("train-CrabNet"):
                 if self.crabnet_model is not None:
@@ -415,15 +423,7 @@ class Discover:
                     del self.crabnet_model
                     gc.collect()
                     empty_cache()
-                self.crabnet_model = CrabNet(
-                    mat_prop=self.mat_prop_name,
-                    losscurve=False,
-                    learningcurve=False,
-                    force_cpu=self.force_cpu,
-                    epochs=self.epochs,
-                    verbose=verbose,
-                    save=save,
-                )
+                self.crabnet_model = CrabNet(**self.crabnet_kwargs)
                 self.crabnet_model.fit(train_df)
 
         # TODO: UMAP on new data (i.e. add metric != "precomputed" functionality)
@@ -1017,14 +1017,7 @@ class Discover:
 
         # test_df = pd.DataFrame({"formula": X_test, "property": y_test})
 
-        self.crabnet_model = CrabNet(
-            mat_prop=self.mat_prop_name,
-            losscurve=False,
-            learningcurve=False,
-            verbose=False,
-            force_cpu=self.force_cpu,
-            epochs=self.epochs,
-        )
+        self.crabnet_model = CrabNet(**self.crabnet_kwargs)
         self.crabnet_model.fit(train_df)
 
         # CrabNet predict output format: (act, pred, formulae, uncert)

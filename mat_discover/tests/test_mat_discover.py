@@ -38,6 +38,13 @@ def test_mat_discover():
     # disc.load()
 
 
+def test_crabnet_kwargs():
+    """Test a custom # of epochs with CrabNet."""
+    disc = Discover(dummy_run=True, crabnet_kwargs={"epochs": 300})
+    train_df, _ = disc.data(elasticity, fname="train.csv", dummy=True)
+    disc.fit(train_df)
+
+
 def test_plotting():
     """Ensure the individual plotting functions run successfully.
 
@@ -118,6 +125,7 @@ def test_sklearn_mat2vec():
 
 
 if __name__ == "__main__":
+    test_crabnet_kwargs()
     test_mat_discover()
     test_plotting()
     test_sklearn_modpetti()
