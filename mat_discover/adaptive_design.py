@@ -53,12 +53,11 @@ class Adapt(Discover):
         predict=False,
         random_search=False,
         print_experiment=True,
-        fit_verbose=False,
         **predict_kwargs,
     ):
         if not random_search:
             if fit:
-                self.fit(self.train_df, verbose=fit_verbose)
+                self.fit(self.train_df)
             elif self.crabnet_model is None:
                 self.crabnet_model = DummyCrabNet()
                 # raise ValueError(
