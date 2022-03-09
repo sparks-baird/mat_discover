@@ -478,7 +478,7 @@ class Discover:
             `dens_score` if return_peak is False, which is the default.
         """
         if "target" not in val_df.columns:
-            val_df["target"] = np.nan
+            val_df["target"] = 0.0
 
         self.val_df = val_df
 
