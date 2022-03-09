@@ -82,35 +82,40 @@ A summary of the DiSCoVeR methods are given in the following table:
 
 ## Installation
 
-I recommend that you run `mat_discover` in a separate conda environment, at least for
-initial testing. After installing
-[Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or
-[Miniconda](https://docs.conda.io/en/latest/miniconda.html), you can [create a new
-environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands)
-in Python `3.9` (`mat_discover` is also tested on `3.7` and `3.8`) and activate it via:
-
-```python
-conda create --name mat_discover python==3.9.*
-conda activate mat_discover
-```
-
 There are three ways to install `mat_discover`: Anaconda (`conda`), PyPI (`pip`), and from source. Anaconda is the preferred method.
 
 ### Anaconda
 
-To install `mat_discover` using `conda`, first, update `conda` via:
-
+After installing
+[Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or
+[Miniconda](https://docs.conda.io/en/latest/miniconda.html) (latter recommended), first update `conda` via:
 ```python
 conda update conda
 ```
 
-The Anaconda `mat_discover` package is hosted on the [@sgbaird channel](https://anaconda.org/sgbaird/repo) and can be installed via:
+Then add the following channels to your default channels list:
 
 ```python
-conda install -c sgbaird mat_discover
+conda config --add channels conda-forge
+conda config --add channels pytorch
 ```
 
+I recommend that you run `mat_discover` in a separate conda environment, at least for
+initial testing. You can [create a new environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) in Python `3.9` (`mat_discover` is also tested on `3.7` and `3.8`), install `mat_discover`, and activate it via:
+```python
+conda create --name mat_discover --channel sgbaird python==3.9.* mat_discover
+conda activate mat_discover
+```
+
+In English, this reads as "Create a new environment named `mat_discover` and install a version of Python that matches `3.9.*` (e.g. `3.9.7`) and the `mat_discover` package while looking preferentially in the [@sgbaird Anaconda channel](https://anaconda.org/sgbaird/repo). Activate the `mat_discover` environment."
+
 ### Pip
+
+Even if you use `pip` to install `mat_discover`, I still recommend doing so in a fresh `conda` environment, at least for initial testing:
+```python
+conda create --name mat_discover python==3.9.*
+conda activate mat_discover
+```
 
 To install via `pip`, first update `pip` via:
 
@@ -136,7 +141,7 @@ pip install mat_discover
 
 ### From Source
 
-To install from source, clone the `mat_discover` repository:
+The same recommendation about using a fresh `conda` environment for initial testing applies here. To install from source, clone the `mat_discover` repository:
 
 ```python
 git clone https://github.com/sparks-baird/mat_discover.git
