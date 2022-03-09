@@ -1,4 +1,6 @@
 {
     "restructuredtext.confPath": "${workspaceFolder}\\docs\\source",
-    "restructuredtext.languageServer.disabled": true
+    "restructuredtext.languageServer.disabled": true,
+    "esbonio.server.enabled": false,
+    "esbonio.sphinx.confDir": "c:\\Users\\sterg\\Documents\\GitHub\\sparks-baird\\mat_discover\\docs\\source"
 }
