@@ -1,5 +1,6 @@
 """Helper functions for finding and plotting a pareto front."""
 from os.path import join
+from typing import Dict, MutableMapping, Optional
 
 # import sys
 # from PyQt5.QtWidgets import QApplication
@@ -105,7 +106,8 @@ def pareto_plot(
         Whether to use `offline.plot(fig)` instead of `fig.show()`. Set to False for
         Google Colab. By default, True.
     """
-    labels = {}
+    labels: Optional[MutableMapping[str, str]] = {}
+    assert labels is not None
     if x_unit is not None:
         labels[x] = f"{x} ({x_unit})"
     if y_unit is not None:
