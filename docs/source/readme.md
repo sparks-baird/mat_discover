@@ -162,13 +162,15 @@ How to `fit`/`predict`, use custom or built-in datasets, and perform adaptive de
 
 ```python
 from mat_discover.mat_discover_ import Discover
-disc = Discover()
+disc = Discover(target_unit="GPa")
 disc.fit(train_df) # DataFrames should have at minimum "formula" and "target" columns
 scores = disc.predict(val_df)
 disc.plot()
 disc.save()
 print(disc.dens_score_df.head(10), disc.peak_score_df.head(10))
 ```
+
+Note that `target_unit="GPa"` simply appends ` (GPa)` to the end of plotting labels where appropriate.
 
 See
 [mat_discover_example.py](https://github.com/sparks-baird/examples/mat_discover_example.py),
