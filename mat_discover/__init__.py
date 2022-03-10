@@ -1,2 +1,2 @@
 """Data-driven materials discovery based on composition."""
-__version__ = "2.1.6"
+__version__ = "2.1.7"
