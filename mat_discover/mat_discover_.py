@@ -157,6 +157,7 @@ class Discover:
         figure_dir: Union[str, pathtype] = "figures",
         table_dir: Union[str, pathtype] = "tables",
         target_unit: Optional[str] = None,
+        use_plotly_offline: bool = True,
         novelty_learner: str = "discover",
         novelty_prop: str = "mod_petti",
         # groupby_filter="max",
@@ -222,6 +223,10 @@ class Discover:
         target_unit : Optional[str]
             Unit of target to use in various x, y, and color axes labels. If None, don't
             add a unit to the labels. By default None.
+
+        use_plotly_offline: bool
+            Whether to use `offline.plot(fig)` instead of `fig.show()`. Set to False for
+            Google Colab. By default, True.
 
         pred_weight : int, optional
             Weighting applied to the predicted, scaled target values, by default 1 (i.e.
@@ -315,6 +320,7 @@ class Discover:
         self.table_dir = table_dir
 
         self.target_unit = target_unit
+        self.use_plotly_offline = use_plotly_offline
 
         # create dir https://stackoverflow.com/a/273227/13697228
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
@@ -1361,6 +1367,7 @@ class Discover:
             reverse_x=False,
             x_unit=self.target_unit,
             y_unit=self.target_unit,
+            use_plotly_offline=self.use_plotly_offline,
         )
         # fig = group_cv_parity(
         #     self.true_avg_targ, self.pred_avg_targ, self.avg_labels
@@ -1393,6 +1400,7 @@ class Discover:
             parity_type=None,
             xrange=[0, 1],
             y_unit=self.target_unit,
+            use_plotly_offline=self.use_plotly_offline,
         )
         return fig, frac_pareto_ind
 
@@ -1421,6 +1429,7 @@ class Discover:
             color="cluster ID",
             pareto_front=True,
             y_unit=self.target_unit,
+            use_plotly_offline=self.use_plotly_offline,
         )
         return fig
 
@@ -1465,6 +1474,7 @@ class Discover:
             pareto_front=False,
             parity_type=None,
             color_unit=self.target_unit,
+            use_plotly_offline=self.use_plotly_offline,
         )
         return fig
 
@@ -1488,6 +1498,7 @@ class Discover:
             fpath=join(self.figure_dir, "px-umap-cluster-scatter"),
             pareto_front=False,
             parity_type=None,
+            use_plotly_offline=self.use_plotly_offline,
         )
         return fig
 
@@ -1526,6 +1537,7 @@ class Discover:
             pareto_front=True,
             x_unit=self.target_unit,
             y_unit=self.target_unit,
+            use_plotly_offline=self.use_plotly_offline,
         )
 
         return fig, pk_pareto_ind
@@ -1557,6 +1569,7 @@ class Discover:
             pareto_front=True,
             parity_type=None,
             y_unit=self.target_unit,
+            use_plotly_offline=self.use_plotly_offline,
         )
 
         return fig, frac_pareto_ind

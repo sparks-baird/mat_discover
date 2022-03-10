@@ -78,6 +78,7 @@ def pareto_plot(
     color_continuous_scale=None,
     color_discrete_map=None,
     xrange=None,
+    use_plotly_offline: bool = True,
 ):
     """Generate and save pareto plot for two variables.
 
@@ -100,6 +101,9 @@ def pareto_plot(
         Whether to reverse the x-axis (i.e. for maximize y and minimize x front)
     parity_type : str, optional
         What kind of parity line to plot: "max-of-both", "max-of-each", or "none"
+    use_plotly_offline: bool
+        Whether to use `offline.plot(fig)` instead of `fig.show()`. Set to False for
+        Google Colab. By default, True.
     """
     labels = {}
     if x_unit is not None:
@@ -201,8 +205,10 @@ def pareto_plot(
     if reverse_x:
         fig.update_layout(xaxis=dict(autorange="reversed"))
 
-    offline.plot(fig)
-    # fig.show()
+    if use_plotly_offline:
+        offline.plot(fig)
+    else:
+        fig.show()
 
     if fpath is not None:
         fig.write_html(fpath + ".html")
