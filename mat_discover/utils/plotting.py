@@ -99,7 +99,7 @@ def cluster_count_hist(labels, figure_dir="figures"):
     return fig
 
 
-def target_scatter(std_emb, target, figure_dir="figures"):
+def target_scatter(std_emb, target, figure_dir="figures", color_unit=None):
     """Plot UMAP embedding locations colored by target values.
 
     Parameters
@@ -125,7 +125,10 @@ def target_scatter(std_emb, target, figure_dir="figures"):
         norm=mpl.colors.LogNorm(),
     )
     plt.axis("off")
-    plt.colorbar(label="Bulk Modulus (GPa)", orientation="horizontal")
+    label = "target"
+    if color_unit is None:
+        label = f"{label} ({color_unit})"
+    plt.colorbar(label=label, orientation="horizontal")
     plt.tight_layout()
     plt.gca().set_aspect("equal", "box")
     plt.savefig(join(figure_dir, "target-scatter"))

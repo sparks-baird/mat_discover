@@ -64,9 +64,12 @@ def get_pareto_ind(proxy, target, reverse_x=True):
 
 def pareto_plot(
     df,
-    x="neigh_avg_targ (GPa)",
-    y="target (GPa)",
-    color="Peak height (GPa)",
+    x="neigh_avg_targ",
+    y="target",
+    color="Peak height",
+    x_unit=None,
+    y_unit=None,
+    color_unit=None,
     hover_data=["formula"],
     fpath=join("figures", "pareto-front"),
     reverse_x=True,
@@ -87,7 +90,7 @@ def pareto_plot(
     y : str, optional
         Name of df column to use for y-axis, by default "target"
     color : str, optional
-        Name of df column to use for colors, by default "Peak height (GPa)"
+        Name of df column to use for colors, by default "Peak height"
     hover_data : list of str, optional
         Name(s) of df columns to display on hover, by default ["formulas"]
     fpath : str, optional
@@ -98,6 +101,16 @@ def pareto_plot(
     parity_type : str, optional
         What kind of parity line to plot: "max-of-both", "max-of-each", or "none"
     """
+    labels = {}
+    if x_unit is not None:
+        labels[x] = f"{x} ({x_unit})"
+    if y_unit is not None:
+        labels[y] = f"{y} ({y_unit})"
+    if color_unit is not None:
+        labels[color] = f"{color} ({color_unit})"
+    if labels == {}:
+        labels = None
+
     mx = np.max(df[color])
     if color_continuous_scale is None and color_discrete_map is None and mx >= 1:
         if isinstance(df[color].iloc[0], (int, np.integer)):
@@ -146,6 +159,7 @@ def pareto_plot(
         x=x,
         y=y,
         color=color,
+        labels=labels,
         hover_data=hover_data,
         **scatter_color_kwargs,
     )

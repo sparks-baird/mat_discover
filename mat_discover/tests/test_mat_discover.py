@@ -25,7 +25,7 @@ def test_mat_discover():
     additionally it uses a `dummy_run` and `dummy` such that MDS is used on a small
     dataset rather than UMAP on a large dataset (for faster runtimes).
     """
-    disc = Discover(dummy_run=True)
+    disc = Discover(dummy_run=True, target_unit="GPa")
     train_df, val_df = disc.data(elasticity, fname="train.csv", dummy=True)
     disc.fit(train_df)
 
@@ -125,8 +125,8 @@ def test_sklearn_mat2vec():
 
 
 if __name__ == "__main__":
-    test_crabnet_kwargs()
     test_mat_discover()
+    test_crabnet_kwargs()
     test_plotting()
     test_sklearn_modpetti()
     test_sklearn_mat2vec()

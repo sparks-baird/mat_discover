@@ -11,7 +11,9 @@ from mat_discover.mat_discover_ import Discover
 # %% instantiate
 # set dummy to True for a quicker run --> small dataset, MDS instead of UMAP
 dummy = False
-disc = Discover(dummy_run=dummy, device="cuda", dist_device="cpu", nscores=1000)
+disc = Discover(
+    dummy_run=dummy, device="cuda", dist_device="cpu", nscores=1000, target_unit="GPa"
+)
 
 # %% data
 train_df = disc.data(elasticity, "train.csv", split=False, dummy=dummy)

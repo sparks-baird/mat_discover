@@ -76,6 +76,7 @@ for Scaler in Scalers:
             Scaler=Scaler,
             pred_weight=weight_pair[0],
             proxy_weight=weight_pair[1],
+            target_unit="GPa",
         )
 
         disc.fit(train_df)
