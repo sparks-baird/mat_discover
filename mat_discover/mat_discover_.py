@@ -156,6 +156,7 @@ class Discover:
         Scaler=RobustScaler,
         figure_dir: Union[str, pathtype] = "figures",
         table_dir: Union[str, pathtype] = "tables",
+        target_unit: Optional[str] = None,
         novelty_learner: str = "discover",
         novelty_prop: str = "mod_petti",
         # groupby_filter="max",
@@ -217,6 +218,10 @@ class Discover:
             by default "figures" and "tables", respectively. The directory will be
             created if it does not exist already. `if dummy_run` then append "dummy" to
             the folder via `os.path.join`.
+
+        target_unit : Optional[str]
+            Unit of target to use in various x, y, and color axes labels. If None, don't
+            add a unit to the labels. By default None.
 
         pred_weight : int, optional
             Weighting applied to the predicted, scaled target values, by default 1 (i.e.
@@ -301,11 +306,19 @@ class Discover:
         if dummy_run:
             figure_dir = join(figure_dir, "dummy")
             table_dir = join(table_dir, "dummy")
-            self.epochs: Optional[int] = 5
+            self.epochs: Optional[int] = 2
+            epochs_step: Optional[int] = 1
         else:
             self.epochs = None
+            epochs_step = None
         self.figure_dir = figure_dir
         self.table_dir = table_dir
+
+        self.target_unit = target_unit
+
+        # create dir https://stackoverflow.com/a/273227/13697228
+        Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
+
         self.novelty_learner = novelty_learner
         self.novelty_prop = novelty_prop
         self.pred_weight = pred_weight
@@ -340,6 +353,10 @@ class Discover:
             force_cpu=self.force_cpu,
             epochs=self.epochs,
         )
+        if epochs_step is not None:
+            self.crabnet_kwargs["epochs_step"] = epochs_step
+
+        # override
         if crabnet_kwargs is not None:
             for key, value in crabnet_kwargs.items():
                 self.crabnet_kwargs[key] = value
@@ -1275,7 +1292,7 @@ class Discover:
         self.log_dens = np.log(self.dens)
         return self.dens, self.log_dens
 
-    def plot(self, return_pareto_ind=False):
+    def plot(self, return_pareto_ind: bool = False):
         """Plot and save various cluster and Pareto front figures.
 
         Parameters
@@ -1288,9 +1305,6 @@ class Discover:
         pk_pareto_ind, dens_pareto_ind : tuple of int
             Pareto front indices for the peak and density proxies, respectively.
         """
-        # create dir https://stackoverflow.com/a/273227/13697228
-        Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
-
         fig, pk_pareto_ind = self.pf_peak_proxy()
         fig, frac_pareto_ind = self.pf_train_contrib_proxy()
 
@@ -1309,7 +1323,7 @@ class Discover:
 
         # Group cross-validation parity plot
         if self.true_avg_targ is not None:
-            dens_pareto_ind = self.gcv_pareto()
+            fig, dens_pareto_ind = self.gcv_pareto()
         else:
             warn("Skipping group cross-validation plot")
 
@@ -1326,10 +1340,8 @@ class Discover:
 
     def gcv_pareto(self):
         """Cluster-wise group cross-validation parity plot."""
-        # x = "$E_\\mathrm{avg,true}$ (GPa)"
-        # y = "$E_\\mathrm{avg,pred}$ (GPa)"
-        x = "true cluster avg target (GPa)"
-        y = "pred cluster avg target (GPa)"
+        x = "true cluster avg target"
+        y = "pred cluster avg target"
         gcv_df = pd.DataFrame(
             {
                 x: self.true_avg_targ,
@@ -1347,19 +1359,21 @@ class Discover:
             color="cluster ID",
             pareto_front=False,
             reverse_x=False,
+            x_unit=self.target_unit,
+            y_unit=self.target_unit,
         )
         # fig = group_cv_parity(
         #     self.true_avg_targ, self.pred_avg_targ, self.avg_labels
         # )
 
-        return dens_pareto_ind
+        return fig, dens_pareto_ind
 
     def pf_frac_proxy(self):
         """Cluster-wise average vs. cluster-wise validation fraction Pareto plot.
 
         In other words, the average performance of a cluster vs. cluster novelty."""
         x = "cluster-wise validation fraction"
-        y = "cluster-wise average target (GPa)"
+        y = "cluster-wise average target"
         frac_df = pd.DataFrame(
             {
                 x: self.val_frac.ravel(),
@@ -1378,14 +1392,16 @@ class Discover:
             reverse_x=False,
             parity_type=None,
             xrange=[0, 1],
+            y_unit=self.target_unit,
         )
+        return fig, frac_pareto_ind
 
     def pf_dens_proxy(self):
         """True targets vs. dens proxy pareto plot (both training and validation)."""
         dens, log_dens = self.compute_log_density()
 
         x = "log density"
-        y = "target (GPa)"
+        y = "target"
         dens_df = pd.DataFrame(
             {
                 x: log_dens,
@@ -1404,7 +1420,9 @@ class Discover:
             parity_type=None,
             color="cluster ID",
             pareto_front=True,
+            y_unit=self.target_unit,
         )
+        return fig
 
     def dens_targ_scatter(self):
         """Target value scatter plot (colored by target value) overlay on densities."""
@@ -1416,12 +1434,14 @@ class Discover:
             self.pdf_sum,
             figure_dir=self.figure_dir,
         )
+        return fig
 
     def dens_scatter(self):
         """Density scatter plot, with densities computed via probability density fn."""
         fig = dens_scatter(
             self.pdf_x, self.pdf_y, self.pdf_sum, figure_dir=self.figure_dir
         )
+        return fig
 
     def px_targ_scatter(self):
         """Interactive `targ_scatter` plot."""
@@ -1444,7 +1464,9 @@ class Discover:
             fpath=join(self.figure_dir, "px-targ-scatter"),
             pareto_front=False,
             parity_type=None,
+            color_unit=self.target_unit,
         )
+        return fig
 
     def px_umap_cluster_scatter(self):
         """Interactive scatter plot of DensMAP embeddings colored by clusters."""
@@ -1467,27 +1489,29 @@ class Discover:
             pareto_front=False,
             parity_type=None,
         )
+        return fig
 
     def umap_cluster_scatter(self):
         """Static scatter plot colored by clusters."""
         fig = umap_cluster_scatter(
             self.std_emb, self.labels, figure_dir=self.figure_dir
         )
+        return fig
 
     def pf_peak_proxy(self):
         """Predicted target vs. peak proxy pareto plot.
 
         Peak proxy gives an idea of how "surprising" the performance is (i.e. a local
         peak in the ElMD space)."""
-        x = str(self.n_peak_neighbors) + "_neigh_avg_targ (GPa)"
-        y = "target (GPa)"
+        x = str(self.n_peak_neighbors) + "_neigh_avg_targ"
+        y = "target"
         # TODO: plot for val data only (fixed?)
         peak_df = pd.DataFrame(
             {
                 x: self.val_k_neigh_avg,
                 y: self.val_pred,
                 "formula": self.val_formula,
-                "Peak height (GPa)": self.val_pred - self.val_k_neigh_avg,
+                "Peak height": self.val_pred - self.val_k_neigh_avg,
                 "cluster ID": self.val_labels,
             }
         )
@@ -1500,6 +1524,8 @@ class Discover:
             color="cluster ID",
             fpath=join(self.figure_dir, "pf-peak-proxy"),
             pareto_front=True,
+            x_unit=self.target_unit,
+            y_unit=self.target_unit,
         )
 
         return fig, pk_pareto_ind
@@ -1511,7 +1537,7 @@ class Discover:
         log density is a proxy for chemical novelty (i.e. how novel is a given
         validation datapoint relative to the training data)."""
         x = "log validation density"
-        y = "validation predictions (GPa)"
+        y = "validation predictions"
         # cluster-wise average vs. cluster-wise validation log-density
         frac_df = pd.DataFrame(
             {
@@ -1530,6 +1556,7 @@ class Discover:
             fpath=join(self.figure_dir, "pf-train-contrib-proxy"),
             pareto_front=True,
             parity_type=None,
+            y_unit=self.target_unit,
         )
 
         return fig, frac_pareto_ind
