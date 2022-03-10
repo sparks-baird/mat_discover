@@ -157,7 +157,7 @@ fig.update_layout(height=300 * rows, width=300 * cols)
 offline.plot(fig)
 # fig.show()
 
-with open("crabnet_performance.pkl", "wb") as f:
+with open(join("data", "crabnet_performance.pkl"), "wb") as f:
     pickle.dump(experiments, f)
 
 1 + 1
