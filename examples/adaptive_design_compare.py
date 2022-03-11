@@ -186,7 +186,7 @@ fig2, scale = matplotlibify(
 )
 fig2.write_image(join("figures", "ad-compare.png"))
 
-with open("rand_novelty_equal_performance.pkl", "wb") as f:
+with open(join("data", "rand_novelty_equal_performance.pkl"), "wb") as f:
     pickle.dump(experiments, f)
 
 # TODO: val RMSE vs. iteration
