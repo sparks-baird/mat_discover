@@ -2,7 +2,7 @@
    :format: html
 
 .. seealso::
-    `Basic Usage <../../README.md#basic-usage>`_
+    `Basic Usage <../../docs/source/readme.md#basic-usage>`_
         Import, instantiate, fit, predict, plot, save, and print top-10 ranked compounds
         in 7 lines. Instructions for importing custom datasets and using other built-in
         datasets (via `CrabNet.data.materials_data`) and downloading data from Materials
