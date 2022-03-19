@@ -8,7 +8,8 @@
 [![Read the Docs](https://img.shields.io/readthedocs/mat-discover?label=Read%20the%20docs&logo=readthedocs)](https://mat-discover.readthedocs.io/en/latest/)
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/sparks-baird/mat_discover/Install%20with%20flit%20and%20test%20via%20Pytest?label=main)](https://github.com/sparks-baird/mat_discover/actions/workflows/flit-install-test.yml)
 
-[![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/)
+<!-- [![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/) -->
+[![PyPI version](https://badge.fury.io/py/mat_discover.svg)](https://pypi.org/project/mat_discover/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?service=github)](https://coveralls.io/github/sparks-baird/mat_discover)
 [![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)
