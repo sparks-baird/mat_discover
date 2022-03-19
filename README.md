@@ -28,16 +28,15 @@
 <!-- [![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg?service=github)](https://anaconda.org/sgbaird/mat_discover) -->
 <!-- ![PyPI - Downloads](https://img.shields.io/pypi/dm/mat_discover?label=PyPI%20downloads) -->
 
-A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
-
 <p align="center">
     <a href="https://mat-discover.readthedocs.io/en/latest/examples.html">Examples</a> and
     <a href="https://mat-discover.readthedocs.io/en/latest/index.html">Docs</a>
 </p>
 
+A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
+
 <!-- <p align="center"><img src=https://user-images.githubusercontent.com/45469701/139520031-bf4fda18-9be7-4c54-b70b-c9be8e974cea.png width=500>  </p> -->
 <img src=https://user-images.githubusercontent.com/45469701/139520031-bf4fda18-9be7-4c54-b70b-c9be8e974cea.png width=500>
-
 <sup>Bulk modulus values overlaid on DensMAP densities (cropped).</sup>
 
 [The documentation](https://mat-discover.readthedocs.io/) describes the Descending from Stochastic Clustering Variance Regression (DiSCoVeR) algorithm, how to install `mat_discover`, and basic usage (`fit`/`predict`, custom or built-in datasets, adaptive design, and cluster plots). [Interactive plots](https://mat-discover.readthedocs.io/en/latest/figures.html) for several types of
