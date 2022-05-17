@@ -9,7 +9,7 @@ matplotlib==3.5.2
 chem_wasserstein==1.0.9
 crabnet==2.0.2
 conda-souschef==2.1.1
-scikit-learn==1.0.2
+scikit-learn==1.1.0
 myst-parser==0.17.2
 sphinx==4.5.0
 sphinx_rtd_theme==1.0.0
