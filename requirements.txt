@@ -1,4 +1,4 @@
-plotly==5.7.0
+plotly==5.8.0
 pqdm==0.2.0
 scipy==1.8.0
 dill==0.3.4
