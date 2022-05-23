@@ -1,7 +1,7 @@
 plotly==5.8.0
 pqdm==0.2.0
 scipy==1.8.0
-dill==0.3.4
+dill==0.3.5.1
 hdbscan==0.8.28
 pandas==1.4.2
 umap_learn==0.5.3
