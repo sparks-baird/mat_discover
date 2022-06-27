@@ -186,7 +186,7 @@ since Google Colab has access to a GPU while Binder does not. Sometimes Binder t
 
 #### From File
 If you're using your own dataset, you will need to supply a Pandas DataFrame that
-contains `formula` (string) and `target` (numeric) columns. If you have a `train.csv` file
+contains `formula` (string) and `target` (numeric) columns (optional for `val_df`). If you have a `train.csv` file
 (located in current working directory) with these two columns, this can be converted to
 a DataFrame via:
 
@@ -204,7 +204,7 @@ Cu1Dy1 | 66.8444
 Cd3N2 | 91.5034
 
 For validation data without known property values to be used with `predict`, dummy
-values (all zeros) are assigned internally. In this case, you can read in a CSV file
+values (all zeros) are assigned internally if the `target` column isn't present. In this case, you can read in a CSV file
 that contains only the `formula` (string) column:
 
 ```python
