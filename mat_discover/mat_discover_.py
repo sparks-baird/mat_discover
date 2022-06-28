@@ -535,6 +535,8 @@ class Discover:
         if np.any(np.isnan(self.val_pred)):
             warn("NaN in val_pred. Replacing with DummyRegressor values.")
             val_pred = np.nan_to_num(self.val_pred, nan=np.mean(self.val_true))
+        else:
+            val_pred = self.val_pred
 
         self.val_rmse = mean_squared_error(self.val_true, val_pred, squared=False)
         if self.verbose:
