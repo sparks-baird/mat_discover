@@ -173,3 +173,6 @@ tables/dummy/**/*
 temp-plot.html
 models/trained_models/UnnamedModel.pth
 figures/lc_data/UnnamedModel_lc.csv
+examples/supercon.csv
+examples/super_con_mat_discover_pypi.ipynb
+examples/super_con_mat_discover.py
