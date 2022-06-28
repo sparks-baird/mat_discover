@@ -88,7 +88,7 @@ There are three ways to install `mat_discover`: Anaconda (`conda`), PyPI (`pip`)
 
 After installing
 [Anaconda](https://docs.anaconda.com/anaconda/navigator/index.html) or
-[Miniconda](https://docs.conda.io/en/latest/miniconda.html) (latter recommended), first update `conda` via:
+[Miniconda](https://docs.conda.io/en/latest/miniconda.html) (Miniconda preferred), first update `conda` via:
 ```python
 conda update conda
 ```
@@ -184,8 +184,9 @@ since Google Colab has access to a GPU while Binder does not. Sometimes Binder t
 
 ### Load Data
 
+#### From File
 If you're using your own dataset, you will need to supply a Pandas DataFrame that
-contains `formula` (string) and `target` (numeric) columns. If you have a `train.csv` file
+contains `formula` (string) and `target` (numeric) columns (optional for `val_df`). If you have a `train.csv` file
 (located in current working directory) with these two columns, this can be converted to
 a DataFrame via:
 
@@ -194,15 +195,36 @@ import pandas as pd
 train_df = pd.read_csv("train.csv")
 ```
 
+which might look something like the following:
+
+formula | target
+---|---
+Tc1V1 | 248.539
+Cu1Dy1 | 66.8444
+Cd3N2 | 91.5034
+
 For validation data without known property values to be used with `predict`, dummy
-values (all zeros) are assigned internally. In this case, you can read in a CSV file
+values (all zeros) are assigned internally if the `target` column isn't present. In this case, you can read in a CSV file
 that contains only the `formula` (string) column:
 
 ```python
 val_df = pd.read_csv("val.csv")
 ```
 
-Note that you can load any of the datasets within `CrabNet/data/`, which includes `matbench` data, other datasets from the CrabNet paper, and a recent (as of Oct 2021) snapshot of `K_VRH` bulk modulus data from Materials Project. For example, to load the bulk modulus snapshot:
+| formula |
+| --- |
+| Al2O3 |
+| SiO2 |
+
+#### Hard-coded
+For a quick hard-coded example, you could use:
+```python
+train_df = pd.DataFrame(dict(formula=["Tc1V1", "Cu1Dy1", "Cd3N2"], target=[248.539, 66.8444, 91.5034]))
+val_df = pd.DataFrame(dict(formula=["Al2O3", "SiO2"]))
+```
+
+#### CrabNet Datasets (including Matbench)
+NOTE: you can load any of the datasets within `CrabNet/data/`, which includes `matbench` data, other datasets from the CrabNet paper, and a recent (as of Oct 2021) snapshot of `K_VRH` bulk modulus data from Materials Project. For example, to load the bulk modulus snapshot:
 
 ```python
 from crabnet.data.materials_data import elasticity
@@ -246,6 +268,7 @@ val_df = disc.data(mp_e_hull, "val.csv", split=False)
 test_df = disc.data(mp_ehull, "test.csv", split=False)
 ```
 
+#### Directly via Materials Project
 Finally, to download data from Materials Project directly, see [generate_elasticity_data.py](https://github.com/sparks-baird/mat_discover/blob/main/mat_discover/utils/generate_elasticity_data.py).
 
 ### Adaptive Design

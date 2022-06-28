@@ -1,4 +1,5 @@
 <!-- TODO: add buttons for code ocean and Zenodo DOI [![Open in Code Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://codeocean.com/capsule/3904426/tree)-->
+
 # DiSCoVeR
 
 [![Open In Colab (PyPI)](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MgV_ZewS6gLm1a3Vyhg33pFHi5uTld_2?usp=sharing)
@@ -7,10 +8,12 @@
 [![Read the Docs](https://img.shields.io/readthedocs/mat-discover?label=Read%20the%20docs&logo=readthedocs)](https://mat-discover.readthedocs.io/en/latest/)
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/sparks-baird/mat_discover/Install%20with%20flit%20and%20test%20via%20Pytest?label=main)](https://github.com/sparks-baird/mat_discover/actions/workflows/flit-install-test.yml)
 
-[![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/)
+<!-- [![PyPI version](https://img.shields.io/pypi/v/mat_discover.svg)](https://pypi.org/project/mat_discover/) -->
+[![PyPI version](https://badge.fury.io/py/mat_discover.svg)](https://pypi.org/project/mat_discover/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?service=github)](https://coveralls.io/github/sparks-baird/mat_discover)
-[![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)
+<!-- [![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover) -->
+[![Lines of code](https://tokei.ekzhang.com/b1/github/sparks-baird/mat_discover)](https://tokei.ekzhang.com/b1/github/sparks-baird/mat_discover)
 [![License](https://img.shields.io/github/license/sparks-baird/mat_discover?service=github)](https://img.shields.io/github/license/sparks-baird/mat_discover)
 [![DOI](https://zenodo.org/badge/392897894.svg?service=github)](https://zenodo.org/badge/latestdoi/392897894)
 <!-- ![PyPI - License](https://img.shields.io/pypi/l/mat_discover) -->
@@ -26,14 +29,21 @@
 <!-- [![Anaconda-Server Downloads](https://anaconda.org/sgbaird/mat_discover/badges/downloads.svg?service=github)](https://anaconda.org/sgbaird/mat_discover) -->
 <!-- ![PyPI - Downloads](https://img.shields.io/pypi/dm/mat_discover?label=PyPI%20downloads) -->
 
+<p align="center">
+    <a href="https://mat-discover.readthedocs.io/en/latest/examples.html">Examples</a>, 
+    <a href="https://doi.org/10.1039/D1DD00028D">Paper</a>, and
+    <a href="https://mat-discover.readthedocs.io/en/latest/index.html">Docs</a>
+</p>
+
 A materials discovery algorithm geared towards exploring high performance candidates in new chemical spaces using composition-only.
 
-<img src=https://user-images.githubusercontent.com/45469701/139520031-bf4fda18-9be7-4c54-b70b-c9be8e974cea.png width=500>  
+<!-- <p align="center"><img src=https://user-images.githubusercontent.com/45469701/139520031-bf4fda18-9be7-4c54-b70b-c9be8e974cea.png width=500>  </p> -->
+<img src=https://user-images.githubusercontent.com/45469701/139520031-bf4fda18-9be7-4c54-b70b-c9be8e974cea.png width=500>
 
 <sup>Bulk modulus values overlaid on DensMAP densities (cropped).</sup>
 
-[The documentation](https://mat-discover.readthedocs.io/) describes the DiSCoVeR algorithm, how to install `mat_discover`, and basic usage (`fit`/`predict`, custom or built-in datasets, adaptive design, and cluster plots). [Interactive plots](https://mat-discover.readthedocs.io/en/latest/figures.html) for several types of
-Pareto front plots are available. We also describe how to contribute, and what to do if you run into bugs or have questions. Various [examples](https://mat-discover.readthedocs.io/en/latest/examples.html) (including a [teaching example](https://mat-discover.readthedocs.io/en/latest/examples.html#bare-bones)), the [interactive figures](https://mat-discover.readthedocs.io/en/latest/figures.html#figures) mentioned, and the [Python API](https://mat-discover.readthedocs.io/en/latest/modules.html) are also hosted at https://mat-discover.readthedocs.io. The article is [published at Digital Discovery](https://dx.doi.org/10.1039/D1DD00028D). If you find this useful, please consider citing as follows:
+[The documentation](https://mat-discover.readthedocs.io/) describes the Descending from Stochastic Clustering Variance Regression (DiSCoVeR) algorithm, how to install `mat_discover`, and basic usage (`fit`/`predict`, custom or built-in datasets, adaptive design, and cluster plots). [Interactive plots](https://mat-discover.readthedocs.io/en/latest/figures.html) for several types of
+Pareto front plots are available. We also describe how to contribute, and what to do if you run into bugs or have questions. Various [examples](https://mat-discover.readthedocs.io/en/latest/examples.html) (including a [teaching example](https://mat-discover.readthedocs.io/en/latest/examples.html#bare-bones)), the [interactive figures](https://mat-discover.readthedocs.io/en/latest/figures.html#figures) mentioned, and the [Python API](https://mat-discover.readthedocs.io/en/latest/modules.html) are also hosted at https://mat-discover.readthedocs.io. The open-access article is [published at Digital Discovery](https://dx.doi.org/10.1039/D1DD00028D). If you find this useful, please consider citing as follows:
 
 ## Citing
 > Baird, S. G.; Diep, T. Q.; Sparks, T. D. DiSCoVeR: A Materials Discovery Screening Tool for High Performance, Unique Chemical Compositions. Digital Discovery 2022. https://doi.org/10.1039/D1DD00028D.
