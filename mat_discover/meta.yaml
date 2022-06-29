@@ -1,5 +1,5 @@
 {% set name = "mat_discover" %}
-{% set version = "2.1.4" %}
+{% set version = "2.2.3" %}
 
 package:
   name: {{ name|lower }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/mat_discover-{{ version }}.tar.gz
-  sha256: 07bbd18076d7c5a7fdfcd9a3ebf94a572d9803488be6291f3b7355283c130232
+  sha256: 52a0c44b462bc0801753c28a6ab63db38aa5da8ee4372a9302adffcaac0a5ad4
 
 build:
   script: {{ PYTHON }} -m pip install . -vv
@@ -22,7 +22,7 @@ requirements:
   run:
     - chem_wasserstein >=1.0.8,<2.0.0
     - composition_based_feature_vector
-    - crabnet >=2.0.3,<3.0.0
+    - crabnet >=2.0.5,<3.0.0
     - cython
     - dill
     - hdbscan
