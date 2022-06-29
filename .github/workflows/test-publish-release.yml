@@ -87,9 +87,7 @@ jobs:
     
     - name: Install dependencies
       run: |    
-        conda install git conda-build conda-verify anaconda-client
-        conda install  -c conda-forge grayskull flit coveralls conda-souschef
-        conda install -c sgbaird pqdm elmd
+        conda install git conda-build conda-verify anaconda-client conda-forge::grayskull conda-forge::flit conda-forge::coveralls conda-forge::conda-souschef sgbaird::pqdm sgbaird::elmd
         
     - name: Build and publish
       env:
