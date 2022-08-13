@@ -281,7 +281,8 @@ class Discover:
             <https://umap-learn.readthedocs.io/en/latest/parameters.html>`_ and the
             `UMAP API
             <https://umap-learn.readthedocs.io/en/latest/api.html#umap.umap_.UMAP>`_. If
-            this contains `dens_lambda` or `n_neighbors` keys, the values in the passed dictionary will take precedence over the corresponding `Discover` kwargs.
+            this contains `dens_lambda` key, the value in the Discover class kwarg will
+            take precedence.
 
         hdbscan_kwargs: dict, optional
             `hdbscan.HDBSCAN` kwargs that are passed directly into the HDBSCAN
@@ -289,6 +290,9 @@ class Discover:
             <https://hdbscan.readthedocs.io/en/latest/parameter_selection.html>`_ and
             the `HDBSCAN API
             <https://hdbscan.readthedocs.io/en/latest/api.html#hdbscan.hdbscan_.HDBSCAN>`_.
+            If ``min_cluster_size`` is not specified, defaults to 50. If
+            ``min_samples`` is not specified, defaults to 1. If ``cluster_selection_epsilon``
+            is not specified, defaults to 0.63.
 
         References
         ----------
@@ -409,6 +413,13 @@ class Discover:
                 cluster_selection_epsilon=0.63,
                 min_cluster_size=min_cluster_size,
             )
+        else:
+            if "min_cluster_size" not in hdbscan_kwargs:
+                hdbscan_kwargs["min_cluster_size"] = 50
+            if "min_samples" not in hdbscan_kwargs:
+                hdbscan_kwargs["min_samples"] = 1
+            if "cluster_selection_epsilon" not in hdbscan_kwargs:
+                hdbscan_kwargs["cluster_selection_epsilon"] = 0.63
         self.hdbscan_kwargs = hdbscan_kwargs
 
         self.mapper = ElM2D(target=self.dist_device)  # type: ignore
@@ -1183,6 +1194,10 @@ class Discover:
             self.umap_cluster_kwargs["random_state"] = random_state
         if metric != "precomputed":
             self.umap_cluster_kwargs["metric"] = metric
+        self.umap_cluster_kwargs["densmap"] = True
+        self.umap_cluster_kwargs["output_dens"] = True
+        self.umap_cluster_kwargs["dens_lambda"] = self.dens_lambda
+        self.umap_cluster_kwargs["low_memory"] = False
         with self.Timer("fit-UMAP"):
             umap_trans = umap.UMAP(**self.umap_cluster_kwargs).fit(dm)
         return umap_trans
@@ -1215,6 +1230,10 @@ class Discover:
         """
         if random_state is not None:
             self.umap_vis_kwargs["random_state"] = random_state
+        self.umap_cluster_kwargs["densmap"] = True
+        self.umap_cluster_kwargs["output_dens"] = True
+        self.umap_cluster_kwargs["dens_lambda"] = self.dens_lambda
+        self.umap_cluster_kwargs["low_memory"] = False
         with self.Timer("fit-vis-UMAP"):
             std_trans = umap.UMAP(**self.umap_vis_kwargs).fit(dm)
         return std_trans
