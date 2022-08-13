@@ -1230,10 +1230,10 @@ class Discover:
         """
         if random_state is not None:
             self.umap_vis_kwargs["random_state"] = random_state
-        self.umap_cluster_kwargs["densmap"] = True
-        self.umap_cluster_kwargs["output_dens"] = True
-        self.umap_cluster_kwargs["dens_lambda"] = self.dens_lambda
-        self.umap_cluster_kwargs["low_memory"] = False
+        self.umap_vis_kwargs["densmap"] = True
+        self.umap_vis_kwargs["output_dens"] = True
+        self.umap_vis_kwargs["dens_lambda"] = self.dens_lambda
+        self.umap_vis_kwargs["low_memory"] = False
         with self.Timer("fit-vis-UMAP"):
             std_trans = umap.UMAP(**self.umap_vis_kwargs).fit(dm)
         return std_trans
