@@ -8,7 +8,7 @@ umap_learn==0.5.3
 matplotlib==3.5.3
 chem_wasserstein==1.0.9
 crabnet==2.0.2
-conda-souschef==2.2.1
+conda-souschef==2.2.3
 scikit-learn==1.1.2
 myst-parser==0.18.0
 sphinx==5.1.1
