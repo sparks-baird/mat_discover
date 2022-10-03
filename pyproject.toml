@@ -20,7 +20,7 @@ dependencies = [
     "pqdm", #PyPI
     "seaborn",
     "scipy",
-    "hdbscan <=0.8.27,>=0.8.29",
+    "hdbscan !=0.8.28",
     "cython", # for hdbscan 0.8.27 or similar
     "numba >=0.53.1",
     "plotly >=5.6.0",
