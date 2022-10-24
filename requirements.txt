@@ -1,6 +1,6 @@
 plotly==5.10.0
 pqdm==0.2.0
-scipy==1.9.2
+scipy==1.9.3
 dill==0.3.5.1
 hdbscan==0.8.28
 joblib==1.1.0
