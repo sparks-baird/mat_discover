@@ -49,7 +49,7 @@ test = [
     "ElM2D==0.4.1", #PyPI
     "pytest-cov",
     "pre-commit",
-    "sphinx==4.2.0",
+    "sphinx==5.3.0",
     "myst-parser==0.15.2",
     "nbformat >=4.2.0", # for Jupyter Notebook in VS Code
     "black >=22.1.0",
