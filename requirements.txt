@@ -4,7 +4,7 @@ dill==0.3.6
 scipy==1.9.3
 hdbscan==0.8.28
 joblib==1.1.0
-pandas==1.5.1
+pandas==1.5.2
 umap_learn==0.5.3
 matplotlib==3.6.2
 chem_wasserstein==1.0.9
