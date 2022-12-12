@@ -12,8 +12,7 @@
 [![PyPI version](https://badge.fury.io/py/mat_discover.svg)](https://pypi.org/project/mat_discover/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Coverage Status](https://coveralls.io/repos/github/sparks-baird/mat_discover/badge.svg?service=github)](https://coveralls.io/github/sparks-baird/mat_discover)
-<!-- [![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover) -->
-[![Lines of code](https://tokei.ekzhang.com/b1/github/sparks-baird/mat_discover)](https://tokei.ekzhang.com/b1/github/sparks-baird/mat_discover)
+[![Lines of code](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)](https://img.shields.io/tokei/lines/github/sparks-baird/mat_discover)
 [![License](https://img.shields.io/github/license/sparks-baird/mat_discover?service=github)](https://img.shields.io/github/license/sparks-baird/mat_discover)
 [![DOI](https://zenodo.org/badge/392897894.svg?service=github)](https://zenodo.org/badge/latestdoi/392897894)
 <!-- ![PyPI - License](https://img.shields.io/pypi/l/mat_discover) -->
