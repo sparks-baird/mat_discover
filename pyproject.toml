@@ -58,6 +58,7 @@ test = [
     "m3gnet",
     "gridrdf==0.2.0",
     "matbench_genmetrics",
+    "matminer<=0.7.4",
 
 ]
 # gpu = ["torch==1.9.1+cu111"]
