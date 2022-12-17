@@ -73,7 +73,7 @@ def test_mat_discover_xtal():
     score = disc.predict(val_df, umap_random_state=42)
     cat_df = pd.concat((train_df, val_df), axis=0)
     # disc.group_cross_val(cat_df, umap_random_state=42)
-    print("scaled test error = ", disc.scaled_error)
+    # print("scaled test error = ", disc.scaled_error)
     disc.plot()
 
 
