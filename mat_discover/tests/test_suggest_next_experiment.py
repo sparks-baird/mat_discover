@@ -14,7 +14,7 @@ val_df = val_df.iloc[:100]
 
 # first experiment, which is more time-intensive
 def test_suggest():
-    adapt = Adapt(train_df, val_df, dummy_run=False, device="cuda")
+    adapt = Adapt(train_df, val_df, dummy_run=False)
     first_experiment = adapt.suggest_first_experiment()
     assert adapt.train_df.shape[0] == 101
     assert adapt.val_df.shape[0] == 99
