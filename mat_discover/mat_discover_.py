@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, MutableMapping, Optional, Union, List, Mapping
 from warnings import warn
 from inspect import signature
+from matbench_genmetrics.utils.featurize import cdvae_cov_struct_fingerprints
+from scipy.spatial.distance import pdist, squareform
 
 import dill as pickle
 import hdbscan
@@ -28,6 +30,9 @@ from chem_wasserstein.utils.Timer import NoTimer, Timer
 # from crabnet.utils.composition import generate_features
 from composition_based_feature_vector.composition import generate_features
 from crabnet.crabnet_ import CrabNet
+import tensorflow as tf
+from m3gnet.models import M3GNet
+from m3gnet.trainers import Trainer
 from ElMD import ElMD
 from scipy.stats import multivariate_normal, wasserstein_distance
 from sklearn.decomposition import PCA
@@ -49,9 +54,30 @@ from mat_discover.utils.plotting import (
 )
 
 # from ml_matrics import density_scatter
-
-
 # from sklearn.decomposition import PCA
+
+
+class M3GNetWrapper:
+    def __init__(self, epochs=1000):
+        self.epochs = epochs
+        self.m3gnet = M3GNet(is_intensive=False)
+        self.trainer = Trainer(self.m3gnet, tf.keras.optimizers.Adam(1e-3))
+
+    def fit(self, train_df):
+        train_inputs = train_df["structure"]
+        train_outputs = train_df["target"]
+        self.trainer.train(
+            train_inputs.tolist(),
+            train_outputs.tolist(),
+            fit_per_element_offset=True,
+            save_checkpoint=False,
+            epochs=self.epochs,
+        )
+
+    def predict(self, val_df):
+        val_inputs = val_df["structure"]
+        val_pred = self.trainer.model.predict_structures(val_inputs)
+        return np.squeeze(np.array(val_pred))
 
 
 plt.rcParams.update(
@@ -62,6 +88,15 @@ plt.rcParams.update(
         "xtick.direction": "in",
     }
 )
+
+
+class CDVAECovStructFingerprintWrapper:
+    def __init__(self):
+        pass
+
+    def fit(self, structures):
+        struct_fingerprints = cdvae_cov_struct_fingerprints(structures)
+        self.dm = squareform(pdist(struct_fingerprints))
 
 
 def my_mvn(mu_x, mu_y, r):
@@ -158,15 +193,15 @@ class Discover:
         table_dir: Union[str, pathtype] = "tables",
         target_unit: Optional[str] = None,
         use_plotly_offline: bool = True,
+        mapper=None,
         novelty_learner: str = "discover",
         novelty_prop: str = "mod_petti",
         # groupby_filter="max",
         pred_weight: float = 1.0,
         proxy_weight: float = 1.0,
-        device: str = "cuda",
-        dist_device: Optional[str] = None,
         nscores: int = 100,
         regressor=None,
+        use_structure: bool = False,
         umap_cluster_kwargs: Optional[MutableMapping] = None,
         umap_vis_kwargs: Optional[MutableMapping] = None,
         hdbscan_kwargs: Optional[MutableMapping] = None,
@@ -252,19 +287,23 @@ class Discover:
             `pred_weight = 1`). For example, to weight the predicted, scaled targets at
             twice that of the proxy values, set to 2 while retaining `pred_weight = 1`.
 
-        dist_device : str, optional
-            Which device to perform the computation on for the distance computations
-            specifically. Possible values are "cpu", "cuda", and None, by default None.
-            If None, default to `device`.
-
         nscores : int, optional
             Number of scores (i.e. compounds) to return in the CSV output files.
 
-        regressor_kwargs : dict, optional
-            `crabnet.crabnet_.CrabNet` kwargs that are passed directly into the CrabNet
-            model. By default None. For example, you can specify the number of epochs
-            as {"epochs", 40} (may be useful to decrease # epochs for smaller datasets). See `CrabNet() API
+        regressor : instantiated class, optional
+            The regressor to use for predicting target values, e.g., CrabNet(), or CrabNet(epochs=40) (may be useful to decrease # epochs for smaller datasets). See `CrabNet() API
             <https://crabnet.readthedocs.io/en/latest/crabnet.html#crabnet.crabnet_.CrabNet>`_.
+            Can be another instantiated class, which at minimum contains fit(dataframe)
+            and predict(dataframe) methods, where dataframe is a pandas DataFrame with
+            at minimum columns ("formula" or "structure") and "target". If None, then
+            defaults to CrabNet() By default None.
+
+        use_structure : bool, optional
+            Whether to use structure-based featurization instead of formula-based. If
+            use_structure is False and regressor is None and mapper is None, then CrabNet and ElMD are used as the regressor and mapper,
+            respectively. If use_structure is True and regressor is None and mapper is
+            None, then M3GNet and GridRDF are used as the regressor and mapper,
+            respectively. By default False.
 
         umap_cluster_kwargs, umap_vis_kwargs : dict, optional
             `umap.UMAP` kwargs that are passed directly into the UMAP embedder that is
@@ -315,15 +354,19 @@ class Discover:
         # create dir https://stackoverflow.com/a/273227/13697228
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
 
+        self.mapper = mapper
+
+        if self.mapper is None:
+            if use_structure:
+                pass  # TODO: Implement GridRDF as default
+                self.mapper = CDVAECovStructFingerprintWrapper()
+            else:
+                self.mapper = ElM2D(target="cpu")
+
         self.novelty_learner = novelty_learner
         self.novelty_prop = novelty_prop
         self.pred_weight = pred_weight
         self.proxy_weight = proxy_weight
-        self.device = device
-        if dist_device is None:
-            self.dist_device = self.device
-        else:
-            self.dist_device = dist_device
 
         if type(Scaler) is str:
             scalers = {
@@ -338,13 +381,17 @@ class Discover:
         self.nscores = nscores
         self.regressor = regressor
         if self.regressor is None:
-            self.regressor = CrabNet(
-                mat_prop="test-property",
-                losscurve=False,
-                learningcurve=False,
-                verbose=True,
-                force_cpu=False,
-            )
+            if use_structure:
+                self.regressor = M3GNetWrapper(epochs=2 if dummy_run else 1000)
+            else:
+                self.regressor = CrabNet(
+                    mat_prop="test-property",
+                    losscurve=False,
+                    learningcurve=False,
+                    verbose=True,
+                    force_cpu=False,
+                    epochs=2 if dummy_run else None,
+                )
 
         if umap_cluster_kwargs is None:
             umap_cluster_kwargs = dict(
@@ -397,7 +444,6 @@ class Discover:
                 hdbscan_kwargs["cluster_selection_epsilon"] = 0.63
         self.hdbscan_kwargs = hdbscan_kwargs
 
-        self.mapper = ElM2D(target=self.dist_device)  # type: ignore
         self.dm: Optional[np.ndarray] = None
         self.train_inputs: Optional[pd.Series] = None
         self.train_target: Optional[pd.Series] = None
@@ -564,7 +610,7 @@ class Discover:
 
         if self.proxy_weight != 0 and self.novelty_learner == "discover":
             # distance matrix
-            with self.Timer("fit-wasserstein"):
+            with self.Timer("fit-novelty-learner"):
                 self.mapper.fit(self.all_inputs)
                 self.dm = self.mapper.dm
 
@@ -871,7 +917,7 @@ class Discover:
 
         score_df = pd.DataFrame(
             {
-                self.input_type: self.val_df.formula,
+                self.input_type: self.val_df[self.input_type],
                 "prediction": self.val_pred,
                 proxy_name: proxy,
                 "score": score,
@@ -894,6 +940,14 @@ class Discover:
         dens_score_df = self.dens_score_df.rename(columns={"score": "Density Score"})
         peak_score_df = self.peak_score_df.rename(columns={"score": "Peak Score"})
 
+        if self.input_type == "structure":
+            dens_score_df[self.input_type] = (
+                dens_score_df[self.input_type].apply(lambda x: x.as_dict()).astype(str)
+            )
+            peak_score_df[self.input_type] = (
+                peak_score_df[self.input_type].apply(lambda x: x.as_dict()).astype(str)
+            )
+
         comb_score_df = dens_score_df[[self.input_type, "Density Score"]].merge(
             peak_score_df[[self.input_type, "Peak Score"]], how="outer"
         )
@@ -902,7 +956,9 @@ class Discover:
             peak_score_df.head(nscores)[[self.input_type]], how="outer"
         )
 
-        self.comb_out_df = comb_score_df[np.isin(comb_score_df.formula, comb_inputs)]
+        self.comb_out_df = comb_score_df[
+            np.isin(comb_score_df[self.input_type], comb_inputs)
+        ]
 
         dens_score_df.head(nscores).to_csv(
             join(self.table_dir, "dens-score.csv"), index=False, float_format="%.3f"
@@ -1674,3 +1730,15 @@ class Discover:
 #     self.force_cpu = True
 # else:
 #     self.force_cpu = False
+
+
+# self.device = device
+# if dist_device is None:
+#     self.dist_device = self.device
+# else:
+#     self.dist_device = dist_device
+
+# dist_device : str, optional
+#     Which device to perform the computation on for the distance computations
+#     specifically. Possible values are "cpu", "cuda", and None, by default None.
+#     If None, default to `device`.
