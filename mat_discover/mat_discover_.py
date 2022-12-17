@@ -1107,7 +1107,10 @@ class Discover:
 
         # test_df = pd.DataFrame({"formula": X_test, "property": y_test})
 
-        self.gcv_regressor = deepcopy(self.regressor)
+        self.gcv_regressor = self.regressor
+        warn(
+            "During group cross validation, the regressor that was trained during any calls to fit will be used and retrained: i.e., self.gcv_regressor is just self.regressor. As a workaround, if you want to retain the fitted regressor during `fit`, you can instantiate a separate class instance for doing the group cross-validation."  # noqa: E501
+        )
         self.gcv_regressor.fit(train_df)
 
         # CrabNet predict output format: (act, pred, formulae, uncert)
