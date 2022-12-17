@@ -355,7 +355,7 @@ class Discover:
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
 
         self.mapper = mapper
-
+        
         if self.mapper is None:
             if use_structure:
                 pass  # TODO: Implement GridRDF as default
@@ -392,6 +392,8 @@ class Discover:
                     force_cpu=False,
                     epochs=2 if dummy_run else None,
                 )
+                
+        self.use_structure = use_structure
 
         if umap_cluster_kwargs is None:
             umap_cluster_kwargs = dict(
@@ -443,6 +445,12 @@ class Discover:
             if "cluster_selection_epsilon" not in hdbscan_kwargs:
                 hdbscan_kwargs["cluster_selection_epsilon"] = 0.63
         self.hdbscan_kwargs = hdbscan_kwargs
+        
+        if use_structure:
+            self.input_type = "structure"
+        else:
+            self.input_type = "formula"
+        self.hover_data = [self.input_type] if not use_structure else None
 
         self.dm: Optional[np.ndarray] = None
         self.train_inputs: Optional[pd.Series] = None
@@ -467,14 +475,6 @@ class Discover:
         """
         # unpack
         self.train_df = train_df
-        if "structure" in train_df:
-            self.input_type = "structure"
-        elif "formula" in train_df:
-            self.input_type = "formula"
-        else:
-            raise ValueError(
-                "Expected at least one of 'structure' or 'formula' columns."
-            )
         self.train_inputs = train_df[self.input_type]
         self.train_target = train_df["target"]
 
@@ -603,6 +603,9 @@ class Discover:
 
         self.all_inputs = pd.concat((train_inputs, self.val_inputs), axis=0)
         self.all_target = pd.concat((train_target, val_target), axis=0)
+        
+        if self.input_type == "structure":
+            self.input_strs = None
 
         self.ntrain, self.nval = len(train_inputs), len(self.val_inputs)
         self.ntot = self.ntrain + self.nval
@@ -1403,10 +1406,10 @@ class Discover:
             self.dens_targ_scatter()
 
         self.pf_dens_proxy()
-        self.pf_frac_proxy()
 
         # Group cross-validation parity plot
         if self.true_avg_targ is not None:
+            self.pf_frac_proxy()
             fig, dens_pareto_ind = self.gcv_pareto()
         else:
             warn("Skipping group cross-validation plot")
@@ -1446,6 +1449,7 @@ class Discover:
             x_unit=self.target_unit,
             y_unit=self.target_unit,
             use_plotly_offline=self.use_plotly_offline,
+            hover_data = self.hover_data,
         )
         # fig = group_cv_parity(
         #     self.true_avg_targ, self.pred_avg_targ, self.avg_labels
@@ -1508,6 +1512,7 @@ class Discover:
             pareto_front=True,
             y_unit=self.target_unit,
             use_plotly_offline=self.use_plotly_offline,
+            hover_data = self.hover_data,
         )
         return fig
 
@@ -1553,6 +1558,7 @@ class Discover:
             parity_type=None,
             color_unit=self.target_unit,
             use_plotly_offline=self.use_plotly_offline,
+            hover_data = self.hover_data,
         )
         return fig
 
@@ -1577,6 +1583,7 @@ class Discover:
             pareto_front=False,
             parity_type=None,
             use_plotly_offline=self.use_plotly_offline,
+            hover_data = self.hover_data,
         )
         return fig
 
@@ -1616,6 +1623,7 @@ class Discover:
             x_unit=self.target_unit,
             y_unit=self.target_unit,
             use_plotly_offline=self.use_plotly_offline,
+            hover_data = self.hover_data,
         )
 
         return fig, pk_pareto_ind
@@ -1648,6 +1656,7 @@ class Discover:
             parity_type=None,
             y_unit=self.target_unit,
             use_plotly_offline=self.use_plotly_offline,
+            hover_data = self.hover_data,
         )
 
         return fig, frac_pareto_ind
