@@ -16,6 +16,7 @@ import pandas as pd
 from crabnet.data.materials_data import elasticity
 from sklearn.neighbors import LocalOutlierFactor
 from mat_discover.mat_discover_ import Discover
+from mat_discover.adaptive_design import DummyCrabNet
 
 # %% Test Functions
 def test_mat_discover():
@@ -38,9 +39,9 @@ def test_mat_discover():
     # disc.load()
 
 
-def test_crabnet_kwargs():
+def test_custom_regressor():
     """Test a custom # of epochs with CrabNet."""
-    disc = Discover(dummy_run=True, crabnet_kwargs={"epochs": 300})
+    disc = Discover(dummy_run=True, regressor=DummyCrabNet())
     train_df, _ = disc.data(elasticity, fname="train.csv", dummy=True)
     disc.fit(train_df)
 
@@ -125,8 +126,8 @@ def test_sklearn_mat2vec():
 
 
 if __name__ == "__main__":
+    test_custom_regressor()
     test_mat_discover()
-    test_crabnet_kwargs()
     test_plotting()
     test_sklearn_modpetti()
     test_sklearn_mat2vec()

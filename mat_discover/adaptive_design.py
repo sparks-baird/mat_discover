@@ -58,8 +58,8 @@ class Adapt(Discover):
         if not random_search:
             if fit:
                 self.fit(self.train_df)
-            elif self.crabnet_model is None:
-                self.crabnet_model = DummyCrabNet()
+            elif self.regressor is None:
+                self.regressor = DummyCrabNet()
                 # raise ValueError(
                 #     "Run `disc.fit(train_df)` method or specify `fit_afresh=True`."
                 # )
@@ -67,8 +67,8 @@ class Adapt(Discover):
                 # TODO: precompute dm, umap, etc.
                 self.predict(self.val_df, **predict_kwargs)
             else:
-                if self.crabnet_model is not None:
-                    self.val_pred, val_sigma, val_true = self.crabnet_model.predict(
+                if self.regressor is not None:
+                    self.val_pred, val_sigma, val_true = self.regressor.predict(
                         self.val_df, return_uncertainty=True, return_true=True
                     )
                 else:
@@ -121,8 +121,9 @@ class Adapt(Discover):
             }
             proxy_df_name = proxy_lookup[proxy_name]
             proxy_df = getattr(self, proxy_df_name)
-            next_formula, next_proxy, next_score = [
-                proxy_df[name].values[0] for name in ["formula", proxy_name, "score"]
+            next_input, next_proxy, next_score = [
+                proxy_df[name].values[0]
+                for name in [self.input_type, proxy_name, "score"]
             ]
             next_index = proxy_df.index[0]
             next_target, next_emb, next_dens = [
@@ -131,7 +132,7 @@ class Adapt(Discover):
             ]
         else:
             sample = self.val_df.sample(1)
-            next_formula, next_target = sample[["formula", "target"]].values[0]
+            next_input, next_target = sample[[self.input_type, "target"]].values[0]
             next_index = sample.index[0]
             next_proxy = np.nan
             next_score = np.nan
@@ -139,7 +140,7 @@ class Adapt(Discover):
             next_dens = np.nan
 
         next_experiment = {
-            "formula": next_formula,
+            self.input_type: next_input,
             "index": next_index,
             "target": next_target,
             "emb": next_emb,

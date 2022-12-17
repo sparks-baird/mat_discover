@@ -7,13 +7,14 @@ proxy) or high-target surrounded by materials with low targets (peak proxy).
 import gc
 
 # saving class objects: https://stackoverflow.com/a/37076668/13697228
-from copy import copy
+from copy import copy, deepcopy
 from operator import attrgetter
 from os.path import join
 from os import PathLike
 from pathlib import Path
 from typing import TYPE_CHECKING, MutableMapping, Optional, Union, List, Mapping
 from warnings import warn
+from inspect import signature
 
 import dill as pickle
 import hdbscan
@@ -151,7 +152,6 @@ class Discover:
         pdf: bool = True,
         n_peak_neighbors: int = 10,
         verbose: bool = True,
-        mat_prop_name: str = "test-property",
         dummy_run: bool = False,
         Scaler=RobustScaler,
         figure_dir: Union[str, pathtype] = "figures",
@@ -166,7 +166,7 @@ class Discover:
         device: str = "cuda",
         dist_device: Optional[str] = None,
         nscores: int = 100,
-        crabnet_kwargs: Optional[MutableMapping] = None,
+        regressor=None,
         umap_cluster_kwargs: Optional[MutableMapping] = None,
         umap_vis_kwargs: Optional[MutableMapping] = None,
         hdbscan_kwargs: Optional[MutableMapping] = None,
@@ -199,10 +199,6 @@ class Discover:
 
         verbose : bool, optional
             Whether to print verbose information, by default True
-
-        mat_prop_name : str, optional
-            A name that helps identify the training target property, by default
-            "test-property"
 
         dummy_run : bool, optional
             Whether to use MDS instead of UMAP to run quickly for small datasets. Note
@@ -256,10 +252,6 @@ class Discover:
             `pred_weight = 1`). For example, to weight the predicted, scaled targets at
             twice that of the proxy values, set to 2 while retaining `pred_weight = 1`.
 
-        device : str, optional
-            Which device to perform the computation on. Possible values are "cpu" and
-            "cuda", by default "cuda".
-
         dist_device : str, optional
             Which device to perform the computation on for the distance computations
             specifically. Possible values are "cpu", "cuda", and None, by default None.
@@ -268,7 +260,7 @@ class Discover:
         nscores : int, optional
             Number of scores (i.e. compounds) to return in the CSV output files.
 
-        crabnet_kwargs : dict, optional
+        regressor_kwargs : dict, optional
             `crabnet.crabnet_.CrabNet` kwargs that are passed directly into the CrabNet
             model. By default None. For example, you can specify the number of epochs
             as {"epochs", 40} (may be useful to decrease # epochs for smaller datasets). See `CrabNet() API
@@ -310,16 +302,10 @@ class Discover:
         self.pdf = pdf
         self.n_peak_neighbors = n_peak_neighbors
         self.verbose = verbose
-        self.mat_prop_name = mat_prop_name
         self.dummy_run = dummy_run
         if dummy_run:
             figure_dir = join(figure_dir, "dummy")
             table_dir = join(table_dir, "dummy")
-            self.epochs: Optional[int] = 2
-            epochs_step: Optional[int] = 1
-        else:
-            self.epochs = None
-            epochs_step = None
         self.figure_dir = figure_dir
         self.table_dir = table_dir
 
@@ -349,27 +335,16 @@ class Discover:
         else:
             self.Scaler = Scaler
 
-        if self.device == "cpu":
-            self.force_cpu = True
-        else:
-            self.force_cpu = False
         self.nscores = nscores
-
-        self.crabnet_kwargs = dict(
-            mat_prop=self.mat_prop_name,
-            losscurve=False,
-            learningcurve=False,
-            verbose=self.verbose,
-            force_cpu=self.force_cpu,
-            epochs=self.epochs,
-        )
-        if epochs_step is not None:
-            self.crabnet_kwargs["epochs_step"] = epochs_step
-
-        # override
-        if crabnet_kwargs is not None:
-            for key, value in crabnet_kwargs.items():
-                self.crabnet_kwargs[key] = value
+        self.regressor = regressor
+        if self.regressor is None:
+            self.regressor = CrabNet(
+                mat_prop="test-property",
+                losscurve=False,
+                learningcurve=False,
+                verbose=True,
+                force_cpu=False,
+            )
 
         if umap_cluster_kwargs is None:
             umap_cluster_kwargs = dict(
@@ -424,8 +399,7 @@ class Discover:
 
         self.mapper = ElM2D(target=self.dist_device)  # type: ignore
         self.dm: Optional[np.ndarray] = None
-        self.crabnet_model: Optional[CrabNet] = None
-        self.train_formula: Optional[pd.Series] = None
+        self.train_inputs: Optional[pd.Series] = None
         self.train_target: Optional[pd.Series] = None
         self.train_df: Optional[pd.DataFrame] = None
         self.val_df: Optional[pd.DataFrame] = None
@@ -443,33 +417,40 @@ class Discover:
         Parameters
         ----------
         train_df : DataFrame
-            Should contain "formula" and "target" columns.
+            Should contain ("formula" or "structure") and "target" columns.
         """
         # unpack
         self.train_df = train_df
-        self.train_formula = train_df["formula"]
+        if "structure" in train_df:
+            self.input_type = "structure"
+        elif "formula" in train_df:
+            self.input_type = "formula"
+        else:
+            raise ValueError(
+                "Expected at least one of 'structure' or 'formula' columns."
+            )
+        self.train_inputs = train_df[self.input_type]
         self.train_target = train_df["target"]
 
         if self.pred_weight != 0:
-            with self.Timer("train-CrabNet"):
-                if self.crabnet_model is not None:
+            with self.Timer("train-regressor"):
+                if self.regressor is not None:
                     # deallocate CUDA memory https://discuss.pytorch.org/t/how-can-we-release-gpu-memory-cache/14530/28
-                    del self.crabnet_model
+                    # del self.regressor # not sure if will run into mem issues
                     gc.collect()
                     empty_cache()
-                self.crabnet_model = CrabNet(**self.crabnet_kwargs)
-                self.crabnet_model.fit(train_df)
+                self.regressor.fit(train_df)
 
         # TODO: UMAP on new data (i.e. add metric != "precomputed" functionality)
 
     def predict(
         self,
         val_df,
-        plotting: bool = None,
+        plotting: Optional[bool] = None,
         umap_random_state=None,
         pred_weight=None,
         proxy_weight=None,
-        dummy_run: bool = None,
+        dummy_run: Optional[bool] = None,
         count_repeats: bool = False,
         return_peak: bool = False,
     ):
@@ -478,8 +459,8 @@ class Discover:
         Parameters
         ----------
         val_df : DataFrame
-            Validation dataset containing at minimum "formula" and optionally "target"
-            (targets are populated with 0's if not available).
+            Validation dataset containing at minimum ("formula" or "structure") and
+            optionally "target" (targets are populated with 0's if not available).
         plotting : bool, optional
             Whether to plot, by default None
         umap_random_state : int or None, optional
@@ -522,56 +503,69 @@ class Discover:
 
         # CrabNet
         # TODO: parity plot
-        crabnet_model = self.crabnet_model
         # CrabNet predict output format: (act, pred, formulae, uncert)
+
+        self.train_true = self.train_df["target"]
+        self.val_true = self.val_df["target"]
+
         if self.pred_weight != 0:
             assert (
-                crabnet_model is not None
+                self.regressor is not None
             ), "`crabnet_model is None. Did you run `disc.fit(train_df)` already?"
-            train_pred, self.train_sigma, self.train_true = crabnet_model.predict(
-                self.train_df, return_uncertainty=True, return_true=True
-            )
-            self.val_pred, self.val_sigma, self.val_true = crabnet_model.predict(
-                self.val_df, return_uncertainty=True, return_true=True
-            )
+            kwarg_keys = signature(self.regressor.predict).parameters.keys()
+            if "return_uncertainty" in kwarg_keys:
+                self.train_pred, self.train_sigma = self.regressor.predict(
+                    self.train_df, return_uncertainty=True
+                )
+                self.val_pred, self.val_sigma = self.regressor.predict(
+                    self.val_df, return_uncertainty=True
+                )
+            else:
+                self.train_pred = self.regressor.predict(self.train_df)
+                self.val_pred = self.regressor.predict(self.val_df)
+                warn(
+                    f"return_uncertainty not a valid kwarg for regressor: {self.regressor}. Setting self.train_sigma as array of zeros (note the uncertainty values are for user convenience; they are not directly used)."  # noqa: E501
+                )
+                self.train_sigma = np.zeros(self.train_df.shape[0])
+                self.val_sigma = np.zeros(self.val_df.shape[0])
         else:
-            self.train_true, train_pred, self.train_sigma = [
+            self.train_true, self.train_pred, self.train_sigma = [
                 np.zeros(self.train_df.shape[0])
             ] * 3
             self.val_true, self.val_pred, self.val_sigma = [
                 np.zeros(self.val_df.shape[0])
             ] * 3
-        pred = np.concatenate((train_pred, self.val_pred), axis=0)
+        pred = np.concatenate((self.train_pred, self.val_pred), axis=0)
 
         if np.any(np.isnan(self.val_pred)):
             warn("NaN in val_pred. Replacing with DummyRegressor values.")
-            val_pred = np.nan_to_num(self.val_pred, nan=np.mean(self.val_true))
+            val_pred_tmp = np.nan_to_num(self.val_pred, nan=np.mean(self.val_true))
         else:
-            val_pred = self.val_pred
+            val_pred_tmp = self.val_pred
 
-        self.val_rmse = mean_squared_error(self.val_true, val_pred, squared=False)
+        self.val_rmse = mean_squared_error(self.val_true, val_pred_tmp, squared=False)
         if self.verbose:
             print("val RMSE: ", self.val_rmse)
 
-        train_formula = self.train_df["formula"]
+        train_inputs = self.train_df[self.input_type]
         train_target = self.train_df["target"]
-        self.val_formula = self.val_df["formula"]
+        self.val_inputs = self.val_df[self.input_type]
         if "target" in self.val_df.columns:
             val_target = self.val_df["target"]
         else:
             val_target = self.val_pred
 
-        self.all_formula = pd.concat((train_formula, self.val_formula), axis=0)
+        self.all_inputs = pd.concat((train_inputs, self.val_inputs), axis=0)
         self.all_target = pd.concat((train_target, val_target), axis=0)
 
-        self.ntrain, self.nval = len(train_formula), len(self.val_formula)
+        self.ntrain, self.nval = len(train_inputs), len(self.val_inputs)
         self.ntot = self.ntrain + self.nval
         train_ids, val_ids = np.arange(self.ntrain), np.arange(self.ntrain, self.ntot)
 
         if self.proxy_weight != 0 and self.novelty_learner == "discover":
             # distance matrix
             with self.Timer("fit-wasserstein"):
-                self.mapper.fit(self.all_formula)
+                self.mapper.fit(self.all_inputs)
                 self.dm = self.mapper.dm
 
             assert self.dm is not None, "`self.dm` is None despite [fit-wasserstein]"
@@ -696,27 +690,27 @@ class Discover:
             # composition-based featurization
             X_train: Union[pd.DataFrame, np.ndarray, List] = []
             X_val: Union[pd.DataFrame, np.ndarray, List] = []
-            assert self.train_formula is not None
+            assert self.train_inputs is not None
             if self.novelty_prop == "mod_petti":
                 assert isinstance(X_train, list)
                 assert isinstance(X_val, list)
-                for comp in self.train_formula.tolist():
+                for comp in self.train_inputs.tolist():
                     X_train.append(ElMD(comp, metric=self.novelty_prop).feature_vector)
-                for comp in self.val_formula.tolist():
+                for comp in self.val_inputs.tolist():
                     X_val.append(ElMD(comp, metric=self.novelty_prop).feature_vector)
                 X_train = np.array(X_train)
                 X_val = np.array(X_val)
             else:
                 train_df = pd.DataFrame(
                     {
-                        "formula": self.train_formula,
-                        "target": np.zeros_like(self.train_formula),
+                        self.input_type: self.train_inputs,
+                        "target": np.zeros_like(self.train_inputs),
                     }
                 )
                 val_df = pd.DataFrame(
                     {
-                        "formula": self.val_formula,
-                        "target": np.zeros_like(self.val_formula),
+                        self.input_type: self.val_inputs,
+                        "target": np.zeros_like(self.val_inputs),
                     }
                 )
                 X_train, y, formulae, skipped = generate_features(
@@ -866,7 +860,7 @@ class Discover:
         Returns
         -------
         DataFrame
-            Contains "formula", "prediction", `proxy_name`, and "score".
+            Contains ("formula" or "structure"), "prediction", `proxy_name`, and "score".
         """
         proxy_lookup = {
             "density": self.val_dens,
@@ -877,7 +871,7 @@ class Discover:
 
         score_df = pd.DataFrame(
             {
-                "formula": self.val_df.formula,
+                self.input_type: self.val_df.formula,
                 "prediction": self.val_pred,
                 proxy_name: proxy,
                 "score": score,
@@ -900,15 +894,15 @@ class Discover:
         dens_score_df = self.dens_score_df.rename(columns={"score": "Density Score"})
         peak_score_df = self.peak_score_df.rename(columns={"score": "Peak Score"})
 
-        comb_score_df = dens_score_df[["formula", "Density Score"]].merge(
-            peak_score_df[["formula", "Peak Score"]], how="outer"
+        comb_score_df = dens_score_df[[self.input_type, "Density Score"]].merge(
+            peak_score_df[[self.input_type, "Peak Score"]], how="outer"
         )
 
-        comb_formula = dens_score_df.head(nscores)[["formula"]].merge(
-            peak_score_df.head(nscores)[["formula"]], how="outer"
+        comb_inputs = dens_score_df.head(nscores)[[self.input_type]].merge(
+            peak_score_df.head(nscores)[[self.input_type]], how="outer"
         )
 
-        self.comb_out_df = comb_score_df[np.isin(comb_score_df.formula, comb_formula)]
+        self.comb_out_df = comb_score_df[np.isin(comb_score_df.formula, comb_inputs)]
 
         dens_score_df.head(nscores).to_csv(
             join(self.table_dir, "dens-score.csv"), index=False, float_format="%.3f"
@@ -950,12 +944,12 @@ class Discover:
         TODO: highest mean vs. highest single target value
         """
         # TODO: remind people in documentation to use a separate Discover() instance if they wish to access fit *and* gcv attributes
-        self.all_formula = df["formula"]
+        self.all_inputs = df[self.input_type]
         self.all_target = df["target"]
 
         # distance matrix
         with self.Timer("fit-wasserstein"):
-            self.mapper.fit(self.all_formula)
+            self.mapper.fit(self.all_inputs)
             self.dm = self.mapper.dm
 
         # UMAP (clustering and visualization)
@@ -993,7 +987,7 @@ class Discover:
         # )
         # tv_ids = np.isin(self.labels, tv_cluster_ids)
 
-        X, y = self.all_formula, self.all_target
+        X, y = self.all_inputs, self.all_target
         # X_test, y_test = X[test_ids], y[test_ids]  # noqa
         # X_tv, y_tv, labels_tv = X[tv_ids], y[tv_ids], self.labels[tv_ids]
 
@@ -1028,9 +1022,9 @@ class Discover:
 
         Parameters
         ----------
-        X : list of str
-            Chemical formulae.
-        y : 1d array of float
+        X : DataFrame of str or Structure objects
+            Chemical formulae or pymatgen Structure objects.
+        y : Series of float
             Target properties.
         train_index, val_index : 1d array of int
             Training and validation indices for a given split, respectively.
@@ -1051,24 +1045,24 @@ class Discover:
         X_train, X_val = Xn[train_index], Xn[val_index]
         y_train, y_val = yn[train_index], yn[val_index]
 
-        train_df = pd.DataFrame({"formula": X_train, "target": y_train})
-        val_df = pd.DataFrame({"formula": X_val, "target": y_val})
+        train_df = pd.DataFrame({self.input_type: X_train, "target": y_train})
+        val_df = pd.DataFrame({self.input_type: X_val, "target": y_val})
         test_df = None
 
         # test_df = pd.DataFrame({"formula": X_test, "property": y_test})
 
-        self.crabnet_model = CrabNet(**self.crabnet_kwargs)
-        self.crabnet_model.fit(train_df)
+        self.gcv_regressor = deepcopy(self.regressor)
+        self.gcv_regressor.fit(train_df)
 
         # CrabNet predict output format: (act, pred, formulae, uncert)
-        train_pred, train_sigma, train_true = self.crabnet_model.predict(
+        train_pred, train_sigma, train_true = self.gcv_regressor.predict(
             train_df, return_uncertainty=True, return_true=True
         )
-        val_pred, val_sigma, val_true = self.crabnet_model.predict(
+        val_pred, val_sigma, val_true = self.gcv_regressor.predict(
             val_df, return_uncertainty=True, return_true=True
         )
         if test_df is not None:
-            test_pred, test_sigma = self.crabnet_model.predict(
+            test_pred, test_sigma = self.gcv_regressor.predict(
                 test_df, return_uncertainty=True
             )
 
@@ -1377,7 +1371,7 @@ class Discover:
             {
                 x: self.true_avg_targ,
                 y: self.pred_avg_targ,
-                "formula": None,
+                self.input_type: None,
                 "cluster ID": np.array(self.avg_labels),
             }
         )
@@ -1439,7 +1433,7 @@ class Discover:
             {
                 x: log_dens,
                 y: self.all_target,
-                "formula": self.all_formula,
+                self.input_type: self.all_inputs,
                 "cluster ID": self.labels,
             }
         )
@@ -1487,7 +1481,7 @@ class Discover:
                 x: self.std_emb[:, 0],
                 y: self.std_emb[:, 1],
                 "target": self.all_target,
-                "formula": self.all_formula,
+                self.input_type: self.all_inputs,
             }
         )
         fig = pareto_plot(
@@ -1512,7 +1506,7 @@ class Discover:
                 x: self.std_emb[:, 0],
                 y: self.std_emb[:, 1],
                 "cluster ID": self.labels,
-                "formula": self.all_formula,
+                self.input_type: self.all_inputs,
             }
         )
         fig = pareto_plot(
@@ -1546,7 +1540,7 @@ class Discover:
             {
                 x: self.val_k_neigh_avg,
                 y: self.val_pred,
-                "formula": self.val_formula,
+                self.input_type: self.val_inputs,
                 "Peak height": self.val_pred - self.val_k_neigh_avg,
                 "cluster ID": self.val_labels,
             }
@@ -1581,7 +1575,7 @@ class Discover:
                 x: self.val_log_dens.ravel(),
                 y: self.val_pred.ravel(),
                 "cluster ID": self.val_labels,
-                "formula": self.val_formula,
+                self.input_type: self.val_inputs,
             }
         )
         # FIXME: manually set the lower and upper bounds of the cmap here (or convert to dict)
@@ -1672,3 +1666,11 @@ class Discover:
             If test_size > 0 and split==True, then training, validation, and test DataFrames are returned.
         """
         return data(module, **data_kwargs)
+
+
+# %% Code Graveyard
+
+# if self.device == "cpu":
+#     self.force_cpu = True
+# else:
+#     self.force_cpu = False

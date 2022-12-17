@@ -27,7 +27,7 @@ umap_df = pd.DataFrame(
         x: disc.std_emb[:, 0],
         y: disc.std_emb[:, 1],
         "cluster ID": disc.labels,
-        "formula": disc.all_formula,
+        "formula": disc.all_inputs,
     }
 )
 fig = pareto_plot(

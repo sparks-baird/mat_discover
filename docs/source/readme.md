@@ -163,7 +163,7 @@ How to `fit`/`predict`, use custom or built-in datasets, and perform adaptive de
 ```python
 from mat_discover.mat_discover_ import Discover
 disc = Discover(target_unit="GPa")
-disc.fit(train_df) # DataFrames should have at minimum "formula" and "target" columns
+disc.fit(train_df) # DataFrames should have at minimum ("formula" or "structure") and "target" columns
 scores = disc.predict(val_df)
 disc.plot()
 disc.save()
