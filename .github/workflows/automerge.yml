@@ -15,6 +15,6 @@ jobs:
           submodules: recursive
       - name: automerge-action
         id: automerge-action
-        uses: conda-forge/automerge-action@master
+        uses: conda-forge/automerge-action@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
