@@ -38,6 +38,7 @@ jobs:
         pip install --upgrade pip
         pip install flit torch
         pip install numba==0.53.* numpy==1.22.0
+        pip install megnet
         flit install
     - name: Test with Pytest on MacOS or Ubuntu
       shell: bash {0}
