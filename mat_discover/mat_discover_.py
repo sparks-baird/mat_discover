@@ -104,9 +104,10 @@ class MEGNetWrapper:
 
     def predict(self, val_df):
         # Predict the property of a new structure
-        return [
+        pred = [
             self.model.predict_structure(structure) for structure in val_df["structure"]
         ]
+        return np.array(pred)
 
 
 class CrabNetPretendCrystalWrapper:
