@@ -94,7 +94,8 @@ def pareto_plot(
     color : str, optional
         Name of df column to use for colors, by default "Peak height"
     hover_data : list of str, optional
-        Name(s) of df columns to display on hover, by default ["formulas"]
+        Name(s) of df columns to display on hover, by default ["formula"], e.g., could
+        also be ["structure"]
     fpath : str, optional
         Filepath to which to save HTML and PNG. Specify as None if no saving
         is desired, by default "pareto-plot"

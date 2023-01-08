@@ -12,10 +12,24 @@ Test DISCOVER algorithm.
 # %% imports
 from pathlib import Path
 import pandas as pd
+from copy import deepcopy
 
 from crabnet.data.materials_data import elasticity
 from sklearn.neighbors import LocalOutlierFactor
 from mat_discover.mat_discover_ import Discover
+from mat_discover.adaptive_design import DummyCrabNet
+from pymatgen.core.lattice import Lattice
+from pymatgen.core.structure import Structure
+
+coords = [[0, 0, 0], [0.75, 0.5, 0.75]]
+lattice = Lattice.from_parameters(a=3.84, b=3.84, c=3.84, alpha=120, beta=90, gamma=60)
+lattice2 = Lattice.from_parameters(a=3.62, b=3.62, c=3.62, alpha=120, beta=90, gamma=60)
+lattice3 = Lattice.from_parameters(a=3.62, b=3.62, c=3.62, alpha=90, beta=90, gamma=90)
+dummy_structures = [
+    Structure(lattice, ["Si", "Si"], coords),
+    Structure(lattice2, ["Ni", "Ni"], coords),
+    Structure(lattice3, ["Al", "Al"], coords),
+]
 
 # %% Test Functions
 def test_mat_discover():
@@ -38,9 +52,34 @@ def test_mat_discover():
     # disc.load()
 
 
-def test_crabnet_kwargs():
+def test_mat_discover_xtal():
+    """Perform a simple run of mat_discover with structure to ensure it runs without errors.
+
+    This does not involve checking to verify that the output is correct, and
+    additionally it uses a `dummy_run` and `dummy` such that MDS is used on a small
+    dataset rather than UMAP on a large dataset (for faster runtimes).
+    """
+    disc = Discover(
+        dummy_run=True, target_unit="GPa", use_structure=True, n_peak_neighbors=3
+    )
+    train_structures = deepcopy(dummy_structures) * 2
+    val_structures = deepcopy(dummy_structures)
+    train_df = pd.DataFrame(
+        dict(structure=train_structures, target=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+    )
+    val_df = pd.DataFrame(dict(structure=val_structures, target=[7.0, 8.0, 9.0]))
+    disc.fit(train_df)
+
+    score = disc.predict(val_df, umap_random_state=42)
+    cat_df = pd.concat((train_df, val_df), axis=0)
+    # disc.group_cross_val(cat_df, umap_random_state=42)
+    # print("scaled test error = ", disc.scaled_error)
+    disc.plot()
+
+
+def test_custom_regressor():
     """Test a custom # of epochs with CrabNet."""
-    disc = Discover(dummy_run=True, crabnet_kwargs={"epochs": 300})
+    disc = Discover(dummy_run=True, regressor=DummyCrabNet())
     train_df, _ = disc.data(elasticity, fname="train.csv", dummy=True)
     disc.fit(train_df)
 
@@ -125,8 +164,9 @@ def test_sklearn_mat2vec():
 
 
 if __name__ == "__main__":
+    test_mat_discover_xtal()
+    test_custom_regressor()
     test_mat_discover()
-    test_crabnet_kwargs()
     test_plotting()
     test_sklearn_modpetti()
     test_sklearn_mat2vec()
