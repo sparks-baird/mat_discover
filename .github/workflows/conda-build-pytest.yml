@@ -40,7 +40,7 @@ jobs:
       shell: bash -l {0}
       run: |
         conda install git pytest conda-build conda-verify anaconda-client conda-forge::grayskull conda-forge::conda-souschef conda-forge::flit conda-forge::coveralls conda-forge::conda-souschef sgbaird::pqdm sgbaird::elmd
-        pip install ElM2D==0.4.1
+        {{ PYTHON }} -m pip install ElM2D==0.4.1
         
     - name: Miniconda build
       shell: bash -l {0}
@@ -60,4 +60,4 @@ jobs:
       shell: bash -l {0}
       run: |
         export NUMBA_ENABLE_CUDASIM="1" # i.e. disable GPU
-        python -m pytest
+        {{ PYTHON }} -m pytest
