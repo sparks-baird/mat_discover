@@ -2,7 +2,7 @@ plotly==5.11.0
 pqdm==0.2.0
 dill==0.3.6
 scipy==1.9.3
-hdbscan==0.8.28
+hdbscan==0.8.29
 joblib==1.1.*
 pandas==1.5.2
 umap_learn==0.5.3
