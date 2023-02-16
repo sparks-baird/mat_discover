@@ -198,6 +198,7 @@ k_neigh_avg_targ = np.array(
 
 val_k_neigh_avg = k_neigh_avg_targ[val_ids]
 
+
 # %% 7. Weighted scores
 def weighted_score(pred, proxy, pred_weight=1.0, proxy_weight=1.0):
     """Calculate weighted discovery score using the predicted target and proxy."""

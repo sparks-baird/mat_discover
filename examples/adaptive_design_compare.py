@@ -122,9 +122,9 @@ cols = len(experiments)
 x = list(range(n_iter))
 y = np.zeros((rows, cols, n_repeats + 4, n_iter))
 formula = rows * [cols * [(n_repeats + 4) * [None]]]
-for (col, experiment) in enumerate(experiments):
-    for (row, y_name) in enumerate(y_names):
-        for (page, sub_experiment) in enumerate(experiment):
+for col, experiment in enumerate(experiments):
+    for row, y_name in enumerate(y_names):
+        for page, sub_experiment in enumerate(experiment):
             y[row, col, page] = sub_experiment[y_name].values.tolist()
             formula[row][col][page] = sub_experiment["formula"].values.tolist()
 

@@ -7,6 +7,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 # import seaborn as sns
 
+
 # TODO: change to square plots
 def umap_cluster_scatter(std_emb, labels, figure_dir="figures"):
     """Plot UMAP embeddings colored by cluster IDs.

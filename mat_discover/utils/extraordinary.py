@@ -43,7 +43,6 @@ def extraordinary_histogram(
     labels=None,
     fpath=join("figures", "extraordinary_histogram"),
 ):
-
     # why should I make a copy of a data frame in pandas https://stackoverflow.com/a/27680109/13697228
     train_df = train_df.copy()
     train_df["split"] = "training"

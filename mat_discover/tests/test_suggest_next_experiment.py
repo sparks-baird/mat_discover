@@ -12,6 +12,7 @@ train_df, val_df, extraordinary_thresh = extraordinary_split(train_df, val_df)
 
 val_df = val_df.iloc[:100]
 
+
 # first experiment, which is more time-intensive
 def test_suggest():
     adapt = Adapt(train_df, val_df, dummy_run=False)

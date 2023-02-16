@@ -31,6 +31,7 @@ dummy_structures = [
     Structure(lattice3, ["Al", "Al"], coords),
 ]
 
+
 # %% Test Functions
 def test_mat_discover():
     """Perform a simple run of mat_discover to ensure it runs without errors.
