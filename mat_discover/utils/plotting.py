@@ -290,7 +290,7 @@ def matplotlibify(fig, size=24, width_inches=3.5, height_inches=3.5, dpi=142):
         tickwidth=2.4,
         tickcolor="black",
     )
-    fig.update(layout_coloraxis_showscale=False)
+    # fig.update(layout_coloraxis_showscale=False)
 
     width_default_px = fig.layout.width
     targ_dpi = 300

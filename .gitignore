@@ -176,3 +176,6 @@ figures/lc_data/UnnamedModel_lc.csv
 examples/supercon.csv
 examples/super_con_mat_discover_pypi.ipynb
 examples/super_con_mat_discover.py
+matbench_kvrh_comp_similarity.csv
+matbench_kvrh_grid_similarity.csv
+matbench_kvrh_total_similarity.csv

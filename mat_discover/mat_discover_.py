@@ -33,6 +33,8 @@ from crabnet.crabnet_ import CrabNet
 import tensorflow as tf
 from m3gnet.models import M3GNet
 from m3gnet.trainers import Trainer
+from megnet.models import MEGNetModel
+from megnet.data.crystal import CrystalGraph
 from ElMD import ElMD
 from scipy.stats import multivariate_normal, wasserstein_distance
 from sklearn.decomposition import PCA
@@ -78,6 +80,54 @@ class M3GNetWrapper:
         val_inputs = val_df["structure"]
         val_pred = self.trainer.model.predict_structures(val_inputs)
         return np.squeeze(np.array(val_pred))
+
+
+class MEGNetWrapper:
+    def __init__(self, epochs=1000, r_cutoff=10, nfeat_bond=100):
+        gaussian_centers = np.linspace(0, r_cutoff + 1, nfeat_bond)
+        gaussian_width = 0.5
+        graph_converter = CrystalGraph(cutoff=r_cutoff)
+        self.model = MEGNetModel(
+            graph_converter=graph_converter,
+            centers=gaussian_centers,
+            width=gaussian_width,
+        )
+        self.epochs = epochs
+
+    def fit(self, train_df):
+        structures = train_df["structure"].tolist()
+        targets = train_df["target"].tolist()
+        # Model training
+        # Here, `structures` is a list of pymatgen Structure objects.
+        # `targets` is a corresponding list of properties.
+        self.model.train(structures, targets, epochs=self.epochs)
+
+    def predict(self, val_df):
+        # Predict the property of a new structure
+        pred = self.model.predict_structures(val_df["structure"])
+        return np.squeeze(np.array(pred))
+
+
+class CrabNetPretendCrystalWrapper:
+    def __init__(self, epochs=300):
+        self.crabnet = CrabNet(
+            mat_prop="test-property",
+            losscurve=False,
+            learningcurve=False,
+            verbose=True,
+            force_cpu=False,
+            epochs=epochs,
+        )
+
+    def fit(self, train_df):
+        df = train_df.copy()
+        df["formula"] = df["structure"].apply(lambda x: x.composition.reduced_formula)
+        self.crabnet.fit(df)
+
+    def predict(self, val_df):
+        df = val_df.copy()
+        df["formula"] = df["structure"].apply(lambda x: x.composition.reduced_formula)
+        return self.crabnet.predict(df)
 
 
 plt.rcParams.update(
@@ -355,7 +405,7 @@ class Discover:
         Path(self.figure_dir).mkdir(parents=True, exist_ok=True)
 
         self.mapper = mapper
-        
+
         if self.mapper is None:
             if use_structure:
                 pass  # TODO: Implement GridRDF as default
@@ -382,7 +432,8 @@ class Discover:
         self.regressor = regressor
         if self.regressor is None:
             if use_structure:
-                self.regressor = M3GNetWrapper(epochs=2 if dummy_run else 1000)
+                # self.regressor = M3GNetWrapper(epochs=2 if dummy_run else 1000)
+                self.regressor = MEGNetWrapper(epochs=2 if dummy_run else 1000)
             else:
                 self.regressor = CrabNet(
                     mat_prop="test-property",
@@ -392,7 +443,7 @@ class Discover:
                     force_cpu=False,
                     epochs=2 if dummy_run else None,
                 )
-                
+
         self.use_structure = use_structure
 
         if umap_cluster_kwargs is None:
@@ -445,7 +496,7 @@ class Discover:
             if "cluster_selection_epsilon" not in hdbscan_kwargs:
                 hdbscan_kwargs["cluster_selection_epsilon"] = 0.63
         self.hdbscan_kwargs = hdbscan_kwargs
-        
+
         if use_structure:
             self.input_type = "structure"
         else:
@@ -603,7 +654,7 @@ class Discover:
 
         self.all_inputs = pd.concat((train_inputs, self.val_inputs), axis=0)
         self.all_target = pd.concat((train_target, val_target), axis=0)
-        
+
         if self.input_type == "structure":
             self.input_strs = None
 
@@ -1449,7 +1500,7 @@ class Discover:
             x_unit=self.target_unit,
             y_unit=self.target_unit,
             use_plotly_offline=self.use_plotly_offline,
-            hover_data = self.hover_data,
+            hover_data=self.hover_data,
         )
         # fig = group_cv_parity(
         #     self.true_avg_targ, self.pred_avg_targ, self.avg_labels
@@ -1512,7 +1563,7 @@ class Discover:
             pareto_front=True,
             y_unit=self.target_unit,
             use_plotly_offline=self.use_plotly_offline,
-            hover_data = self.hover_data,
+            hover_data=self.hover_data,
         )
         return fig
 
@@ -1558,7 +1609,7 @@ class Discover:
             parity_type=None,
             color_unit=self.target_unit,
             use_plotly_offline=self.use_plotly_offline,
-            hover_data = self.hover_data,
+            hover_data=self.hover_data,
         )
         return fig
 
@@ -1583,7 +1634,7 @@ class Discover:
             pareto_front=False,
             parity_type=None,
             use_plotly_offline=self.use_plotly_offline,
-            hover_data = self.hover_data,
+            hover_data=self.hover_data,
         )
         return fig
 
@@ -1623,7 +1674,7 @@ class Discover:
             x_unit=self.target_unit,
             y_unit=self.target_unit,
             use_plotly_offline=self.use_plotly_offline,
-            hover_data = self.hover_data,
+            hover_data=self.hover_data,
         )
 
         return fig, pk_pareto_ind
@@ -1656,7 +1707,7 @@ class Discover:
             parity_type=None,
             y_unit=self.target_unit,
             use_plotly_offline=self.use_plotly_offline,
-            hover_data = self.hover_data,
+            hover_data=self.hover_data,
         )
 
         return fig, frac_pareto_ind
