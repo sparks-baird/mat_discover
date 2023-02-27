@@ -236,7 +236,7 @@ class Discover:
         plotting: bool = False,
         pdf: bool = True,
         n_peak_neighbors: int = 10,
-        radius = None,
+        radius=None,
         verbose: bool = True,
         dummy_run: bool = False,
         Scaler=RobustScaler,
