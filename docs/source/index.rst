@@ -6,12 +6,12 @@
 Welcome to Chemically Novel Materials Discovery!
 ================================================
 
-This is the documentation for `mat_discover <https://github.com/sparks-baird/mat_discover>`_. Descending from Stochastic Clustering Variance Regression (DiSCoVeR) is a
-composition-based materials
-discovery algorithm. DiSCoVeR emphasizes exploring high-performance candidates in new chemical
+This is the documentation for `mat_discover <https://github.com/sparks-baird/mat_discover>`_. Descending from Stochastic Clustering Variance Regression (DiSCoVeR) is a materials
+discovery algorithm for composition- or structure-based materials. DiSCoVeR emphasizes exploring high-performance candidates in new chemical
 spaces as originally proposed by Baird, Diep, and Sparks (`Digital Discovery <https://dx.doi.org/10.1039/D1DD00028D>`_, `ChemRxiv <https://dx.doi.org/10.33774/chemrxiv-2021-5l2f8-v3>`_). The
 library :code:`mat_discover` provides a GPU-accelerated (and CPU-compatible) Python
-implementation and tools for analyzing the outputs. :code:`mat_discover` will "suggest your next experiment" using a custom training dataset of chemical formula and target
+implementation and tools for analyzing the outputs. :code:`mat_discover` will "suggest
+your next experiment" using a custom training dataset of chemical formula or structure and target
 properties and a custom validation set of potential candidates. All in just a few lines of code! `Get started learning about DiSCoVeR <https://mat-discover.readthedocs.io/en/latest/readme.html>`_.
 
 .. raw:: html
