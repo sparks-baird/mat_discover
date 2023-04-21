@@ -104,6 +104,7 @@ autodoc_mock_imports = [
     "tensorflow",
     "megnet",
     "m3gnet",
+    "umap",
 ]
 
 # https://github.com/sphinx-doc/sphinx/issues/7000#issuecomment-677916705
