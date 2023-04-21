@@ -37,6 +37,7 @@ properties and a custom validation set of potential candidates. All in just a fe
    figures
    contributing
    modules
+   GitHub Source <https://github.com/sparks-baird/mat_discover>
 
 Indices and tables
 ==================
