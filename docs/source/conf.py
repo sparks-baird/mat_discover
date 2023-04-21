@@ -101,6 +101,9 @@ autodoc_mock_imports = [
     "hdbscan",
     "matbench_genmetrics",
     "matminer",
+    "tensorflow",
+    "megnet",
+    "m3gnet",
 ]
 
 # https://github.com/sphinx-doc/sphinx/issues/7000#issuecomment-677916705
