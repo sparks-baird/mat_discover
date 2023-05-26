@@ -34,7 +34,7 @@ working on an [implementation of composition-based Bayesian optimization
 using Ax](https://github.com/facebook/Ax/issues/727) (2021-12-10).
 
 For alternative "suggest next experiment" materials discovery tools,
-see the [Citrine Platform](https://citrination.com/) (free for non-commercial use), [CAMD](https://github.com/TRI-AMDD/CAMD) ([trihackathon2020 tutorial notebooks](https://github.com/TRI-AMDD/tri-hackathon-2020)), [PyChemia](https://github.com/MaterialsDiscovery/PyChemia),
+see the [Citrine Platform](https://citrination.com/) (proprietary), [ChemOS](https://chemos.io/) (proprietary), [Olympus](https://aspuru-guzik-group.github.io/olympus/), [CAMD](https://github.com/TRI-AMDD/CAMD) ([trihackathon2020 tutorial notebooks](https://github.com/TRI-AMDD/tri-hackathon-2020)), [PyChemia](https://github.com/MaterialsDiscovery/PyChemia),
 [Heteroscedastic-BO](https://github.com/Ryan-Rhys/Heteroscedastic-BO), and
 [thermo](https://github.com/janosh/thermo).
 
