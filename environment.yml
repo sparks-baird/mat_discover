@@ -12,7 +12,7 @@ dependencies:
   - pandas
   - pytorch >=1.9.0
   - plotly
-  - python >=3.7,<3.10
+  - python >=3.7
   - scipy
   - cudatoolkit <11.4
   - numba >=0.53.1
