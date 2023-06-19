@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, MutableMapping, Optional, Union, List, Mapping
 from warnings import warn
 from inspect import signature
-from matbench_genmetrics.utils.featurize import cdvae_cov_struct_fingerprints
+from matbench_genmetrics.core.utils.featurize import cdvae_cov_struct_fingerprints
 from scipy.spatial.distance import pdist, squareform
 
 import dill as pickle
