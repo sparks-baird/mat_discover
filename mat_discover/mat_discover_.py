@@ -45,6 +45,7 @@ from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 from torch.cuda import empty_cache
 
 from mat_discover.utils.data import data
+from mat_discover.utils.gridrdf_helper import gridrdf_pdist
 from mat_discover.utils.nearest_neigh import nearest_neigh_props
 from mat_discover.utils.pareto import pareto_plot  # , get_pareto_ind
 from mat_discover.utils.plotting import (
@@ -147,6 +148,29 @@ class CDVAECovStructFingerprintWrapper:
     def fit(self, structures):
         struct_fingerprints = cdvae_cov_struct_fingerprints(structures)
         self.dm = squareform(pdist(struct_fingerprints))
+
+
+class GridRDFWrapper:
+    def __init__(
+        self,
+        maximum_grid_distance=10,
+        bin_size=0.1,
+        broadening=0.1,
+        number_of_shells=100,
+    ):
+        self.maximum_grid_distance = maximum_grid_distance
+        self.bin_size = bin_size
+        self.broadening = broadening
+        self.number_of_shells = number_of_shells
+
+    def fit(self, structures):
+        self.dm = gridrdf_pdist(
+            structures,
+            maximum_grid_distance=self.maximum_grid_distance,
+            bin_size=self.bin_size,
+            broadening=self.broadening,
+            number_of_shells=self.number_of_shells,
+        )
 
 
 def my_mvn(mu_x, mu_y, r):
@@ -410,7 +434,6 @@ class Discover:
 
         if self.mapper is None:
             if use_structure:
-                pass  # TODO: Implement GridRDF as default
                 self.mapper = CDVAECovStructFingerprintWrapper()
             else:
                 self.mapper = ElM2D(target="cpu")
