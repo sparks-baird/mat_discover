@@ -35,6 +35,7 @@ dependencies:
     # core:
     - ElM2D ==0.4.1
     - matbench_genmetrics
+    - matbench
   # optional:
   - ipykernel
   - nbformat >=4.2.0
