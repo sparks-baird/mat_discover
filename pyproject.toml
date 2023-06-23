@@ -33,7 +33,7 @@ dependencies = [
     "umap-learn",
     "dill",
     "crabnet >=2.0.5,<3.0.0",
-    "torch <2"
+    "torch <2",
     "chem_wasserstein >=1.0.8,<2.0.0",
     "composition_based_feature_vector",
     "matbench_genmetrics >= 0.6.1",
