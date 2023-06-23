@@ -813,8 +813,8 @@ class Discover:
                 f"self.val_rad_neigh_avg` and `self.val_k_neigh_avg` are being assigned the same values as `val_dens` for compatibility reasons since a non-DiSCoVeR novelty learner was specified: {self.novelty_learner}."
             )
             # composition-based featurization
-            X_train: Union[pd.DataFrame, np.ndarray, List] = []
-            X_val: Union[pd.DataFrame, np.ndarray, List] = []
+            X_train: Union[np.ndarray, List] = []
+            X_val: Union[np.ndarray, List] = []
             assert self.train_inputs is not None
             if self.novelty_prop == "mod_petti":
                 assert isinstance(X_train, list)

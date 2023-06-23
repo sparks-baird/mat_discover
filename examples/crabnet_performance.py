@@ -4,6 +4,7 @@ Use CrabNet outside of DiSCoVeR to do optimization; compare with random search.
 # TODO: incorporate CrabNet uncertainty into search
 """
 from crabnet.crabnet_ import CrabNet
+import pandas as pd
 
 # %% imports
 from tqdm import tqdm
@@ -82,7 +83,7 @@ for i in range(n_repeats):
         idx = perf_val_df.pred.idxmax()
         # idx = np.where(val_pred == max(val_pred))[0][0]
         move_row = perf_val_df.loc[idx]
-        perf_train_df.append(move_row)
+        perf_train_df = pd.concat((perf_train_df, move_row))
         perf_val_df = perf_val_df.drop(index=idx)
         next_experiments.append(move_row.to_dict())
     experiment = ad_experiments_metrics(
