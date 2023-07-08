@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, MutableMapping, Optional, Union, List, Mapping
 from warnings import warn
 from inspect import signature
-from matbench_genmetrics.utils.featurize import cdvae_cov_struct_fingerprints
+from matbench_genmetrics.core.utils.featurize import cdvae_cov_struct_fingerprints
 from scipy.spatial.distance import pdist, squareform
 
 import dill as pickle
@@ -45,6 +45,7 @@ from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 from torch.cuda import empty_cache
 
 from mat_discover.utils.data import data
+from mat_discover.utils.gridrdf_helper import gridrdf_pdist
 from mat_discover.utils.nearest_neigh import nearest_neigh_props
 from mat_discover.utils.pareto import pareto_plot  # , get_pareto_ind
 from mat_discover.utils.plotting import (
@@ -149,6 +150,29 @@ class CDVAECovStructFingerprintWrapper:
         self.dm = squareform(pdist(struct_fingerprints))
 
 
+class GridRDFWrapper:
+    def __init__(
+        self,
+        maximum_grid_distance=10,
+        bin_size=0.1,
+        broadening=0.1,
+        number_of_shells=100,
+    ):
+        self.maximum_grid_distance = maximum_grid_distance
+        self.bin_size = bin_size
+        self.broadening = broadening
+        self.number_of_shells = number_of_shells
+
+    def fit(self, structures):
+        self.dm = gridrdf_pdist(
+            structures,
+            maximum_grid_distance=self.maximum_grid_distance,
+            bin_size=self.bin_size,
+            broadening=self.broadening,
+            number_of_shells=self.number_of_shells,
+        )
+
+
 def my_mvn(mu_x, mu_y, r):
     """Calculate multivariate normal at (mu_x, mu_y) with constant radius, r."""
     return multivariate_normal([mu_x, mu_y], [[r, 0], [0, r]])
@@ -236,6 +260,7 @@ class Discover:
         plotting: bool = False,
         pdf: bool = True,
         n_peak_neighbors: int = 10,
+        radius=None,
         verbose: bool = True,
         dummy_run: bool = False,
         Scaler=RobustScaler,
@@ -390,6 +415,7 @@ class Discover:
         self.plotting = plotting
         self.pdf = pdf
         self.n_peak_neighbors = n_peak_neighbors
+        self.radius = radius
         self.verbose = verbose
         self.dummy_run = dummy_run
         if dummy_run:
@@ -408,7 +434,6 @@ class Discover:
 
         if self.mapper is None:
             if use_structure:
-                pass  # TODO: Implement GridRDF as default
                 self.mapper = CDVAECovStructFingerprintWrapper()
             else:
                 self.mapper = ElM2D(target="cpu")
@@ -768,7 +793,7 @@ class Discover:
             # compound-wise scores (i.e. individual compounds)
             with self.Timer("nearest-neighbor-properties"):
                 self.rad_neigh_avg_targ, self.k_neigh_avg_targ = nearest_neigh_props(
-                    self.dm, pred, n_neighbors=self.n_peak_neighbors
+                    self.dm, pred, n_neighbors=self.n_peak_neighbors, radius=self.radius
                 )
                 self.val_rad_neigh_avg = self.rad_neigh_avg_targ[val_ids]
                 self.val_k_neigh_avg = self.k_neigh_avg_targ[val_ids]
@@ -788,8 +813,8 @@ class Discover:
                 f"self.val_rad_neigh_avg` and `self.val_k_neigh_avg` are being assigned the same values as `val_dens` for compatibility reasons since a non-DiSCoVeR novelty learner was specified: {self.novelty_learner}."
             )
             # composition-based featurization
-            X_train: Union[pd.DataFrame, np.ndarray, List] = []
-            X_val: Union[pd.DataFrame, np.ndarray, List] = []
+            X_train: Union[np.ndarray, List] = []
+            X_val: Union[np.ndarray, List] = []
             assert self.train_inputs is not None
             if self.novelty_prop == "mod_petti":
                 assert isinstance(X_train, list)

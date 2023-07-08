@@ -11,6 +11,8 @@ on:
     - "**"
     tags-ignore:
     - "*.*.*"
+  pull_request: # Run in every PR
+  workflow_dispatch: # Allow manually triggering the workflow
 
 jobs:
   pytest:

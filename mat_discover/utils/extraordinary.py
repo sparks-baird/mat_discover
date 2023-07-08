@@ -17,7 +17,7 @@ def extraordinary_split(
 ):
     # set aside high-performing candidates
     if val_df is not None:
-        train_val_df = train_df.append(val_df)
+        train_val_df = pd.concat((train_df, val_df))
     else:
         train_val_df = train_df
 
@@ -31,7 +31,7 @@ def extraordinary_split(
     train_df, val_df = train_test_split(
         train_val_df, train_size=train_size, random_state=random_state
     )
-    val_df = val_df.append(extraordinary_df)
+    val_df = pd.concat((val_df, extraordinary_df))
 
     return train_df, val_df, extraordinary_thresh
 

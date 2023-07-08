@@ -11,6 +11,7 @@ classifiers = [
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Operating System :: OS Independent",
 ]
 dynamic = ["version", "description"]
@@ -21,7 +22,7 @@ dependencies = [
     "seaborn",
     "scipy",
     "hdbscan",
-    "joblib==1.1.0",
+    "joblib",
     "cython", # for hdbscan 0.8.27 or similar
     "numba >=0.53.1",
     "plotly >=5.6.0",
@@ -32,8 +33,14 @@ dependencies = [
     "umap-learn",
     "dill",
     "crabnet >=2.0.5,<3.0.0",
+    "torch <2",
     "chem_wasserstein >=1.0.8,<2.0.0",
     "composition_based_feature_vector",
+    "matbench_genmetrics >= 0.6.1",
+    "megnet",
+    "m3gnet",
+    "gridrdf==0.3.0",
+    "matbench",
     # "ElMD==0.4.8", #PyPI
     # "pymatgen",
     # "joblib",
@@ -56,8 +63,7 @@ test = [
     "sphinx_rtd_theme==1.1.1",
     "sphinx_copybutton==0.5.1",
     "m3gnet",
-    "gridrdf==0.2.0",
-    "matbench_genmetrics",
+    # "gridrdf==0.3.0",
     "matminer<=0.7.4",
 
 ]

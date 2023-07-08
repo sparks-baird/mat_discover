@@ -3,7 +3,7 @@ pqdm==0.2.0
 dill==0.3.6
 scipy==1.9.3
 hdbscan==0.8.29
-joblib==1.1.*
+joblib==1.2.*
 pandas==1.5.2
 umap_learn==0.5.3
 matplotlib==3.6.2
@@ -16,3 +16,4 @@ sphinx==5.3.0
 sphinx_rtd_theme==1.1.1
 sphinx_copybutton==0.5.1
 composition-based-feature-vector==1.0.4
+matbench_genmetrics==0.6.0

@@ -15,7 +15,7 @@ Path("scratch").mkdir(exist_ok=True)
 fpath = join(name, "meta.yaml")
 fpath2 = join("scratch", "meta.yaml")
 my_recipe = Recipe(load_file=fpath)
-my_recipe["requirements"]["host"].append("flit")
+my_recipe["requirements"]["host"].replace("flit_core >=3.2,<4", "flit")
 my_recipe["build"].add_section("noarch")
 my_recipe["build"]["noarch"] = "python"
 try:

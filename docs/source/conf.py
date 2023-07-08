@@ -94,7 +94,18 @@ html_theme_options = {
 
 html_extra_path = ["googlea441f484329a8f75.html"]
 
-autodoc_mock_imports = ["numba", "torch", "pymatgen", "hdbscan"]
+autodoc_mock_imports = [
+    "numba",
+    "torch",
+    "pymatgen",
+    "hdbscan",
+    "matbench_genmetrics",
+    "matminer",
+    "tensorflow",
+    "megnet",
+    "m3gnet",
+    "umap",
+]
 
 # https://github.com/sphinx-doc/sphinx/issues/7000#issuecomment-677916705
 source_suffix = [".rst", ".md"]

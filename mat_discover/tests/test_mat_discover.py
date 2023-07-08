@@ -17,6 +17,7 @@ from copy import deepcopy
 from crabnet.data.materials_data import elasticity
 from sklearn.neighbors import LocalOutlierFactor
 from mat_discover.mat_discover_ import Discover
+from mat_discover.utils.gridrdf_helper import gridrdf_pdist
 from mat_discover.adaptive_design import DummyCrabNet
 from pymatgen.core.lattice import Lattice
 from pymatgen.core.structure import Structure
@@ -164,7 +165,12 @@ def test_sklearn_mat2vec():
     # disc.plot() # not functional
 
 
+def test_gridrdf_helper():
+    gridrdf_pdist(dummy_structures)
+
+
 if __name__ == "__main__":
+    test_gridrdf_helper()
     test_mat_discover_xtal()
     test_custom_regressor()
     test_mat_discover()
