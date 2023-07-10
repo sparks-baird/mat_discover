@@ -64,7 +64,7 @@ test = [
     "sphinx_copybutton==0.5.1",
     "m3gnet",
     # "gridrdf==0.3.0",
-    "matminer<=0.7.4",
+    "matminer<=0.9.0",
 
 ]
 # gpu = ["torch==1.9.1+cu111"]
